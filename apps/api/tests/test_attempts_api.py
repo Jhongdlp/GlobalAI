@@ -181,3 +181,17 @@ async def test_login_is_rate_limited(anon):
     body = {"email": "nadie@globalai.demo", "password": "wrong"}
     codes = [(await anon.post("/auth/login", json=body)).status_code for _ in range(6)]
     assert codes == [401] * 5 + [429]
+
+
+async def test_listening_audio_requires_auth_and_is_served(student, anon):
+    attempt = await start(student)
+    url = next(q for q in attempt["questions"] if q["skill"] == "listening")["stimulus"][
+        "audio_url"
+    ]
+    path = url.removeprefix("/api/v1")
+
+    assert (await anon.get(path)).status_code == 401
+    response = await student.get(path)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "audio/mpeg"
+    assert (await student.get(f"/stimuli/{uuid.uuid4()}/audio")).status_code == 404

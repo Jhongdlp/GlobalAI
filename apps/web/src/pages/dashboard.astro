@@ -1,0 +1,738 @@
+---
+import Base from "../layouts/Base.astro";
+
+// Escala MCER completa para la regla de nivel (el backend solo devuelve el nivel actual).
+// ponytail: duplicado de catalog.json; exponer GET /levels si los niveles cambian a menudo.
+const LEVELS = [
+  ["PRE_A1", "Pre-A1"],
+  ["A1", "A1"],
+  ["A2", "A2"],
+  ["B1", "B1"],
+  ["B2", "B2"],
+  ["C1", "C1"],
+];
+---
+
+<Base title="Inicio · Global AI">
+  <header class="topbar">
+    <a class="brand" href="/dashboard"><span class="dot"></span>Global AI</a>
+    <div class="user">
+      <span class="avatar" id="avatar" aria-hidden="true"></span>
+      <span class="name" id="user-name"></span>
+      <button class="logout" id="logout" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"></path></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </header>
+
+  <main class="dash">
+    <section class="hero" aria-labelledby="greeting">
+      <div class="hero-text">
+        <p class="eyebrow">Tu evaluación</p>
+        <h1 id="greeting">Hola</h1>
+        <p class="hero-lead" id="hero-lead">Mide tu inglés y recibe recomendaciones de tu coach.</p>
+
+        <div class="assessment" id="assessment">
+          <div class="skeleton" style="width: 70%"></div>
+          <div class="skeleton" style="width: 90%"></div>
+        </div>
+      </div>
+
+      <div class="coach" aria-hidden="true">
+        <canvas id="coach"></canvas>
+        <div class="caption" id="caption">
+          <p class="en" lang="en">Ready when you are.</p>
+          <p class="es">Cuando quieras, empezamos.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="progress" aria-labelledby="progress-title">
+      <h2 id="progress-title">Tu progreso</h2>
+
+      <dl class="stats">
+        <div><dt>Intentos</dt><dd id="stat-attempts">—</dd></div>
+        <div><dt>Mejor puntaje</dt><dd id="stat-best">—</dd></div>
+        <div><dt>Promedio</dt><dd id="stat-avg">—</dd></div>
+      </dl>
+
+      <div class="block">
+        <h3>Nivel MCER</h3>
+        <ol class="ruler" id="ruler">
+          {LEVELS.map(([code, label]) => <li data-level={code}><span>{label}</span></li>)}
+        </ol>
+        <p class="note" id="level-note">Completa tu primera evaluación para conocer tu nivel.</p>
+      </div>
+
+      <div class="block">
+        <h3>Por habilidad</h3>
+        <ul class="skills" id="skills">
+          <li class="skeleton"></li>
+          <li class="skeleton"></li>
+          <li class="skeleton"></li>
+        </ul>
+      </div>
+
+      <div class="block">
+        <h3>Historial</h3>
+        <ul class="history" id="history">
+          <li class="skeleton"></li>
+          <li class="skeleton"></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  :global(body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+  }
+  .avatar {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+  .logout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      border-color 0.2s,
+      background 0.2s;
+  }
+  .logout:hover {
+    color: var(--ink);
+    border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
+    background: var(--surface);
+  }
+  .logout svg {
+    width: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .dash {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 20px;
+    padding: 0 20px 20px;
+    min-height: 0;
+  }
+
+  /* Tarjeta principal: mismo escenario azul tinta que el login, continuidad visual. */
+  .hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: center;
+    gap: 24px;
+    padding: 40px;
+    border-radius: 20px;
+    color: var(--bg);
+    background:
+      radial-gradient(circle, rgb(246 241 231 / 0.12) 1px, transparent 1.4px) 0 0 / 24px 24px,
+      var(--stage);
+    overflow: hidden;
+    animation: rise 0.8s var(--ease-out) both;
+  }
+  .eyebrow {
+    margin: 0 0 12px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+  }
+  .hero-lead {
+    margin: 0 0 32px;
+    max-width: 36ch;
+    opacity: 0.75;
+  }
+
+  .assessment {
+    padding: 22px;
+    border-radius: 14px;
+    background: rgb(246 241 231 / 0.07);
+    border: 1px solid rgb(246 241 231 / 0.14);
+  }
+  .assessment :global(h2) {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .assessment :global(.desc) {
+    margin: 0 0 16px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+  .assessment :global(.meta) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+    font-size: 0.78rem;
+  }
+  .assessment :global(.meta li) {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgb(246 241 231 / 0.1);
+  }
+  .assessment :global(.cta) {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    padding: 0 22px;
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--stage);
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+      transform 0.15s var(--ease-out),
+      box-shadow 0.25s var(--ease-out);
+  }
+  .assessment :global(.cta:hover) {
+    box-shadow: 0 10px 28px -10px rgb(0 0 0 / 0.5);
+  }
+  .assessment :global(.cta:active) {
+    transform: translateY(1px) scale(0.99);
+  }
+  .assessment :global(.cta svg) {
+    width: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 0.3s var(--ease-out);
+  }
+  .assessment :global(.cta:hover svg) {
+    translate: 3px 0;
+  }
+  .assessment :global(.resume) {
+    margin: 12px 0 0;
+    font-size: 0.8rem;
+    opacity: 0.75;
+  }
+  .assessment .skeleton {
+    height: 14px;
+    margin-bottom: 12px;
+    background: rgb(246 241 231 / 0.1);
+  }
+
+  .coach {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+  canvas {
+    width: min(100%, 320px, 42dvh);
+    aspect-ratio: 1;
+  }
+  .caption p {
+    margin: 0;
+  }
+  .caption.swap p {
+    animation: rise 0.45s var(--ease-out);
+  }
+  .en {
+    font-weight: 500;
+  }
+  .es {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+
+  /* Progreso */
+  .progress {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 28px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    min-height: 0;
+    overflow: auto;
+    animation: rise 0.8s 0.1s var(--ease-out) both;
+  }
+  h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    margin: 0 0 12px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 0;
+  }
+  .stats div {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--bg);
+  }
+  dt {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  dd {
+    margin: 2px 0 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ruler {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ruler li {
+    position: relative;
+    padding-top: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-align: center;
+  }
+  .ruler li::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    transition: background 0.5s var(--ease-out);
+  }
+  .ruler :global(li.reached::before) {
+    background: color-mix(in srgb, var(--accent) 35%, var(--line));
+  }
+  .ruler :global(li.current) {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .ruler :global(li.current::before) {
+    background: var(--accent);
+    animation: grow 0.7s 0.3s var(--ease-out) both;
+  }
+  .note {
+    margin: 10px 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .note :global(strong) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .skills,
+  .history {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .skills :global(li:not(.skeleton, .empty)) {
+    display: grid;
+    grid-template-columns: 90px 1fr 44px 48px;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+  }
+  .skills :global(.bar) {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .skills :global(.bar span) {
+    display: block;
+    height: 100%;
+    width: var(--pct);
+    border-radius: inherit;
+    background: var(--accent);
+    transform-origin: left;
+    animation: grow 0.9s var(--delay, 0s) var(--ease-out) both;
+  }
+  .skills :global(.pct) {
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .skills :global(.delta) {
+    font-size: 0.72rem;
+    text-align: right;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .skills :global(.delta.up) {
+    color: #1f7a4d;
+  }
+  .skills :global(.delta.down) {
+    color: var(--danger);
+  }
+
+  .history :global(a) {
+    display: grid;
+    grid-template-columns: 1fr auto auto 20px;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition:
+      background 0.2s,
+      translate 0.25s var(--ease-out);
+  }
+  .history :global(a:hover) {
+    background: var(--accent-soft);
+    translate: 2px 0;
+  }
+  .history :global(.date) {
+    color: var(--muted);
+  }
+  .history :global(.level) {
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .history :global(.score) {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .history :global(svg) {
+    width: 16px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .progress :global(.empty) {
+    padding: 16px;
+    border-radius: 12px;
+    border: 1.5px dashed var(--line);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .skeleton {
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--bg) 30%, color-mix(in srgb, var(--line) 60%, var(--bg)) 50%, var(--bg) 70%) 0 0 / 300% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  @keyframes grow {
+    from {
+      scale: 0 1;
+    }
+  }
+  @keyframes shimmer {
+    to {
+      background-position: -150% 0;
+    }
+  }
+
+  /* Escritorio: todo cabe en el alto de la ventana; si falta espacio, solo el panel de progreso hace scroll. */
+  @media (min-width: 861px) and (min-height: 540px) {
+    :global(body) {
+      height: 100dvh;
+    }
+  }
+  @media (min-width: 861px) and (max-height: 760px) {
+    .dash {
+      gap: 16px;
+    }
+    .hero {
+      padding: 28px 32px;
+    }
+    .hero-lead {
+      margin-bottom: 20px;
+    }
+    .assessment :global(.desc) {
+      display: none;
+    }
+    .progress {
+      gap: 16px;
+      padding: 20px 24px;
+    }
+    .stats div {
+      padding: 8px 12px;
+    }
+    dd {
+      font-size: 1.2rem;
+    }
+    .history :global(a) {
+      padding: 9px 14px;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+    .coach {
+      display: none;
+    }
+  }
+  @media (max-width: 860px) {
+    .dash {
+      grid-template-columns: 1fr;
+      padding: 0 16px 16px;
+    }
+    .topbar {
+      padding: 12px 16px;
+    }
+    .name {
+      display: none;
+    }
+    .hero {
+      padding: 28px 24px;
+    }
+    .progress {
+      padding: 22px 18px;
+      overflow: visible;
+    }
+    .assessment :global(.cta) {
+      width: 100%;
+      justify-content: space-between;
+      white-space: nowrap;
+    }
+  }
+  @media (max-width: 480px) {
+    .logout {
+      width: 36px;
+      padding: 0;
+      justify-content: center;
+      font-size: 0;
+    }
+  }
+</style>
+
+<script>
+  import { api, esc } from "../lib/api";
+  import type { CoachState } from "../lib/coach";
+
+  type User = { full_name: string };
+  type Assessment = {
+    slug: string;
+    title: string;
+    description: string | null;
+    question_count: number;
+    time_limit_minutes: number | null;
+    attempts_used: number;
+    best_score_pct: number | null;
+    open_attempt_id: string | null;
+  };
+  type Progress = {
+    total_attempts: number;
+    best_score_pct: number | null;
+    average_score_pct: number | null;
+    current_level: { code: string; name: string; description: string | null } | null;
+    skills: { code: string; name: string; latest_pct: number; previous_pct: number | null }[];
+    attempts: { id: string; submitted_at: string; score_pct: number; suggested_level: string }[];
+  };
+
+  const $ = (id: string) => document.getElementById(id)!;
+  const pct = (n: number | null) => (n == null ? "—" : `${Math.round(n)}%`);
+  const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
+
+  let coach: { setState(s: CoachState): void; pulse(): void } | undefined;
+  import("../lib/coach")
+    .then(({ createCoach }) => (coach = createCoach($("coach") as HTMLCanvasElement)))
+    .catch(() => $("coach").remove());
+
+  function say(en: string, es: string) {
+    const c = $("caption");
+    c.querySelector(".en")!.textContent = en;
+    c.querySelector(".es")!.textContent = es;
+    c.classList.remove("swap");
+    void c.offsetWidth;
+    c.classList.add("swap");
+  }
+
+  $("logout").addEventListener("click", async () => {
+    await api("/auth/logout", { method: "POST" }).catch(() => {});
+    location.replace("/");
+  });
+
+  function renderUser(u: User) {
+    const first = u.full_name.split(" ")[0];
+    $("greeting").textContent = `Hola, ${first}`;
+    $("user-name").textContent = u.full_name;
+    $("avatar").textContent = u.full_name
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
+  }
+
+  function renderAssessment(a: Assessment | undefined) {
+    const box = $("assessment");
+    if (!a) {
+      box.innerHTML = '<p class="desc">No hay evaluaciones disponibles por ahora.</p>';
+      return;
+    }
+    const resuming = !!a.open_attempt_id;
+    const label = resuming ? "Continuar evaluación" : a.attempts_used ? "Repetir evaluación" : "Comenzar evaluación";
+    const meta = [
+      `${a.question_count} preguntas`,
+      a.time_limit_minutes ? `${a.time_limit_minutes} minutos` : null,
+      "Guardado automático",
+    ].filter(Boolean);
+    box.innerHTML = `
+      <h2>${esc(a.title)}</h2>
+      ${a.description ? `<p class="desc">${esc(a.description)}</p>` : ""}
+      <ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>
+      <a class="cta" href="/test?slug=${encodeURIComponent(a.slug)}">${label} ${ARROW}</a>
+      ${resuming ? '<p class="resume">Tus respuestas anteriores siguen guardadas.</p>' : ""}`;
+
+    if (resuming) say("Your answers are saved. Let's continue.", "Tus respuestas están guardadas. Sigamos.");
+    else if (a.attempts_used) say("Let's try to beat your best score.", "Intentemos superar tu mejor puntaje.");
+
+    const cta = box.querySelector(".cta")!;
+    cta.addEventListener("pointerenter", () => {
+      coach?.setState("success");
+      coach?.pulse();
+    });
+    cta.addEventListener("pointerleave", () => coach?.setState("idle"));
+  }
+
+  function renderProgress(p: Progress) {
+    $("stat-attempts").textContent = String(p.total_attempts);
+    $("stat-best").textContent = pct(p.best_score_pct);
+    $("stat-avg").textContent = pct(p.average_score_pct);
+
+    const level = p.current_level;
+    if (level) {
+      const items = [...$("ruler").children] as HTMLElement[];
+      const idx = items.findIndex((li) => li.dataset.level === level.code);
+      items.forEach((li, i) => li.classList.toggle(i === idx ? "current" : "reached", i <= idx));
+      $("level-note").innerHTML = `<strong>${esc(level.code.replace("_", "-"))} · ${esc(level.name)}.</strong> ${esc(level.description ?? "")}`;
+    }
+
+    $("skills").innerHTML = p.skills.length
+      ? p.skills
+          .map((s, i) => {
+            const d = s.previous_pct == null ? null : Math.round(s.latest_pct - s.previous_pct);
+            const delta = d == null ? "" : d > 0 ? `<span class="delta up">+${d}</span>` : d < 0 ? `<span class="delta down">${d}</span>` : '<span class="delta">=</span>';
+            return `<li><span>${esc(s.name)}</span>
+              <span class="bar" role="img" aria-label="${esc(s.name)} ${pct(s.latest_pct)}"><span style="--pct:${s.latest_pct}%;--delay:${0.1 * i}s"></span></span>
+              <span class="pct">${pct(s.latest_pct)}</span>${delta || '<span class="delta"></span>'}</li>`;
+          })
+          .join("")
+      : '<li class="empty">Aquí verás cómo te va en Grammar, Vocabulary, Reading y Listening.</li>';
+
+    const date = new Intl.DateTimeFormat("es", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    $("history").innerHTML = p.attempts.length
+      ? p.attempts
+          .slice(0, 3)
+          .map(
+            (a) => `<li><a href="/results?id=${a.id}">
+              <span class="date">${date.format(new Date(a.submitted_at))}</span>
+              <span class="level">${esc(a.suggested_level.replace("_", "-"))}</span>
+              <span class="score">${pct(a.score_pct)}</span>${ARROW}</a></li>`,
+          )
+          .join("")
+      : '<li class="empty">Tus intentos aparecerán aquí, con su puntaje y nivel.</li>';
+  }
+
+  try {
+    const [user, assessments, progress] = await Promise.all([
+      api<User>("/auth/me"),
+      api<Assessment[]>("/assessments"),
+      api<Progress>("/me/progress"),
+    ]);
+    renderUser(user);
+    renderAssessment(assessments[0]);
+    renderProgress(progress);
+  } catch (e) {
+    $("assessment").innerHTML = `<p class="desc">${esc((e as Error).message)}</p>`;
+  }
+</script>

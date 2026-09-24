@@ -1,0 +1,1169 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Evaluación · Global AI">
+  <header class="topbar">
+    <a class="brand" href="/dashboard" aria-label="Global AI, volver al inicio"><span class="dot"></span><span class="brand-name">Global AI</span></a>
+    <p class="title" id="title"></p>
+    <div class="status">
+      <span class="save" id="save" data-state="saved" aria-live="polite">Guardado</span>
+      <span class="timer" id="timer" role="timer" aria-label="Tiempo restante">--:--</span>
+      <a class="exit" href="/dashboard">Salir</a>
+    </div>
+  </header>
+
+  <nav class="steps" id="steps" aria-label="Preguntas"></nav>
+
+  <main class="exam" hidden id="exam">
+    <aside class="stage" aria-hidden="true">
+      <canvas id="coach"></canvas>
+      <div class="caption" id="caption">
+        <p class="en" lang="en"></p>
+        <p class="es"></p>
+      </div>
+      <p class="fineprint">Tus respuestas se guardan solas. Evita cambiar de pestaña durante la evaluación.</p>
+    </aside>
+
+    <section class="qa">
+      <p class="meta" id="meta"></p>
+      <div id="stimulus"></div>
+      <form id="answer-form" novalidate>
+        <h1 id="prompt" tabindex="-1" lang="en"></h1>
+        <div id="answer"></div>
+      </form>
+      <footer class="nav">
+        <button type="button" class="ghost" id="prev">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+          Anterior
+        </button>
+        <p class="kbd-hint" aria-hidden="true" id="kbd-hint"></p>
+        <button type="button" class="primary" id="next">
+          <span class="label">Siguiente</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </button>
+      </footer>
+    </section>
+  </main>
+
+  <div class="screen" id="screen" role="status">
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="screen-text">Preparando tu evaluación…</p>
+    <a href="/dashboard" class="back" id="screen-back" hidden>Volver al inicio</a>
+  </div>
+
+  <dialog id="confirm" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">¿Enviar la evaluación?</h2>
+    <p id="confirm-text"></p>
+    <div class="dialog-actions">
+      <button type="button" class="ghost" id="confirm-cancel">Seguir revisando</button>
+      <button type="button" class="primary" id="confirm-ok">Enviar respuestas</button>
+    </div>
+  </dialog>
+
+  <p class="sr-only" id="announcer" aria-live="assertive"></p>
+</Base>
+
+<style>
+  :global(body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .title {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.85rem;
+  }
+  .save {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+  }
+  .save::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1f7a4d;
+    transition: background 0.3s;
+  }
+  .save[data-state="saving"]::before {
+    background: var(--accent);
+    animation: blink 0.8s ease-in-out infinite;
+  }
+  .save[data-state="offline"] {
+    color: var(--danger);
+  }
+  .save[data-state="offline"]::before {
+    background: var(--danger);
+  }
+  .timer {
+    min-width: 72px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    font-weight: 600;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition:
+      color 0.3s,
+      border-color 0.3s,
+      background 0.3s;
+  }
+  .timer.low {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--danger-soft);
+    animation: pulse 1s ease-in-out infinite;
+  }
+  .exit {
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .exit:hover {
+    color: var(--ink);
+  }
+
+  /* Pasos: la línea de 10 marcas es la barra de progreso y la navegación a la vez. */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(var(--n, 10), 1fr);
+    gap: 6px;
+    padding: 0 24px 14px;
+  }
+  .steps :global(button) {
+    position: relative;
+    height: 30px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding-top: 10px;
+  }
+  .steps :global(button::before) {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--line);
+    transition: background 0.3s var(--ease-out);
+  }
+  .steps :global(button.answered::before) {
+    background: color-mix(in srgb, var(--accent) 45%, var(--line));
+  }
+  .steps :global(button[aria-current="step"]) {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .steps :global(button[aria-current="step"]::before) {
+    background: var(--accent);
+  }
+  .steps :global(button:hover) {
+    color: var(--ink);
+  }
+
+  .exam {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(260px, 0.7fr) 1.6fr;
+    gap: 20px;
+    padding: 0 20px 20px;
+    min-height: 0;
+  }
+  .exam[hidden] {
+    display: none;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    justify-items: center;
+    gap: 14px;
+    padding: 28px 24px 22px;
+    border-radius: 20px;
+    color: var(--bg);
+    background:
+      radial-gradient(circle, rgb(246 241 231 / 0.12) 1px, transparent 1.4px) 0 0 / 24px 24px,
+      var(--stage);
+    text-align: center;
+    animation: rise 0.8s var(--ease-out) both;
+  }
+  canvas {
+    align-self: center;
+    width: min(100%, 260px, 34dvh);
+    aspect-ratio: 1;
+  }
+  .caption p {
+    margin: 0;
+  }
+  .caption.swap p {
+    animation: rise 0.45s var(--ease-out);
+  }
+  .en {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  .es {
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+  .fineprint {
+    margin: 0;
+    font-size: 0.72rem;
+    opacity: 0.55;
+    max-width: 30ch;
+  }
+
+  .qa {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 32px 40px 24px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    overflow: auto;
+    animation: rise 0.8s 0.1s var(--ease-out) both;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 0 0 18px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .meta :global(.chip) {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .meta :global(.chip.level) {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  #answer-form {
+    flex: 1;
+  }
+  #answer-form.enter {
+    animation: slide 0.4s var(--ease-out);
+  }
+  h1 {
+    margin: 0 0 24px;
+    font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    outline: none;
+  }
+
+  /* Lectura y audio */
+  #stimulus :global(.reading) {
+    max-height: 30dvh;
+    overflow: auto;
+    margin-bottom: 22px;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: var(--bg);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+  #stimulus :global(.reading h2),
+  #stimulus :global(.audio h2) {
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  #stimulus :global(.reading p) {
+    margin: 0;
+  }
+  #stimulus :global(.audio) {
+    margin-bottom: 22px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: var(--bg);
+  }
+  #stimulus :global(.player) {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  #stimulus :global(.play) {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+    transition: transform 0.15s var(--ease-out);
+  }
+  #stimulus :global(.play:active) {
+    transform: scale(0.94);
+  }
+  #stimulus :global(.play svg) {
+    width: 20px;
+    fill: currentColor;
+  }
+  #stimulus :global(.track) {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  #stimulus :global(.track span) {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    transition: width 0.25s linear;
+  }
+  #stimulus :global(.time) {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Opciones: radios nativos con apariencia de tarjeta (teclado y lector de pantalla gratis). */
+  #answer :global(.options) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  #answer :global(.option) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 60px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      background 0.2s,
+      transform 0.15s var(--ease-out);
+  }
+  #answer :global(.option:hover) {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  }
+  #answer :global(.option:active) {
+    transform: scale(0.99);
+  }
+  #answer :global(.option input) {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #answer :global(.option:has(input:focus-visible)) {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+  #answer :global(.key) {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--bg);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    transition:
+      background 0.2s,
+      color 0.2s;
+  }
+  #answer :global(.option:has(input:checked)) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  #answer :global(.option:has(input:checked) .key) {
+    background: var(--accent);
+    color: var(--accent-ink);
+    animation: pop 0.35s var(--ease-spring);
+  }
+
+  /* Completar: el hueco vive dentro de la frase, como en un cuaderno. */
+  h1 :global(.blank) {
+    display: inline-block;
+    width: var(--w, 10ch);
+    max-width: 100%;
+    margin: 0 4px;
+    padding: 2px 6px;
+    border: 0;
+    border-bottom: 2px solid var(--accent);
+    border-radius: 6px 6px 0 0;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    text-align: center;
+    transition: background 0.2s;
+  }
+  h1 :global(.blank:focus) {
+    outline: none;
+    background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  }
+  #answer :global(.hint) {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* Fija al pie del panel: con lecturas largas la navegación siempre queda a mano. */
+  .nav {
+    position: sticky;
+    bottom: -24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 24px 0 -24px;
+    padding: 18px 0 24px;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .kbd-hint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .kbd-hint :global(kbd) {
+    padding: 1px 6px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--bg);
+    font: inherit;
+  }
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+  .primary,
+  .ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 48px;
+    padding: 0 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+      background 0.2s,
+      border-color 0.2s,
+      transform 0.15s var(--ease-out),
+      opacity 0.2s;
+  }
+  .primary {
+    border: 0;
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+  .primary:hover {
+    background: color-mix(in srgb, var(--accent) 88%, black);
+  }
+  .ghost {
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+  }
+  .ghost:hover {
+    border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
+  }
+  .ghost:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .primary:active,
+  .ghost:active:not(:disabled) {
+    transform: translateY(1px) scale(0.99);
+  }
+  .primary svg,
+  .ghost svg {
+    width: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 0.3s var(--ease-out);
+  }
+  .primary:hover svg {
+    translate: 3px 0;
+  }
+  .ghost:hover:not(:disabled) svg {
+    translate: -3px 0;
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 16px;
+    background: var(--bg);
+    text-align: center;
+    transition: opacity 0.4s var(--ease-out);
+  }
+  .screen[hidden] {
+    display: none;
+  }
+  .screen p {
+    margin: 0;
+    max-width: 40ch;
+    color: var(--muted);
+  }
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid var(--line);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  .screen.error .spinner {
+    display: none;
+  }
+  .back {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  dialog {
+    width: min(92vw, 480px);
+    padding: 28px;
+    border: 0;
+    border-radius: 18px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 30px 80px -20px rgb(22 32 90 / 0.45);
+  }
+  dialog[open] {
+    animation: rise 0.35s var(--ease-out);
+  }
+  dialog::backdrop {
+    background: rgb(22 32 90 / 0.35);
+    backdrop-filter: blur(3px);
+  }
+  dialog h2 {
+    margin: 0 0 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  dialog p {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .dialog-actions {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  @keyframes slide {
+    from {
+      opacity: 0;
+      translate: var(--from, 16px) 0;
+    }
+  }
+  @keyframes pop {
+    40% {
+      scale: 1.15;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.3;
+    }
+  }
+  @keyframes pulse {
+    50% {
+      opacity: 0.75;
+    }
+  }
+  @keyframes spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  @media (min-width: 861px) and (min-height: 560px) {
+    :global(body) {
+      height: 100dvh;
+    }
+  }
+  @media (min-width: 861px) and (max-height: 760px) {
+    .qa {
+      padding: 22px 32px 18px;
+    }
+    h1 {
+      margin-bottom: 16px;
+    }
+    #answer :global(.option) {
+      min-height: 50px;
+      padding: 8px 14px;
+    }
+    .nav {
+      bottom: -18px;
+      margin: 14px 0 -18px;
+      padding: 12px 0 18px;
+    }
+    .fineprint {
+      display: none;
+    }
+    #stimulus :global(.reading) {
+      max-height: 20dvh;
+      margin-bottom: 14px;
+    }
+  }
+  @media (max-width: 1100px) {
+    .title {
+      display: none;
+    }
+  }
+  @media (max-width: 860px) {
+    .topbar {
+      padding: 12px 16px;
+    }
+    .brand-name {
+      display: none;
+    }
+    .steps {
+      padding: 0 16px 10px;
+      gap: 4px;
+    }
+    .exam {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+    .stage {
+      grid-template-columns: 64px 1fr;
+      grid-template-rows: auto;
+      justify-items: start;
+      align-items: center;
+      padding: 12px 16px;
+      text-align: left;
+    }
+    canvas {
+      width: 64px;
+    }
+    .en {
+      font-size: 0.95rem;
+    }
+    .es {
+      font-size: 0.78rem;
+    }
+    .fineprint {
+      display: none;
+    }
+    .qa {
+      padding: 22px 18px 18px;
+    }
+    .nav {
+      bottom: -18px;
+      margin: 14px 0 -18px;
+      padding: 12px 0 18px;
+    }
+    #answer :global(.options) {
+      grid-template-columns: 1fr;
+    }
+    .kbd-hint {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { api, ApiError, esc } from "../lib/api";
+  import type { CoachState } from "../lib/coach";
+
+  type Option = { id: string; text: string };
+  type Question = {
+    id: string;
+    position: number;
+    type: "multiple_choice" | "fill_blank" | "comprehension" | "vocabulary";
+    response_format: "choice" | "text";
+    skill: string;
+    level: string;
+    prompt: string;
+    options: Option[] | null;
+    stimulus: { id: string; kind: "text" | "audio"; title: string; content: string | null; audio_url: string | null } | null;
+  };
+  type Answer = { option_id: string } | { text: string };
+  type Attempt = {
+    id: string;
+    status: "in_progress" | "submitted" | "expired";
+    assessment_title: string;
+    expires_at: string | null;
+    server_time: string;
+    questions: Question[];
+    answers: Record<string, Answer>;
+  };
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+  const SKILLS: Record<string, string> = { grammar: "Grammar", vocabulary: "Vocabulary", reading: "Reading", listening: "Listening", speaking: "Speaking" };
+  const PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>';
+  const PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+
+  let attempt: Attempt;
+  let current = 0;
+  let answers: Record<string, Answer> = {};
+  const pending = new Set<string>(); // preguntas con cambios sin confirmar por el servidor
+  let events: { type: string; occurred_at: string; question_id?: string }[] = [];
+  let finished = false;
+
+  let coach: { setState(s: CoachState): void; pulse(): void } | undefined;
+  import("../lib/coach")
+    .then(({ createCoach }) => (coach = createCoach($<HTMLCanvasElement>("coach"))))
+    .catch(() => $("coach").remove());
+
+  // ---------- Coach e instrucciones bilingües ----------
+  function say(en: string, es: string) {
+    const c = $("caption");
+    if (c.querySelector(".en")!.textContent === en) return;
+    c.querySelector(".en")!.textContent = en;
+    c.querySelector(".es")!.textContent = es;
+    c.classList.remove("swap");
+    void c.offsetWidth;
+    c.classList.add("swap");
+  }
+  function instruction(q: Question) {
+    if (allAnswered() && current === attempt.questions.length - 1) return say("All done! Review and submit.", "¡Listo! Revisa y envía tus respuestas.");
+    if (q.stimulus?.kind === "audio") return say("Listen to the audio, then answer.", "Escucha el audio y luego responde.");
+    if (q.stimulus?.kind === "text") return say("Read the text, then answer.", "Lee el texto y luego responde.");
+    if (q.response_format === "text") return say("Type the missing words.", "Escribe lo que falta en el espacio.");
+    if (q.type === "vocabulary") return say("Pick the best word.", "Elige la palabra más adecuada.");
+    say("Choose the correct option.", "Elige la opción correcta.");
+  }
+
+  // ---------- Persistencia local (sobrevive a recargas y cortes de red) ----------
+  const storeKey = () => `ga:attempt:${attempt.id}`;
+  function persistLocal() {
+    try {
+      localStorage.setItem(storeKey(), JSON.stringify({ answers, pending: [...pending] }));
+    } catch {}
+  }
+  function restoreLocal() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storeKey()) ?? "null");
+      if (!saved) return;
+      for (const id of saved.pending ?? []) {
+        if (saved.answers?.[id]) {
+          answers[id] = saved.answers[id];
+          pending.add(id);
+        }
+      }
+    } catch {}
+  }
+
+  // ---------- Autoguardado ----------
+  const save = $("save");
+  function setSave(state: "saved" | "saving" | "offline") {
+    save.dataset.state = state;
+    save.textContent = state === "saved" ? "Guardado" : state === "saving" ? "Guardando…" : "Sin conexión · guardado en este equipo";
+  }
+  let flushing = false;
+  async function flush() {
+    if (flushing || finished || !pending.size) return;
+    flushing = true;
+    setSave("saving");
+    try {
+      for (const id of [...pending]) {
+        const sent = answers[id];
+        await api(`/attempts/${attempt.id}/answers/${id}`, { method: "PUT", body: JSON.stringify(sent) });
+        if (answers[id] === sent) pending.delete(id); // si cambió mientras viajaba, se reenvía
+      }
+      persistLocal();
+      setSave("saved");
+    } catch (e) {
+      if (e instanceof ApiError && e.code === "attempt_expired") return timeUp();
+      if (e instanceof ApiError && e.code === "attempt_closed") return goToResult();
+      setSave("offline");
+    } finally {
+      flushing = false;
+    }
+    if (pending.size) setTimeout(flush, 400);
+  }
+  let debounce: number | undefined;
+  function setAnswer(q: Question, answer: Answer | null, delay = 0) {
+    // ponytail: borrar un texto ya sincronizado no lo borra en el servidor; enviar {text: ""} si importa.
+    if (answer) answers[q.id] = answer;
+    else delete answers[q.id];
+    if (!answer) return renderSteps();
+    pending.add(q.id);
+    persistLocal();
+    renderSteps();
+    clearTimeout(debounce);
+    debounce = window.setTimeout(flush, delay);
+  }
+  addEventListener("online", flush);
+  setInterval(flush, 8000);
+
+  // ---------- Eventos de integridad (se informan al profesor, no bloquean) ----------
+  function track(type: string) {
+    if (finished) return;
+    events.push({ type, occurred_at: new Date().toISOString(), question_id: attempt?.questions[current]?.id });
+  }
+  function sendEvents(keepalive = false) {
+    if (!events.length || !attempt) return;
+    const batch = events.splice(0, 100);
+    fetch(`/api/v1/attempts/${attempt.id}/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ events: batch }),
+      keepalive,
+    }).catch(() => events.unshift(...batch));
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      track("tab_hidden");
+      sendEvents(true);
+      flush();
+    }
+  });
+  addEventListener("blur", () => track("window_blur"));
+  document.addEventListener("paste", () => track("paste"));
+  document.addEventListener("copy", () => track("copy"));
+  setInterval(sendEvents, 10000);
+
+  // ---------- Temporizador (contra la hora del servidor, no la del equipo) ----------
+  const timer = $("timer");
+  let clockOffset = 0;
+  const warned = new Set<number>();
+  function tick() {
+    if (!attempt.expires_at || finished) return;
+    const left = Math.max(0, Date.parse(attempt.expires_at) - (Date.now() + clockOffset));
+    const m = Math.floor(left / 60000);
+    const s = Math.floor((left % 60000) / 1000);
+    timer.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    timer.classList.toggle("low", left < 120000);
+    for (const mins of [5, 1]) {
+      if (left < mins * 60000 && !warned.has(mins)) {
+        warned.add(mins);
+        $("announcer").textContent = `Queda${mins > 1 ? "n" : ""} ${mins} minuto${mins > 1 ? "s" : ""}.`;
+      }
+    }
+    if (left === 0) timeUp();
+  }
+
+  // ---------- Render ----------
+  const allAnswered = () => attempt.questions.every((q) => answers[q.id]);
+  const answeredCount = () => attempt.questions.filter((q) => answers[q.id]).length;
+
+  function renderSteps() {
+    const nav = $("steps");
+    nav.style.setProperty("--n", String(attempt.questions.length));
+    nav.innerHTML = attempt.questions
+      .map((q, i) => {
+        const done = !!answers[q.id];
+        return `<button type="button" data-i="${i}" class="${done ? "answered" : ""}" ${i === current ? 'aria-current="step"' : ""}
+          aria-label="Pregunta ${i + 1}${done ? ", respondida" : ""}">${i + 1}</button>`;
+      })
+      .join("");
+  }
+  $("steps").addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-i]");
+    if (b) go(Number(b.dataset.i));
+  });
+
+  function renderStimulus(q: Question) {
+    const box = $("stimulus");
+    const s = q.stimulus;
+    if (!s) return (box.innerHTML = "");
+    if (s.kind === "text") {
+      box.innerHTML = `<article class="reading" lang="en" tabindex="0" aria-label="Texto: ${esc(s.title)}"><h2>${esc(s.title)}</h2><p>${esc(s.content ?? "")}</p></article>`;
+      return;
+    }
+    box.innerHTML = `<div class="audio"><h2>${esc(s.title)}</h2>
+      <div class="player">
+        <button type="button" class="play" aria-label="Reproducir audio">${PLAY}</button>
+        <div class="track"><span></span></div>
+        <span class="time">0:00</span>
+      </div>
+      <audio preload="auto" src="${esc(s.audio_url ?? "")}"></audio></div>`;
+    const audio = box.querySelector("audio")!;
+    const btn = box.querySelector<HTMLButtonElement>(".play")!;
+    const bar = box.querySelector<HTMLElement>(".track span")!;
+    const time = box.querySelector<HTMLElement>(".time")!;
+    const fmt = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+    btn.addEventListener("click", () => (audio.paused ? audio.play() : audio.pause()));
+    audio.addEventListener("play", () => {
+      btn.innerHTML = PAUSE;
+      btn.setAttribute("aria-label", "Pausar audio");
+      coach?.setState("loading"); // Glo "habla" mientras suena el audio
+    });
+    audio.addEventListener("pause", () => {
+      btn.innerHTML = PLAY;
+      btn.setAttribute("aria-label", "Reproducir audio");
+      coach?.setState("idle");
+    });
+    audio.addEventListener("timeupdate", () => {
+      bar.style.width = `${(audio.currentTime / (audio.duration || 1)) * 100}%`;
+      time.textContent = fmt(audio.duration ? audio.duration - audio.currentTime : 0);
+    });
+    audio.addEventListener("loadedmetadata", () => (time.textContent = fmt(audio.duration)));
+    audio.addEventListener("error", () => {
+      box.querySelector(".player")!.innerHTML = '<p class="time">No pudimos cargar el audio. Revisa tu conexión y recarga la página.</p>';
+    });
+  }
+
+  function renderAnswer(q: Question) {
+    const prompt = $("prompt");
+    const box = $("answer");
+    const saved = answers[q.id];
+
+    if (q.response_format === "text") {
+      // Los "___" consecutivos se convierten en un único hueco dentro de la frase.
+      const match = q.prompt.match(/_{2,}(?:\s+_{2,})*/);
+      const words = match ? match[0].split(/\s+/).length : 1;
+      const input = `<input class="blank" id="blank" type="text" lang="en" autocomplete="off" autocapitalize="off"
+        spellcheck="false" maxlength="200" aria-label="Respuesta" style="--w:${Math.max(8, words * 8)}ch">`;
+      prompt.innerHTML = match
+        ? esc(q.prompt.slice(0, match.index)) + input + esc(q.prompt.slice(match.index! + match[0].length))
+        : esc(q.prompt) + " " + input;
+      box.innerHTML = '<p class="hint">Escribe tu respuesta en el espacio. No importan mayúsculas ni espacios extra.</p>';
+      const el = $<HTMLInputElement>("blank");
+      el.value = saved && "text" in saved ? saved.text : "";
+      el.addEventListener("input", () => {
+        coach?.setState("email");
+        coach?.pulse();
+        const v = el.value.trim();
+        setAnswer(q, v ? { text: v } : null, 700);
+      });
+      el.addEventListener("blur", () => coach?.setState("idle"));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          next();
+        }
+      });
+      $("kbd-hint").innerHTML = "<kbd>Enter</kbd> para continuar";
+      return;
+    }
+
+    prompt.textContent = q.prompt;
+    const selected = saved && "option_id" in saved ? saved.option_id : null;
+    box.innerHTML = `<fieldset class="options"><legend class="sr-only">Opciones</legend>${(q.options ?? [])
+      .map(
+        (o, i) => `<label class="option">
+          <input type="radio" name="opt" value="${esc(o.id)}" ${o.id === selected ? "checked" : ""}>
+          <span class="key" aria-hidden="true">${String.fromCharCode(65 + i)}</span>
+          <span lang="en">${esc(o.text)}</span></label>`,
+      )
+      .join("")}</fieldset>`;
+    box.querySelectorAll<HTMLInputElement>("input").forEach((r) =>
+      r.addEventListener("change", () => {
+        coach?.pulse();
+        setAnswer(q, { option_id: r.value });
+      }),
+    );
+    $("kbd-hint").innerHTML = "<kbd>A</kbd>–<kbd>D</kbd> para elegir · <kbd>Enter</kbd> para continuar";
+  }
+
+  function render(direction = 1) {
+    const q = attempt.questions[current];
+    const total = attempt.questions.length;
+    $("meta").innerHTML = `Pregunta ${current + 1} de ${total}
+      <span class="chip">${esc(SKILLS[q.skill] ?? q.skill)}</span>
+      <span class="chip level">${esc(q.level.replace("_", "-"))}</span>`;
+    renderStimulus(q);
+    renderAnswer(q);
+    renderSteps();
+    instruction(q);
+
+    const last = current === total - 1;
+    $<HTMLButtonElement>("prev").disabled = current === 0;
+    $("next").querySelector(".label")!.textContent = last ? "Revisar y enviar" : "Siguiente";
+
+    const form = $("answer-form");
+    form.style.setProperty("--from", `${direction * 16}px`);
+    form.classList.remove("enter");
+    void form.offsetWidth;
+    form.classList.add("enter");
+    $("prompt").focus({ preventScroll: true });
+  }
+
+  function go(i: number) {
+    if (i < 0 || i >= attempt.questions.length || i === current) return;
+    const dir = i > current ? 1 : -1;
+    current = i;
+    flush();
+    render(dir);
+  }
+  function next() {
+    if (current === attempt.questions.length - 1) return openConfirm();
+    go(current + 1);
+  }
+  $("prev").addEventListener("click", () => go(current - 1));
+  $("next").addEventListener("click", next);
+
+  // Atajos: A–D / 1–4 eligen opción, Enter avanza, flechas navegan (fuera de campos de texto).
+  document.addEventListener("keydown", (e) => {
+    if (!attempt || finished || $<HTMLDialogElement>("confirm").open) return;
+    const typing = (e.target as HTMLElement).matches("input[type=text], textarea");
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    const radios = [...document.querySelectorAll<HTMLInputElement>('#answer input[type="radio"]')];
+    const idx = "abcd".indexOf(e.key.toLowerCase()) >= 0 ? "abcd".indexOf(e.key.toLowerCase()) : "1234".indexOf(e.key);
+    if (idx >= 0 && radios[idx]) {
+      radios[idx].checked = true;
+      radios[idx].dispatchEvent(new Event("change"));
+      radios[idx].focus();
+    } else if (e.key === "Enter" && !(e.target as HTMLElement).matches("button, a")) {
+      e.preventDefault();
+      next();
+    } else if (e.key === "ArrowRight" && !(e.target as HTMLElement).matches("input")) go(current + 1);
+    else if (e.key === "ArrowLeft" && !(e.target as HTMLElement).matches("input")) go(current - 1);
+  });
+
+  // ---------- Envío ----------
+  const dialog = $<HTMLDialogElement>("confirm");
+  function openConfirm(error?: string) {
+    const missing = attempt.questions.length - answeredCount();
+    $("confirm-title").textContent = error ? "No pudimos enviar tus respuestas" : "¿Enviar la evaluación?";
+    $("confirm-ok").textContent = error ? "Intentar de nuevo" : "Enviar respuestas";
+    $("confirm-text").textContent = error
+      ? `${error} Tus respuestas siguen guardadas en este equipo.`
+      : missing
+      ? `Te falta${missing > 1 ? "n" : ""} ${missing} pregunta${missing > 1 ? "s" : ""} por responder. Las preguntas sin respuesta cuentan como incorrectas.`
+      : "Respondiste todas las preguntas. Una vez enviadas no podrás cambiarlas.";
+    dialog.showModal();
+  }
+  $("confirm-cancel").addEventListener("click", () => dialog.close());
+  $("confirm-ok").addEventListener("click", () => {
+    dialog.close();
+    submit();
+  });
+
+  function showScreen(text: string, error = false) {
+    const screen = $("screen");
+    screen.hidden = false;
+    screen.classList.toggle("error", error);
+    $("screen-text").textContent = text;
+    $("screen-back").hidden = !error;
+  }
+  function goToResult() {
+    finished = true;
+    try {
+      localStorage.removeItem(storeKey());
+    } catch {}
+    location.replace(`/results?id=${attempt.id}`);
+  }
+
+  async function submit() {
+    if (finished) return;
+    finished = true;
+    coach?.setState("loading");
+    showScreen("Calculando tu resultado…");
+    sendEvents(true);
+    try {
+      // Se envían todas las respuestas: cubre las que no alcanzaron a sincronizarse offline.
+      await api(`/attempts/${attempt.id}/submit`, { method: "POST", body: JSON.stringify({ answers }) });
+      goToResult();
+    } catch (e) {
+      finished = false;
+      $("screen").hidden = true;
+      setSave("offline");
+      openConfirm((e as Error).message);
+    }
+  }
+  function timeUp() {
+    if (finished) return;
+    showScreen("Se acabó el tiempo. Guardando tus respuestas…");
+    submit();
+  }
+
+  // ---------- Inicio ----------
+  async function start() {
+    const params = new URLSearchParams(location.search);
+    const slug = params.get("slug");
+    if (!slug) return showScreen("No encontramos la evaluación.", true);
+    try {
+      attempt = await api<Attempt>(`/assessments/${encodeURIComponent(slug)}/attempts`, { method: "POST" });
+    } catch (e) {
+      return showScreen((e as Error).message, true);
+    }
+    if (attempt.status !== "in_progress") return goToResult();
+
+    clockOffset = Date.parse(attempt.server_time) - Date.now();
+    answers = { ...attempt.answers };
+    const resumed = Object.keys(answers).length > 0;
+    restoreLocal();
+    if (resumed) track("resumed");
+
+    $("title").textContent = attempt.assessment_title;
+    // Reanuda en la primera pregunta sin responder.
+    const firstOpen = attempt.questions.findIndex((q) => !answers[q.id]);
+    current = firstOpen < 0 ? attempt.questions.length - 1 : firstOpen;
+
+    $("exam").hidden = false;
+    $("screen").hidden = true;
+    render();
+    tick();
+    setInterval(tick, 1000);
+    if (pending.size) flush();
+    if (resumed) say("Welcome back. Your answers were saved.", "Qué bueno verte de nuevo. Tus respuestas se guardaron.");
+  }
+  start();
+</script>

@@ -1,0 +1,623 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Iniciar sesión · Global AI">
+  <main class="login">
+    <section class="stage" aria-hidden="true">
+      <div class="brand"><span class="dot"></span>Global AI</div>
+      <canvas id="coach"></canvas>
+      <div class="caption" id="bubble">
+        <span class="tag"><span class="live"></span>English coach</span>
+        <p class="en" lang="en">Welcome. Ready to find your level?</p>
+        <p class="es">Te damos la bienvenida. ¿Descubrimos tu nivel?</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <p class="eyebrow">Evaluación de nivel · MCER Pre-A1 a C1</p>
+        <h1>Descubre tu nivel de inglés</h1>
+        <p class="lead">10 preguntas, unos 10 minutos y resultados al instante por habilidad.</p>
+      </header>
+
+      <form id="login" novalidate>
+        <div class="field">
+          <label for="email">Correo electrónico</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="username"
+            placeholder="nombre@correo.com"
+            aria-describedby="email-error"
+            required
+          />
+          <p class="field-error" id="email-error"></p>
+        </div>
+
+        <div class="field">
+          <label for="password">Contraseña</label>
+          <div class="password">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              aria-describedby="password-error caps"
+              required
+            />
+            <button type="button" class="toggle" id="toggle" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"
+                ><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="slash" d="M4 4l16 16"></path></svg
+              >
+              <span class="sr-only">Mostrar contraseña</span>
+            </button>
+          </div>
+          <p class="hint" id="caps" hidden>Bloq Mayús está activado</p>
+          <p class="field-error" id="password-error"></p>
+        </div>
+
+        <p class="form-error" id="form-error" role="alert"></p>
+
+        <button type="submit" class="primary" id="submit">
+          <span class="label">Entrar</span>
+          <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </button>
+
+        <div class="demo-row">
+          <span>¿Solo quieres explorar?</span>
+          <button type="button" class="link" id="demo">Usar la cuenta demo</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .login {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 24px;
+    min-height: 100dvh;
+    padding: 20px;
+  }
+
+  /* Escenario: azul tinta profundo con cuadrícula de puntos muy tenue. */
+  .stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    overflow: hidden;
+    color: var(--bg);
+    background:
+      radial-gradient(circle, rgb(246 241 231 / 0.12) 1px, transparent 1.4px) 0 0 / 24px 24px,
+      var(--stage);
+  }
+  .brand {
+    position: absolute;
+    top: 28px;
+    left: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  canvas {
+    /* Limitado también por el alto: en portátiles bajos no debe provocar scroll. */
+    width: min(70%, 480px, 52dvh);
+    aspect-ratio: 1;
+    animation: rise 1s var(--ease-out) both;
+  }
+  .caption {
+    position: absolute;
+    left: 32px;
+    right: 32px;
+    bottom: 32px;
+    animation: rise 1s 0.2s var(--ease-out) both;
+  }
+  .caption.swap p {
+    animation: rise 0.45s var(--ease-out);
+  }
+  .caption p {
+    margin: 0;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+  .live {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: live 2.4s ease-in-out infinite;
+  }
+  .en {
+    font-size: 1.35rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .es {
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 440px;
+    margin-inline: auto;
+    padding-block: 24px;
+    animation: rise 0.8s 0.1s var(--ease-out) both;
+  }
+  .eyebrow {
+    margin: 0 0 12px;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    margin: 0 0 10px;
+  }
+  .lead {
+    color: var(--muted);
+    margin: 0 0 36px;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+  label {
+    display: block;
+    font-weight: 500;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+  }
+  input {
+    width: 100%;
+    height: 52px;
+    padding: 0 16px;
+    font: inherit;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    transition:
+      border-color 0.2s,
+      box-shadow 0.25s var(--ease-out);
+  }
+  input::placeholder {
+    color: color-mix(in srgb, var(--muted) 65%, transparent);
+  }
+  input:hover {
+    border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  input[aria-invalid="true"] {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px var(--danger-soft);
+  }
+
+  .password {
+    position: relative;
+  }
+  .password input {
+    padding-right: 56px;
+  }
+  .toggle {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      color 0.2s;
+  }
+  .toggle:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .toggle svg {
+    width: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  /* La barra se "dibuja" al ocultar: micro animación con stroke-dashoffset. */
+  .slash {
+    stroke-dasharray: 23;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.3s var(--ease-out);
+  }
+  .toggle[aria-pressed="true"] .slash {
+    stroke-dashoffset: 23;
+  }
+
+  .hint,
+  .field-error {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+  }
+  .hint {
+    color: var(--muted);
+  }
+  .field-error:empty,
+  .form-error:empty {
+    display: none;
+  }
+  .field-error,
+  .form-error {
+    color: var(--danger);
+    animation: rise 0.3s var(--ease-out);
+  }
+  .form-error {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: var(--danger-soft);
+    font-size: 0.85rem;
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+  .primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 52px;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 500;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.15),
+      0 10px 24px -12px color-mix(in srgb, var(--accent) 70%, transparent);
+    transition:
+      background 0.2s,
+      transform 0.15s var(--ease-out),
+      box-shadow 0.25s var(--ease-out);
+  }
+  .primary:hover {
+    background: color-mix(in srgb, var(--accent) 88%, black);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.15),
+      0 14px 28px -12px color-mix(in srgb, var(--accent) 80%, transparent);
+  }
+  .primary:active {
+    transform: translateY(1px) scale(0.99);
+  }
+  .arrow {
+    width: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 0.3s var(--ease-out);
+  }
+  .primary:hover .arrow {
+    translate: 3px 0;
+  }
+  .primary[aria-busy="true"] {
+    cursor: progress;
+  }
+  .primary[aria-busy="true"] .arrow {
+    display: none;
+  }
+  .primary[aria-busy="true"] .label::after {
+    content: "";
+    display: inline-block;
+    width: 1.2em;
+    text-align: left;
+    animation: dots 1s steps(4) infinite;
+  }
+
+  .demo-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: text-underline-offset 0.2s var(--ease-out);
+  }
+  .link:hover {
+    text-underline-offset: 6px;
+  }
+
+  .shake {
+    animation: shake 0.4s var(--ease-out);
+  }
+
+  @keyframes live {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @keyframes shake {
+    25%,
+    75% {
+      translate: -5px 0;
+    }
+    50% {
+      translate: 5px 0;
+    }
+  }
+  @keyframes dots {
+    0% {
+      content: "";
+    }
+    25% {
+      content: ".";
+    }
+    50% {
+      content: "..";
+    }
+    75% {
+      content: "...";
+    }
+  }
+
+  /* Portátiles con poca altura: compacta espacios verticales sin reducir legibilidad. */
+  @media (min-width: 861px) and (max-height: 720px) {
+    .login {
+      padding: 12px;
+    }
+    .lead {
+      margin-bottom: 24px;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .brand {
+      top: 20px;
+    }
+    .caption {
+      bottom: 20px;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .login {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 16px;
+    }
+    .stage {
+      grid-template-columns: 96px 1fr;
+      gap: 4px 16px;
+      padding: 20px;
+      place-items: center start;
+    }
+    .brand {
+      position: static;
+      grid-column: 1 / -1;
+      margin-bottom: 8px;
+    }
+    canvas {
+      width: 96px;
+    }
+    .caption {
+      position: static;
+    }
+    .tag {
+      margin-bottom: 4px;
+    }
+    .en {
+      font-size: 1rem;
+    }
+    .es {
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+
+<script>
+  import type { CoachState } from "../lib/coach";
+
+  const API = "/api/v1";
+  const DEMO = { email: "estudiante@globalai.demo", password: "Demo1234!" };
+  const LINES: Record<CoachState, [string, string]> = {
+    idle: ["Welcome. Ready to find your level?", "Te damos la bienvenida. ¿Descubrimos tu nivel?"],
+    email: ["Nice to meet you.", "Un gusto conocerte."],
+    password: ["Don't worry, I won't look.", "No te preocupes, no voy a mirar."],
+    peek: ["Your password is visible now.", "Tu contraseña ahora está visible."],
+    loading: ["Checking your details…", "Revisando tus datos…"],
+    error: ["That didn't work. Let's try again.", "No funcionó. Intentémoslo de nuevo."],
+    success: ["You're in. Let's begin.", "Listo. Empecemos."],
+  };
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const form = $<HTMLFormElement>("login");
+  const email = $<HTMLInputElement>("email");
+  const password = $<HTMLInputElement>("password");
+  const toggle = $<HTMLButtonElement>("toggle");
+  const submit = $<HTMLButtonElement>("submit");
+  const demo = $<HTMLButtonElement>("demo");
+  const formError = $("form-error");
+  const bubble = $("bubble");
+
+  // Three.js se carga después: el formulario funciona desde el primer instante.
+  let coach: { setState(s: CoachState): void; pulse(): void; gaze(x: number): void; say(s: number): void } | undefined;
+  import("../lib/coach")
+    .then(({ createCoach }) => (coach = createCoach($<HTMLCanvasElement>("coach"))))
+    .catch(() => $("coach").remove()); // sin WebGL: queda solo la burbuja
+
+  let current: CoachState = "idle";
+  function mood(s: CoachState) {
+    coach?.setState(s);
+    if (s === current) return;
+    current = s;
+    const [en, es] = LINES[s];
+    bubble.querySelector(".en")!.textContent = en;
+    bubble.querySelector(".es")!.textContent = es;
+    bubble.classList.remove("swap");
+    void bubble.offsetWidth; // reinicia la animación
+    bubble.classList.add("swap");
+    coach?.say(0.9 + en.length * 0.03); // "dice" la frase en inglés
+  }
+
+  const fieldMood = () =>
+    document.activeElement === email ? "email"
+    : document.activeElement === password || document.activeElement === toggle ? (password.type === "text" ? "peek" : "password")
+    : "idle";
+
+  email.addEventListener("focus", () => mood("email"));
+  password.addEventListener("focus", () => mood(fieldMood()));
+  for (const input of [email, password]) {
+    input.addEventListener("blur", () => setTimeout(() => current !== "loading" && mood(fieldMood()), 0));
+    input.addEventListener("input", () => {
+      coach?.pulse();
+      setFieldError(input, "");
+    });
+  }
+
+  // Glo sigue con la mirada el cursor mientras escribes el correo (~32 caracteres llenan el campo).
+  const followCaret = () => coach?.gaze((email.selectionStart ?? email.value.length) / 32);
+  for (const ev of ["input", "keyup", "click", "focus"]) email.addEventListener(ev, followCaret);
+
+  toggle.addEventListener("click", () => {
+    const show = password.type === "password";
+    password.type = show ? "text" : "password";
+    toggle.setAttribute("aria-pressed", String(show));
+    toggle.querySelector(".sr-only")!.textContent = show ? "Ocultar contraseña" : "Mostrar contraseña";
+    mood(show ? "peek" : "password");
+  });
+
+  const caps = $("caps");
+  const checkCaps = (e: KeyboardEvent) => (caps.hidden = !e.getModifierState?.("CapsLock"));
+  password.addEventListener("keydown", checkCaps);
+  password.addEventListener("keyup", checkCaps);
+
+  function setFieldError(input: HTMLInputElement, msg: string) {
+    $(`${input.id}-error`).textContent = msg;
+    if (msg) input.setAttribute("aria-invalid", "true");
+    else input.removeAttribute("aria-invalid");
+  }
+
+  function validate() {
+    const e = email.value.trim();
+    const emailMsg = !e ? "Escribe tu correo electrónico."
+      : !email.checkValidity() ? "Revisa el correo, debe verse así: nombre@correo.com"
+      : "";
+    const passMsg = password.value ? "" : "Escribe tu contraseña.";
+    setFieldError(email, emailMsg);
+    setFieldError(password, passMsg);
+    (emailMsg ? email : passMsg ? password : null)?.focus();
+    return !emailMsg && !passMsg;
+  }
+
+  function fail(msg: string) {
+    formError.textContent = msg;
+    form.classList.remove("shake");
+    void form.offsetWidth;
+    form.classList.add("shake");
+    mood("error");
+  }
+
+  let busy = false;
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (busy) return;
+    formError.textContent = "";
+    if (!validate()) return fail(""); // los errores ya están junto a cada campo
+
+    busy = true;
+    submit.setAttribute("aria-busy", "true");
+    submit.querySelector(".label")!.textContent = "Entrando";
+    mood("loading");
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.value.trim(), password: password.value }),
+      });
+      if (res.ok) {
+        submit.removeAttribute("aria-busy");
+        submit.querySelector(".label")!.textContent = "¡Listo!";
+        mood("success");
+        setTimeout(() => location.assign("/dashboard"), 900);
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      fail(body?.error?.message ?? "Algo salió mal. Inténtalo de nuevo.");
+    } catch {
+      fail("No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.");
+    }
+    busy = false;
+    submit.removeAttribute("aria-busy");
+    submit.querySelector(".label")!.textContent = "Entrar";
+  });
+
+  // Cuenta demo: se "escribe" sola para que el coach reaccione, y entra.
+  demo.addEventListener("click", async () => {
+    if (busy) return;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    for (const [input, value] of [[email, DEMO.email], [password, DEMO.password]] as const) {
+      input.focus();
+      input.value = "";
+      for (const ch of value) {
+        input.value += ch;
+        input.dispatchEvent(new Event("input"));
+        if (!reduced) await new Promise((r) => setTimeout(r, 28));
+      }
+    }
+    form.requestSubmit();
+  });
+
+  // Si ya hay sesión, no tiene sentido mostrar el login.
+  fetch(`${API}/auth/me`).then((r) => r.ok && location.replace("/dashboard"), () => {});
+</script>

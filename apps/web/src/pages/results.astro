@@ -1,0 +1,936 @@
+---
+import Base from "../layouts/Base.astro";
+
+// ponytail: misma escala que el dashboard; exponer GET /levels si cambia a menudo.
+const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
+---
+
+<Base title="Resultados · Global AI">
+  <header class="topbar">
+    <a class="brand" href="/dashboard"><span class="dot"></span>Global AI</a>
+    <a class="back" href="/dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+      Volver al inicio
+    </a>
+  </header>
+
+  <main class="results" id="results" hidden>
+    <section class="stage" aria-labelledby="score-title">
+      <p class="eyebrow" id="assessment-title"></p>
+
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="track" cx="60" cy="60" r="56"></circle>
+          <circle class="fill" id="ring-fill" cx="60" cy="60" r="56" pathLength="100"></circle>
+        </svg>
+        <canvas id="coach" aria-hidden="true"></canvas>
+      </div>
+
+      <h1 id="score-title"><span id="score">0</span><small>%</small></h1>
+      <p class="score-sub" id="score-sub"></p>
+
+      <div class="level">
+        <p class="level-label">Nivel sugerido</p>
+        <p class="level-code"><strong id="level-code"></strong> <span id="level-name"></span></p>
+        <ol class="ruler" id="ruler" aria-hidden="true">
+          {LEVELS.map((code) => <li data-level={code}>{code.replace("PRE_", "Pre-")}</li>)}
+        </ol>
+        <p class="level-desc" id="level-desc"></p>
+      </div>
+
+      <dl class="stats">
+        <div><dt>Correctas</dt><dd id="st-correct"></dd></div>
+        <div><dt>Incorrectas</dt><dd id="st-incorrect"></dd></div>
+        <div><dt>Sin responder</dt><dd id="st-empty"></dd></div>
+        <div><dt>Tiempo</dt><dd id="st-time"></dd></div>
+      </dl>
+    </section>
+
+    <section class="detail">
+      <article class="feedback" aria-labelledby="fb-title" aria-busy="true" id="feedback">
+        <header>
+          <h2 id="fb-title">Tu coach dice</h2>
+          <button type="button" class="listen" id="listen" hidden>
+            <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"></path></svg>
+            <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+            <span>Escuchar</span>
+          </button>
+        </header>
+        <div class="fb-body" id="fb-body">
+          <p class="writing">Glo está escribiendo tu feedback<span class="dots"></span></p>
+          <div class="skeleton" style="width: 95%"></div>
+          <div class="skeleton" style="width: 88%"></div>
+          <div class="skeleton" style="width: 60%"></div>
+        </div>
+      </article>
+
+      <div class="block">
+        <h2>Por habilidad</h2>
+        <ul class="skills" id="skills"></ul>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <h2>Revisión de respuestas</h2>
+          <p class="legend" id="review-legend"></p>
+        </div>
+        <ol class="review" id="review"></ol>
+      </div>
+    </section>
+  </main>
+
+  <div class="screen" id="screen" role="status">
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="screen-text">Cargando tu resultado…</p>
+    <a href="/dashboard" class="link" id="screen-back" hidden>Volver al inicio</a>
+  </div>
+</Base>
+
+<style>
+  :global(body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
+  }
+  .back:hover {
+    border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
+    background: var(--surface);
+  }
+  .back svg {
+    width: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 0.3s var(--ease-out);
+  }
+  .back:hover svg {
+    translate: -3px 0;
+  }
+
+  .results {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(320px, 0.8fr) 1.4fr;
+    gap: 20px;
+    padding: 0 20px 20px;
+    min-height: 0;
+  }
+  .results[hidden] {
+    display: none;
+  }
+
+  /* Escenario del resultado */
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: safe center;
+    gap: 6px;
+    padding: 26px 28px;
+    border-radius: 20px;
+    color: var(--bg);
+    background:
+      radial-gradient(circle, rgb(246 241 231 / 0.12) 1px, transparent 1.4px) 0 0 / 24px 24px,
+      var(--stage);
+    text-align: center;
+    overflow: auto;
+    animation: rise 0.8s var(--ease-out) both;
+  }
+  .eyebrow {
+    margin: 0 0 8px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+  .ring-wrap {
+    position: relative;
+    width: min(190px, 26dvh);
+    aspect-ratio: 1;
+    flex: none;
+  }
+  .ring {
+    position: absolute;
+    inset: 0;
+    rotate: -90deg;
+  }
+  .ring circle {
+    fill: none;
+    stroke-width: 5;
+  }
+  .track {
+    stroke: rgb(246 241 231 / 0.14);
+  }
+  .fill {
+    stroke: var(--bg);
+    stroke-linecap: round;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    transition: stroke-dashoffset 1.6s var(--ease-out);
+  }
+  canvas {
+    position: absolute;
+    inset: 12%;
+    width: 76%;
+    height: 76%;
+  }
+  h1 {
+    margin: 4px 0 0;
+    font-size: clamp(2.6rem, 6dvh, 3.4rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  h1 small {
+    font-size: 0.5em;
+    opacity: 0.7;
+  }
+  .score-sub {
+    margin: 0 0 14px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  .level {
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: rgb(246 241 231 / 0.07);
+    border: 1px solid rgb(246 241 231 / 0.14);
+    text-align: left;
+  }
+  .level p {
+    margin: 0;
+  }
+  .level-label {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+  .level-code {
+    margin: 2px 0 12px !important;
+    font-size: 1.05rem;
+  }
+  .level-code strong {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-right: 4px;
+  }
+  .ruler {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
+  }
+  .ruler li {
+    white-space: nowrap;
+    position: relative;
+    padding-top: 10px;
+    font-size: 0.68rem;
+    text-align: center;
+    opacity: 0.55;
+  }
+  .ruler li::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    border-radius: 3px;
+    background: rgb(246 241 231 / 0.18);
+  }
+  .ruler :global(li.reached) {
+    opacity: 0.8;
+  }
+  .ruler :global(li.reached::before) {
+    background: rgb(246 241 231 / 0.45);
+  }
+  .ruler :global(li.current) {
+    opacity: 1;
+    font-weight: 600;
+  }
+  .ruler :global(li.current::before) {
+    background: var(--bg);
+    animation: grow 0.7s 0.6s var(--ease-out) both;
+  }
+  .level-desc {
+    font-size: 0.8rem;
+    opacity: 0.75;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin: 10px 0 0;
+  }
+  .stats div {
+    padding: 8px 6px;
+    border-radius: 10px;
+    background: rgb(246 241 231 / 0.07);
+  }
+  dt {
+    font-size: 0.68rem;
+    opacity: 0.7;
+  }
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Detalle */
+  .detail {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-height: 0;
+    padding: 26px 28px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    overflow: auto;
+    animation: rise 0.8s 0.1s var(--ease-out) both;
+  }
+  h2 {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .feedback {
+    padding: 20px 22px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+  }
+  .feedback header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .feedback h2 {
+    color: var(--accent);
+  }
+  .listen {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px 0 10px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      transform 0.15s var(--ease-out),
+      background 0.2s;
+  }
+  .listen:hover {
+    background: color-mix(in srgb, var(--accent) 88%, black);
+  }
+  .listen:active {
+    transform: scale(0.97);
+  }
+  .listen svg {
+    width: 16px;
+    fill: currentColor;
+  }
+  .listen .i-pause,
+  .listen[aria-pressed="true"] .i-play {
+    display: none;
+  }
+  .listen[aria-pressed="true"] .i-pause {
+    display: block;
+  }
+  .listen[aria-busy="true"] {
+    opacity: 0.7;
+    cursor: progress;
+  }
+  .fb-body :global(p) {
+    margin: 0 0 10px;
+    line-height: 1.65;
+    font-size: 0.95rem;
+  }
+  .fb-body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .writing {
+    color: var(--accent);
+    font-size: 0.85rem !important;
+  }
+  .dots::after {
+    content: "";
+    animation: dots 1s steps(4) infinite;
+  }
+  .fb-body .skeleton {
+    height: 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.4) 30%, rgb(255 255 255 / 0.85) 50%, rgb(255 255 255 / 0.4) 70%) 0 0 / 300% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+  .fb-body :global(.caret) {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: var(--accent);
+    animation: blink 0.8s steps(2) infinite;
+  }
+
+  .block h2,
+  .block-head {
+    margin-bottom: 12px;
+  }
+  .block-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .block-head h2 {
+    margin: 0;
+  }
+  .legend {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .skills {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .skills :global(li) {
+    display: grid;
+    grid-template-columns: 90px 1fr 40px 48px;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+  }
+  .skills :global(.bar) {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .skills :global(.bar span) {
+    display: block;
+    height: 100%;
+    width: var(--pct);
+    border-radius: inherit;
+    background: var(--accent);
+    transform-origin: left;
+    animation: grow 0.9s var(--delay, 0s) var(--ease-out) both;
+  }
+  .skills :global(.frac) {
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .skills :global(.pct) {
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Revisión: <details> nativo = accesible y sin JS para abrir/cerrar. */
+  .review {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .review :global(details) {
+    border-radius: 12px;
+    background: var(--bg);
+    transition: background 0.2s;
+  }
+  .review :global(details[open]) {
+    background: color-mix(in srgb, var(--bg) 60%, var(--surface));
+    box-shadow: inset 0 0 0 1.5px var(--line);
+  }
+  .review :global(summary) {
+    display: grid;
+    grid-template-columns: 26px 1fr auto 16px;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.88rem;
+  }
+  .review :global(summary::-webkit-details-marker) {
+    display: none;
+  }
+  .review :global(.mark) {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .review :global(.ok .mark) {
+    background: #dcefe4;
+    color: #1f7a4d;
+  }
+  .review :global(.ko .mark) {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+  .review :global(.q) {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .review :global(.tag) {
+    text-transform: capitalize;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .review :global(.chev) {
+    width: 16px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: rotate 0.25s var(--ease-out);
+  }
+  .review :global(details[open] .chev) {
+    rotate: 180deg;
+  }
+  .review :global(.body) {
+    display: grid;
+    gap: 8px;
+    padding: 0 14px 14px 52px;
+    font-size: 0.85rem;
+    animation: rise 0.3s var(--ease-out);
+  }
+  .review :global(.body p) {
+    margin: 0;
+  }
+  .review :global(details[open] .q) {
+    white-space: normal;
+  }
+  .review :global(.ans) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .review :global(.ans span) {
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .review :global(.ans .wrong) {
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--line));
+    color: var(--danger);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+  .review :global(.ans .right) {
+    border-color: color-mix(in srgb, #1f7a4d 40%, var(--line));
+    color: #1f7a4d;
+  }
+  .review :global(.why),
+  .review :global(.transcript) {
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .review :global(.transcript) {
+    padding-left: 12px;
+    border-left: 2px solid var(--line);
+    font-style: italic;
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 16px;
+    background: var(--bg);
+    text-align: center;
+  }
+  .screen[hidden] {
+    display: none;
+  }
+  .screen p {
+    margin: 0;
+    max-width: 40ch;
+    color: var(--muted);
+  }
+  .screen.error .spinner {
+    display: none;
+  }
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid var(--line);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  .link {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  @keyframes grow {
+    from {
+      scale: 0 1;
+    }
+  }
+  @keyframes shimmer {
+    to {
+      background-position: -150% 0;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+  @keyframes dots {
+    0% {
+      content: "";
+    }
+    25% {
+      content: ".";
+    }
+    50% {
+      content: "..";
+    }
+    75% {
+      content: "...";
+    }
+  }
+
+  @media (min-width: 861px) and (min-height: 560px) {
+    :global(body) {
+      height: 100dvh;
+    }
+  }
+  @media (min-width: 861px) and (max-height: 760px) {
+    .level-desc {
+      display: none;
+    }
+    .stage {
+      padding: 18px 24px;
+    }
+    .detail {
+      padding: 20px 24px;
+      gap: 18px;
+    }
+  }
+  @media (max-width: 860px) {
+    .topbar {
+      padding: 12px 16px;
+    }
+    .results {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 0 16px 16px;
+    }
+    .detail {
+      padding: 20px 16px;
+      overflow: visible;
+    }
+    .stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .review :global(.tag) {
+      display: none;
+    }
+    .review :global(.q) {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      white-space: normal;
+    }
+    .block-head {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .ruler li {
+      font-size: 0.6rem;
+    }
+    .review :global(summary) {
+      grid-template-columns: 26px 1fr 16px;
+    }
+    .review :global(.body) {
+      padding-left: 14px;
+    }
+  }
+</style>
+
+<script>
+  import { api, ApiError, esc } from "../lib/api";
+  import type { CoachState } from "../lib/coach";
+
+  type Option = { id: string; text: string };
+  type ReviewItem = {
+    question: { position: number; skill: string; level: string; prompt: string; options: Option[] | null; stimulus: { title: string } | null };
+    response: { option_id?: string; text?: string } | null;
+    is_correct: boolean;
+    correct_answer: string;
+    explanation: string | null;
+    transcript: string | null;
+  };
+  type Result = {
+    id: string;
+    assessment_title: string;
+    result: {
+      score_pct: number;
+      correct_count: number;
+      incorrect_count: number;
+      unanswered_count: number;
+      suggested_level: { code: string; name: string; description: string | null };
+      skills: { code: string; name: string; correct: number; total: number; pct: number }[];
+      duration_seconds: number;
+      ai_feedback: string | null;
+    };
+    review: ReviewItem[];
+  };
+
+  const $ = (id: string) => document.getElementById(id)!;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const level = (code: string) => code.replace("PRE_", "Pre-");
+  const CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+
+  let coach: { setState(s: CoachState): void; pulse(): void } | undefined;
+  const coachReady = import("../lib/coach")
+    .then(({ createCoach }) => (coach = createCoach($("coach") as HTMLCanvasElement)))
+    .catch(() => $("coach").remove());
+
+  function fail(msg: string) {
+    $("screen").classList.add("error");
+    $("screen-text").textContent = msg;
+    $("screen-back").hidden = false;
+  }
+
+  function countUp(el: HTMLElement, to: number, ms = 1400) {
+    if (reduced) return (el.textContent = String(to));
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / ms);
+      el.textContent = String(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function renderSummary(data: Result) {
+    const r = data.result;
+    const score = Math.round(r.score_pct);
+    const total = r.correct_count + r.incorrect_count;
+    $("assessment-title").textContent = data.assessment_title;
+    $("score-sub").textContent = `${r.correct_count} de ${total} respuestas correctas`;
+    countUp($("score"), score);
+    requestAnimationFrame(() => ($("ring-fill").style.strokeDashoffset = String(100 - score)));
+
+    $("level-code").textContent = level(r.suggested_level.code);
+    $("level-name").textContent = r.suggested_level.name;
+    $("level-desc").textContent = r.suggested_level.description ?? "";
+    const items = [...$("ruler").children] as HTMLElement[];
+    const idx = items.findIndex((li) => li.dataset.level === r.suggested_level.code);
+    items.forEach((li, i) => i <= idx && li.classList.add(i === idx ? "current" : "reached"));
+
+    $("st-correct").textContent = String(r.correct_count);
+    $("st-incorrect").textContent = String(r.incorrect_count - r.unanswered_count);
+    $("st-empty").textContent = String(r.unanswered_count);
+    const m = Math.floor(r.duration_seconds / 60);
+    $("st-time").textContent = m ? `${m} min` : `${r.duration_seconds} s`;
+
+    $("skills").innerHTML = r.skills
+      .map(
+        (s, i) => `<li><span>${esc(s.name)}</span>
+          <span class="bar" role="img" aria-label="${esc(s.name)}: ${Math.round(s.pct)}%"><span style="--pct:${s.pct}%;--delay:${0.4 + i * 0.1}s"></span></span>
+          <span class="frac">${s.correct}/${s.total}</span><span class="pct">${Math.round(s.pct)}%</span></li>`,
+      )
+      .join("");
+
+    const wrong = data.review.filter((i) => !i.is_correct).length;
+    $("review-legend").textContent = wrong ? `${wrong} por repasar · toca una pregunta para ver la explicación` : "¡Todas correctas!";
+    $("review").innerHTML = data.review.map(reviewItem).join("");
+  }
+
+  function answerText(item: ReviewItem) {
+    const r = item.response;
+    if (!r) return null;
+    if (r.text !== undefined) return r.text || null;
+    return item.question.options?.find((o) => o.id === r.option_id)?.text ?? null;
+  }
+
+  function reviewItem(item: ReviewItem) {
+    const q = item.question;
+    const given = answerText(item);
+    const answers = item.is_correct
+      ? `<span class="right">${esc(given ?? item.correct_answer)}</span>`
+      : `${given ? `<span class="wrong">${esc(given)}</span>` : '<span class="wrong">Sin responder</span>'}<span class="right">${esc(item.correct_answer)}</span>`;
+    return `<li><details class="${item.is_correct ? "ok" : "ko"}">
+      <summary>
+        <span class="mark" aria-label="${item.is_correct ? "Correcta" : "Incorrecta"}">${item.is_correct ? "✓" : "✕"}</span>
+        <span class="q" lang="en">${q.position}. ${esc(q.prompt)}</span>
+        <span class="tag">${esc(q.skill)} · ${esc(level(q.level))}</span>${CHEV}
+      </summary>
+      <div class="body">
+        <p class="ans" lang="en">${answers}</p>
+        ${item.explanation ? `<p class="why">${esc(item.explanation)}</p>` : ""}
+        ${item.transcript ? `<p class="transcript" lang="en">“${esc(item.transcript)}”</p>` : ""}
+      </div></details></li>`;
+  }
+
+  // ---------- Feedback del coach (IA) ----------
+  async function typewrite(text: string) {
+    const body = $("fb-body");
+    const paragraphs = text.split(/\n\s*\n/).filter(Boolean);
+    body.innerHTML = paragraphs.map(() => "<p></p>").join("");
+    $("feedback").setAttribute("aria-busy", "false");
+    const ps = [...body.querySelectorAll("p")];
+    if (reduced) return ps.forEach((p, i) => (p.textContent = paragraphs[i]));
+    const caret = document.createElement("span");
+    caret.className = "caret";
+    for (const [i, para] of paragraphs.entries()) {
+      const node = document.createTextNode("");
+      ps[i].append(node, caret);
+      for (let c = 3; c < para.length + 3; c += 3) {
+        node.data = para.slice(0, c);
+        if (c % 30 === 0) coach?.pulse();
+        await new Promise((r) => setTimeout(r, 12));
+      }
+    }
+    caret.remove();
+  }
+
+  async function loadFeedback(data: Result) {
+    coach?.setState("loading");
+    let text = data.result.ai_feedback;
+    try {
+      text ??= (await api<{ feedback: string }>(`/attempts/${data.id}/feedback`, { method: "POST" })).feedback;
+    } catch {
+      text = "No pudimos generar tu feedback en este momento. Revisa tus respuestas abajo: cada una incluye su explicación.";
+    }
+    coach?.setState(data.result.score_pct >= 60 ? "success" : "idle");
+    await typewrite(text);
+    $("listen").hidden = false;
+  }
+
+  // ---------- Voz del coach (ElevenLabs vía API) ----------
+  let audio: HTMLAudioElement | undefined;
+  $("listen").addEventListener("click", async () => {
+    const btn = $("listen");
+    const label = btn.querySelector("span")!;
+    if (!audio) {
+      btn.setAttribute("aria-busy", "true");
+      label.textContent = "Cargando voz…";
+      const res = await fetch(`/api/v1/attempts/${new URLSearchParams(location.search).get("id")}/feedback/audio`);
+      btn.removeAttribute("aria-busy");
+      if (!res.ok) {
+        label.textContent = "Voz no disponible";
+        btn.setAttribute("disabled", "");
+        return;
+      }
+      audio = new Audio(URL.createObjectURL(await res.blob()));
+      audio.addEventListener("play", () => {
+        btn.setAttribute("aria-pressed", "true");
+        label.textContent = "Pausar";
+        coach?.setState("loading"); // Glo "habla"
+      });
+      const stop = () => {
+        btn.setAttribute("aria-pressed", "false");
+        label.textContent = "Escuchar";
+        coach?.setState("idle");
+      };
+      audio.addEventListener("pause", stop);
+      audio.addEventListener("ended", stop);
+    }
+    audio.paused ? audio.play() : audio.pause();
+  });
+
+  // ---------- Inicio ----------
+  const id = new URLSearchParams(location.search).get("id");
+  if (!id) fail("No encontramos este resultado.");
+  else {
+    try {
+      const data = await api<Result>(`/attempts/${encodeURIComponent(id)}/result`);
+      $("results").hidden = false;
+      $("screen").hidden = true;
+      renderSummary(data);
+      await coachReady;
+      loadFeedback(data);
+    } catch (e) {
+      fail(e instanceof ApiError && e.code === "attempt_open" ? "Esta evaluación sigue abierta. Termínala para ver tu resultado." : (e as Error).message);
+    }
+  }
+</script>

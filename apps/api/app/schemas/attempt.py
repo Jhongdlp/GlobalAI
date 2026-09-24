@@ -141,3 +141,7 @@ class AttemptResultOut(BaseModel):
 class AnswerSavedOut(BaseModel):
     question_id: uuid.UUID
     saved_at: datetime
+
+
+class FeedbackOut(BaseModel):
+    feedback: str

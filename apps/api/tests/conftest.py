@@ -12,6 +12,9 @@ os.environ["DATABASE_URL"] = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+asyncpg://globalai:globalai@localhost:5432/globalai_test"
 )
 os.environ["ENV"] = "test"
+# Los tests nunca llaman a proveedores externos (ni gastan créditos), aunque .env tenga keys.
+os.environ["AI_PROVIDER"] = "mock"
+os.environ["TTS_PROVIDER"] = "none"
 
 import httpx  # noqa: E402
 import pytest  # noqa: E402

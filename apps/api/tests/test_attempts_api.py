@@ -195,3 +195,21 @@ async def test_listening_audio_requires_auth_and_is_served(student, anon):
     assert response.status_code == 200
     assert response.headers["content-type"] == "audio/mpeg"
     assert (await student.get(f"/stimuli/{uuid.uuid4()}/audio")).status_code == 404
+
+
+async def test_coach_feedback_is_generated_once_and_persisted(student):
+    attempt = await start(student)
+    assert (await student.post(f"/attempts/{attempt['id']}/feedback")).status_code == 409
+
+    await student.post(f"/attempts/{attempt['id']}/submit", json={"answers": {}})
+    first = await student.post(f"/attempts/{attempt['id']}/feedback")
+    assert first.status_code == 200
+    assert "nivel sugerido" in first.json()["feedback"]
+
+    again = await student.post(f"/attempts/{attempt['id']}/feedback")
+    assert again.json() == first.json()
+    result = (await student.get(f"/attempts/{attempt['id']}/result")).json()
+    assert result["result"]["ai_feedback"] == first.json()["feedback"]
+    # Sin TTS configurado la voz responde 404 controlado, no 500.
+    audio = await student.get(f"/attempts/{attempt['id']}/feedback/audio")
+    assert audio.json()["error"]["code"] == "tts_unavailable"

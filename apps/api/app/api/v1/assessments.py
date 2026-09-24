@@ -1,19 +1,21 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from app.api.deps import CurrentUser
 from app.core.db import SessionDep
+from app.core.errors import NotFoundError
 from app.schemas.attempt import (
     AnswerIn,
     AnswerSavedOut,
     AssessmentSummaryOut,
     AttemptOut,
     AttemptResultOut,
+    FeedbackOut,
     IntegrityEventsIn,
     SubmitIn,
 )
-from app.services import attempt_service
+from app.services import attempt_service, coach_ai
 
 router = APIRouter(tags=["assessments"])
 
@@ -70,3 +72,33 @@ async def get_result(
     attempt_id: uuid.UUID, user: CurrentUser, session: SessionDep
 ) -> AttemptResultOut:
     return await attempt_service.get_result(session, user, attempt_id)
+
+
+@router.post("/attempts/{attempt_id}/feedback")
+async def coach_feedback(
+    attempt_id: uuid.UUID, user: CurrentUser, session: SessionDep
+) -> FeedbackOut:
+    """Feedback del English Coach. Se genera una sola vez por intento y queda guardado:
+    el costo de IA está acotado y el estudiante ve siempre el mismo texto."""
+    data = await attempt_service.get_result(session, user, attempt_id)  # 409 si sigue abierto
+    if data.result.ai_feedback:
+        return FeedbackOut(feedback=data.result.ai_feedback)
+    # ponytail: la llamada al LLM retiene la conexión a BD; a escala, moverlo a una cola.
+    text = await coach_ai.generate_feedback(data)
+    attempt = await attempt_service.get_attempt(session, user, attempt_id)
+    attempt.ai_feedback = text
+    await session.commit()
+    return FeedbackOut(feedback=text)
+
+
+@router.get("/attempts/{attempt_id}/feedback/audio", response_class=Response)
+async def coach_feedback_audio(
+    attempt_id: uuid.UUID, user: CurrentUser, session: SessionDep
+) -> Response:
+    attempt = await attempt_service.get_attempt(session, user, attempt_id)
+    audio = attempt.ai_feedback and await coach_ai.synthesize(str(attempt.id), attempt.ai_feedback)
+    if not audio:
+        raise NotFoundError("La voz del coach no está disponible", code="tts_unavailable")
+    return Response(
+        audio, media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=86400"}
+    )

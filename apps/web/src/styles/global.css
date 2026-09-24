@@ -10,6 +10,7 @@
   --accent-soft: #e4e8fb;
   --danger: #b3261e;
   --danger-soft: #fbe4e2;
+  --glo: #ff4b3a; /* coral de Glo, la mascota */
   --stage: #16205a; /* azul tinta profundo para el escenario del coach */
   --radius: 10px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);

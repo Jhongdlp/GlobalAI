@@ -1,0 +1,22 @@
+{
+  "levels": [
+    { "code": "PRE_A1", "name": "Pre-Beginner", "rank": 0, "description": "Primer contacto con el idioma: palabras y frases aisladas." },
+    { "code": "A1", "name": "Beginner", "rank": 1, "description": "Entiende y usa expresiones cotidianas y frases muy básicas." },
+    { "code": "A2", "name": "Elementary", "rank": 2, "description": "Se comunica en tareas simples y rutinarias sobre temas conocidos." },
+    { "code": "B1", "name": "Intermediate", "rank": 3, "description": "Resuelve la mayoría de situaciones de viaje y describe experiencias." },
+    { "code": "B2", "name": "Upper Intermediate", "rank": 4, "description": "Interactúa con fluidez y entiende ideas principales de textos complejos." },
+    { "code": "C1", "name": "Advanced", "rank": 5, "description": "Se expresa de forma fluida y espontánea en contextos académicos y profesionales." }
+  ],
+  "skills": [
+    { "code": "grammar", "name": "Grammar" },
+    { "code": "vocabulary", "name": "Vocabulary" },
+    { "code": "reading", "name": "Reading" },
+    { "code": "listening", "name": "Listening" },
+    { "code": "speaking", "name": "Speaking" }
+  ],
+  "users": [
+    { "email": "estudiante@globalai.demo", "password": "Demo1234!", "full_name": "Laura Gómez", "role": "student" },
+    { "email": "profesor@globalai.demo", "password": "Demo1234!", "full_name": "Carlos Ruiz", "role": "teacher" },
+    { "email": "admin@globalai.demo", "password": "Demo1234!", "full_name": "Admin Global AI", "role": "admin" }
+  ]
+}

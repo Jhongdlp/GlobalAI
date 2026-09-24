@@ -1,0 +1,182 @@
+{
+  "assessment": {
+    "slug": "placement-a1-b2",
+    "title": "English Placement Assessment",
+    "description": "Evaluación de ubicación de 10 preguntas (A1–B2) que mide Grammar, Vocabulary, Reading y Listening.",
+    "level_code": null,
+    "time_limit_minutes": 20,
+    "max_attempts": null,
+    "cooldown_minutes": 0,
+    "shuffle_questions": true,
+    "shuffle_options": true,
+    "is_published": true
+  },
+  "stimuli": [
+    {
+      "code": "reading-laura-remote-job",
+      "kind": "text",
+      "title": "A new job, a new language",
+      "content": "Laura is a nurse from Medellín. Last year, a hospital in Toronto offered her a remote job reviewing medical reports at night. The salary was excellent, but there was one problem: every report was written in English. At first, Laura needed almost two hours to read a single report. She started studying for thirty minutes every morning before breakfast, and she kept a notebook with new medical words. Six months later, she can read a report in twenty minutes, and her manager has asked her to train two new colleagues."
+    },
+    {
+      "code": "listening-flight-change",
+      "kind": "audio",
+      "title": "Voicemail from the travel agency",
+      "content": "Hi, this is Mark from Blue Sky Travel. I'm calling about your trip to London. Unfortunately, your flight on Tuesday has been cancelled. We've moved you to a new flight on Thursday at nine thirty in the morning. Please arrive at the airport two hours before departure. If you have any questions, call us back at this number. Thanks, and have a great day!"
+    }
+  ],
+  "questions": [
+    {
+      "code": "gr-a1-present-simple",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "A1",
+      "prompt": "She ___ to school every day.",
+      "options": [
+        { "id": "a", "text": "go" },
+        { "id": "b", "text": "goes" },
+        { "id": "c", "text": "going" },
+        { "id": "d", "text": "gone" }
+      ],
+      "answer_key": { "option_id": "b" },
+      "explanation": "Con he/she/it en presente simple el verbo lleva -s o -es: she goes."
+    },
+    {
+      "code": "gr-a2-past-simple",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "A2",
+      "prompt": "Yesterday we ___ a great movie at the cinema.",
+      "options": [
+        { "id": "a", "text": "watch" },
+        { "id": "b", "text": "have watched" },
+        { "id": "c", "text": "watched" },
+        { "id": "d", "text": "are watching" }
+      ],
+      "answer_key": { "option_id": "c" },
+      "explanation": "'Yesterday' indica un momento terminado en el pasado, así que se usa el pasado simple: watched."
+    },
+    {
+      "code": "gr-b1-second-conditional",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "B1",
+      "prompt": "If I ___ more free time, I would learn to play the guitar.",
+      "options": [
+        { "id": "a", "text": "have" },
+        { "id": "b", "text": "had" },
+        { "id": "c", "text": "will have" },
+        { "id": "d", "text": "would have" }
+      ],
+      "answer_key": { "option_id": "b" },
+      "explanation": "El segundo condicional (situaciones hipotéticas) usa if + pasado simple: If I had…, I would…"
+    },
+    {
+      "code": "gr-b2-future-perfect",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "B2",
+      "prompt": "By the time you arrive at the party, we ___ all the pizza.",
+      "options": [
+        { "id": "a", "text": "will eat" },
+        { "id": "b", "text": "are eating" },
+        { "id": "c", "text": "ate" },
+        { "id": "d", "text": "will have eaten" }
+      ],
+      "answer_key": { "option_id": "d" },
+      "explanation": "'By the time…' marca una acción que ya estará terminada en el futuro: futuro perfecto (will have eaten)."
+    },
+    {
+      "code": "gr-a2-since-for",
+      "type": "fill_blank",
+      "response_format": "text",
+      "skill_code": "grammar",
+      "level_code": "A2",
+      "prompt": "I have lived in Bogotá ___ 2019.",
+      "options": null,
+      "answer_key": { "accepted": ["since"] },
+      "explanation": "'Since' se usa con un punto de inicio (2019); 'for' se usa con una duración (for five years)."
+    },
+    {
+      "code": "vo-b1-phrasal-turn-off",
+      "type": "fill_blank",
+      "response_format": "text",
+      "skill_code": "vocabulary",
+      "level_code": "B1",
+      "prompt": "Please ___ ___ the lights when you leave the room. (2 words)",
+      "options": null,
+      "answer_key": { "accepted": ["turn off", "switch off"] },
+      "explanation": "'Turn off' o 'switch off' significan apagar un aparato o una luz."
+    },
+    {
+      "code": "re-b1-laura-motivation",
+      "type": "comprehension",
+      "response_format": "choice",
+      "skill_code": "reading",
+      "level_code": "B1",
+      "stimulus_code": "reading-laura-remote-job",
+      "prompt": "Why did Laura start studying English every morning?",
+      "options": [
+        { "id": "a", "text": "Because she wanted to move to Toronto." },
+        { "id": "b", "text": "Because her new job required reading reports in English." },
+        { "id": "c", "text": "Because her manager asked her to train new colleagues." },
+        { "id": "d", "text": "Because she wanted a better salary as a nurse in Medellín." }
+      ],
+      "answer_key": { "option_id": "b" },
+      "explanation": "El texto dice que el trabajo era remoto y que 'every report was written in English'. Entrenar colegas fue una consecuencia, no la causa."
+    },
+    {
+      "code": "li-a2-flight-new-time",
+      "type": "comprehension",
+      "response_format": "choice",
+      "skill_code": "listening",
+      "level_code": "A2",
+      "stimulus_code": "listening-flight-change",
+      "prompt": "When is the new flight?",
+      "options": [
+        { "id": "a", "text": "Tuesday at 9:30 a.m." },
+        { "id": "b", "text": "Thursday at 7:30 a.m." },
+        { "id": "c", "text": "Thursday at 9:30 a.m." },
+        { "id": "d", "text": "Tuesday at 7:30 a.m." }
+      ],
+      "answer_key": { "option_id": "c" },
+      "explanation": "Mark dice 'a new flight on Thursday at nine thirty in the morning'. Las 7:30 es la hora de llegar al aeropuerto, no la del vuelo."
+    },
+    {
+      "code": "vo-a2-opposite-expensive",
+      "type": "vocabulary",
+      "response_format": "choice",
+      "skill_code": "vocabulary",
+      "level_code": "A2",
+      "prompt": "Choose the opposite of \"expensive\".",
+      "options": [
+        { "id": "a", "text": "cheap" },
+        { "id": "b", "text": "rich" },
+        { "id": "c", "text": "poor" },
+        { "id": "d", "text": "costly" }
+      ],
+      "answer_key": { "option_id": "a" },
+      "explanation": "'Cheap' (barato) es el opuesto de 'expensive' (caro). 'Costly' es un sinónimo."
+    },
+    {
+      "code": "vo-b2-reluctant",
+      "type": "vocabulary",
+      "response_format": "choice",
+      "skill_code": "vocabulary",
+      "level_code": "B2",
+      "prompt": "He was reluctant to share his opinion in the meeting. \"Reluctant\" means…",
+      "options": [
+        { "id": "a", "text": "eager" },
+        { "id": "b", "text": "unwilling" },
+        { "id": "c", "text": "proud" },
+        { "id": "d", "text": "confused" }
+      ],
+      "answer_key": { "option_id": "b" },
+      "explanation": "'Reluctant' describe a alguien que no quiere hacer algo: unwilling. 'Eager' es lo contrario."
+    }
+  ]
+}

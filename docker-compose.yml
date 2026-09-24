@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: globalai
+      POSTGRES_PASSWORD: globalai
+      POSTGRES_DB: globalai
+    ports: ["5433:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U globalai"]
+      interval: 3s
+      retries: 20
+
+  api:
+    build: ./apps/api
+    env_file: ./apps/api/.env.example
+    environment:
+      DATABASE_URL: postgresql+asyncpg://globalai:globalai@db:5432/globalai
+    command: sh -c "alembic upgrade head && python -m seed.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    ports: ["8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  pgdata:

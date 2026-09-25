@@ -8,6 +8,9 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY . .
 ENV PATH="/app/.venv/bin:$PATH"
+# Sin root: si alguien explota la app, no es dueño del contenedor.
+RUN useradd --system --uid 1001 app
+USER app
 EXPOSE 8000
 
 # Stateless: se escala horizontalmente agregando réplicas detrás de un balanceador.

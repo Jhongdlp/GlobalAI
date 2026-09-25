@@ -15,7 +15,10 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode(), password_hash.encode())
+    # bcrypt solo usa 72 bytes y la v5 lanza ValueError si hay más: se trata como inválida
+    # (antes era un 500 que además se saltaba el rate limit de login).
+    raw = password.encode()
+    return len(raw) <= 72 and bcrypt.checkpw(raw, password_hash.encode())
 
 
 # Hash válido para comparar cuando el usuario no existe: iguala el tiempo de respuesta

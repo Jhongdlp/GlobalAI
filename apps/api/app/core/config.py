@@ -2,7 +2,10 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEV_JWT_SECRET = "change-me-in-production-please-32b"
 
 
 class Settings(BaseSettings):
@@ -17,7 +20,7 @@ class Settings(BaseSettings):
     # asyncpg debe desactivar su caché de prepared statements.
     db_use_pgbouncer: bool = False
 
-    jwt_secret: str = "change-me-in-production-please-32b"
+    jwt_secret: str = DEV_JWT_SECRET
     jwt_expires_minutes: int = 60 * 8
     cookie_name: str = "gai_session"
 
@@ -30,6 +33,15 @@ class Settings(BaseSettings):
     tts_provider: Literal["elevenlabs", "none"] = "none"
     elevenlabs_api_key: str | None = None
     elevenlabs_voice_id: str | None = None
+    stt_provider: Literal["elevenlabs", "none"] = "none"
+    elevenlabs_stt_model: str = "scribe_v2"
+
+    @model_validator(mode="after")
+    def _production_guard(self):
+        # Falla al arrancar, no en runtime: con el secreto por defecto cualquiera firma tokens.
+        if self.is_production and (self.jwt_secret == DEV_JWT_SECRET or len(self.jwt_secret) < 32):
+            raise ValueError("JWT_SECRET debe definirse (>= 32 caracteres) en producción")
+        return self
 
     @property
     def is_production(self) -> bool:

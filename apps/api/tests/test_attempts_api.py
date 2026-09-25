@@ -5,8 +5,11 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select, update
 
 from app.core.db import SessionLocal
-from app.models import Attempt, Question
+from app.models import Attempt, AttemptAnswer, Question
+from app.services import speech
 from tests.conftest import SLUG
+
+QUESTIONS = 13
 
 
 async def start(client) -> dict:
@@ -16,8 +19,9 @@ async def start(client) -> dict:
 
 
 async def correct_answers(attempt: dict) -> dict[str, dict]:
-    """Construye respuestas correctas leyendo la BD (el cliente real nunca puede hacer esto)."""
-    ids = [uuid.UUID(q["id"]) for q in attempt["questions"]]
+    """Construye respuestas correctas leyendo la BD (el cliente real nunca puede hacer esto).
+    Las orales no viajan en el envío: se guardan ya calificadas (ver perfect_speech)."""
+    ids = [uuid.UUID(q["id"]) for q in attempt["questions"] if q["response_format"] != "speech"]
     async with SessionLocal() as session:
         questions = await session.scalars(select(Question).where(Question.id.in_(ids)))
         return {
@@ -26,6 +30,32 @@ async def correct_answers(attempt: dict) -> dict[str, dict]:
             else {"text": q.answer_key["accepted"][0]}
             for q in questions
         }
+
+
+async def perfect_speech(attempt: dict) -> None:
+    async with SessionLocal() as session, session.begin():
+        session.add_all(
+            AttemptAnswer(
+                attempt_id=uuid.UUID(attempt["id"]),
+                question_id=uuid.UUID(q["id"]),
+                response={"transcript": "perfect", "score": 1.0, "tries": 1},
+            )
+            for q in attempt["questions"]
+            if q["response_format"] == "speech"
+        )
+
+
+def speech_question(attempt: dict, qtype: str = "read_aloud") -> dict:
+    return next(q for q in attempt["questions"] if q["type"] == qtype)
+
+
+def fake_stt(text: str) -> dict:
+    """Respuesta con la forma de ElevenLabs Scribe: una palabra cada 0.4 s, confianza alta."""
+    words = [
+        {"text": w, "type": "word", "start": i * 0.4, "end": i * 0.4 + 0.3, "logprob": -0.05}
+        for i, w in enumerate(text.split())
+    ]
+    return {"text": text, "words": words}
 
 
 async def test_requires_authentication(anon):
@@ -38,8 +68,9 @@ async def test_attempt_payload_never_exposes_answers(student):
     attempt = await start(student)
     raw = json.dumps(attempt)
 
-    assert len(attempt["questions"]) == 10
-    for forbidden in ("answer_key", "explanation", "accepted", "Mark from Blue Sky Travel"):
+    assert len(attempt["questions"]) == QUESTIONS
+    # Como claves JSON: un enunciado puede contener la palabra "explanation" legítimamente.
+    for forbidden in ('"answer_key"', '"explanation"', '"accepted"', "Mark from Blue Sky Travel"):
         assert forbidden not in raw
     listening = next(q for q in attempt["questions"] if q["skill"] == "listening")
     assert listening["stimulus"]["content"] is None
@@ -49,19 +80,21 @@ async def test_attempt_payload_never_exposes_answers(student):
 async def test_perfect_submission_is_graded_on_server(student):
     attempt = await start(student)
     answers = await correct_answers(attempt)
+    await perfect_speech(attempt)
 
     response = await student.post(f"/attempts/{attempt['id']}/submit", json={"answers": answers})
 
     assert response.status_code == 200
     result = response.json()["result"]
     assert result["score_pct"] == 100.0
-    assert result["correct_count"] == 10
+    assert result["correct_count"] == QUESTIONS
     assert result["suggested_level"]["code"] == "B2"
     assert {s["code"] for s in result["skills"]} == {
         "grammar",
         "vocabulary",
         "reading",
         "listening",
+        "speaking",
     }
 
 
@@ -75,12 +108,12 @@ async def test_client_cannot_inject_its_own_score(student):
 
     result = response.json()["result"]
     assert result["score_pct"] == 0.0
-    assert result["unanswered_count"] == 10
+    assert result["unanswered_count"] == QUESTIONS
 
 
 async def test_resume_keeps_same_attempt_and_saved_answers(student):
     attempt = await start(student)
-    question = attempt["questions"][0]
+    question = next(q for q in attempt["questions"] if q["response_format"] != "speech")
     answer = (
         {"option_id": question["options"][0]["id"]} if question["options"] else {"text": "since"}
     )
@@ -166,6 +199,7 @@ async def test_integrity_events_are_counted(student):
 
 async def test_progress_reflects_submitted_attempts(student):
     attempt = await start(student)
+    await perfect_speech(attempt)
     await student.post(
         f"/attempts/{attempt['id']}/submit", json={"answers": await correct_answers(attempt)}
     )
@@ -213,3 +247,110 @@ async def test_coach_feedback_is_generated_once_and_persisted(student):
     # Sin TTS configurado la voz responde 404 controlado, no 500.
     audio = await student.get(f"/attempts/{attempt['id']}/feedback/audio")
     assert audio.json()["error"]["code"] == "tts_unavailable"
+
+
+async def test_speech_without_stt_provider_fails_cleanly(student):
+    attempt = await start(student)
+    q = speech_question(attempt)
+    url = f"/attempts/{attempt['id']}/answers/{q['id']}/speech"
+
+    response = await student.put(url, content=b"fake-audio", headers={"content-type": "audio/webm"})
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "stt_unavailable"
+
+    not_audio = await student.put(url, json={"text": "hi"})
+    assert not_audio.json()["error"]["code"] == "invalid_audio"
+    typed = await student.put(f"/attempts/{attempt['id']}/answers/{q['id']}", json={"text": "hi"})
+    assert typed.json()["error"]["code"] == "invalid_answer"
+
+
+async def test_read_aloud_is_graded_on_server_with_limited_tries(student, monkeypatch):
+    attempt = await start(student)
+    q = speech_question(attempt)
+    url = f"/attempts/{attempt['id']}/answers/{q['id']}/speech"
+    audio = {"content": b"fake-audio", "headers": {"content-type": "audio/webm;codecs=opus"}}
+
+    async def silence(audio, content_type):
+        return {"text": "", "words": []}
+
+    monkeypatch.setattr(speech, "transcribe", silence)
+    assert (await student.put(url, **audio)).json()["error"]["code"] == "no_speech"
+
+    async def reads_prompt(audio, content_type):
+        assert content_type == "audio/webm"
+        return fake_stt(q["prompt"])
+
+    monkeypatch.setattr(speech, "transcribe", reads_prompt)
+    saved = await student.put(url, **audio)
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["tries_left"] == 2  # el silencio no gastó una grabación
+
+    # Antes de enviar solo se ve lo que se entendió, nunca el puntaje.
+    view = await student.get(f"/attempts/{attempt['id']}")
+    assert view.json()["answers"][q["id"]] == {"transcript": q["prompt"], "tries": 1}
+
+    for _ in range(2):
+        await student.put(url, **audio)
+    exhausted = await student.put(url, **audio)
+    assert exhausted.json()["error"]["code"] == "speech_tries_exhausted"
+
+    result = (await student.post(f"/attempts/{attempt['id']}/submit", json={})).json()
+    item = next(i for i in result["review"] if i["question"]["id"] == q["id"])
+    assert item["is_correct"]
+    assert item["response"]["accuracy"] == 1.0
+    assert item["correct_answer"] == q["prompt"]
+    speaking = next(s for s in result["result"]["skills"] if s["code"] == "speaking")
+    assert speaking["correct"] == 1
+
+
+async def test_overlong_password_is_rejected_not_500(anon):
+    body = {"email": "otro@globalai.demo", "password": "x" * 100}
+    response = await anon.post("/auth/login", json=body)
+    assert response.status_code == 401
+
+
+async def test_speech_upload_is_capped_while_streaming(student):
+    attempt = (await student.post(f"/assessments/{SLUG}/attempts")).json()
+    qid = attempt["questions"][0]["id"]
+
+    async def chunked():  # sin Content-Length: el límite debe cortar igual
+        for _ in range(6):
+            yield b"\0" * (1024 * 1024)
+
+    response = await student.put(
+        f"/attempts/{attempt['id']}/answers/{qid}/speech",
+        content=chunked(),
+        headers={"content-type": "audio/webm"},
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "audio_too_large"
+
+
+async def test_responses_carry_request_id_and_security_headers(anon):
+    response = await anon.get("/health", headers={"x-request-id": "abc123"})
+    assert response.headers["x-request-id"] == "abc123"
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
+async def test_listening_audio_is_not_served_to_users_without_that_attempt(student, teacher):
+    attempt = await start(student)
+    url = next(q for q in attempt["questions"] if q["skill"] == "listening")["stimulus"][
+        "audio_url"
+    ]
+    # Otro usuario con sesión válida y el ID exacto: 404, como si no existiera.
+    assert (await teacher.get(url.removeprefix("/api/v1"))).status_code == 404
+
+
+async def test_paid_endpoints_are_rate_limited_per_user(student):
+    attempt = await start(student)
+    path = f"/attempts/{attempt['id']}/feedback/audio"
+    codes = [(await student.get(path)).status_code for _ in range(11)]
+    assert 429 not in codes[:10]
+    assert codes[10] == 429
+
+
+async def test_login_is_rate_limited_per_ip_across_emails(anon):
+    for i in range(50):
+        await anon.post("/auth/login", json={"email": f"u{i}@x.com", "password": "bad"})
+    response = await anon.post("/auth/login", json={"email": "otro@x.com", "password": "bad"})
+    assert response.status_code == 429

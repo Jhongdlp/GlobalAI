@@ -10,6 +10,8 @@ from typing import Any
 # Umbrales para sugerir nivel (ver suggest_level).
 LEVEL_OWN_THRESHOLD = 0.5
 LEVEL_CUMULATIVE_THRESHOLD = 0.6
+# Speaking da crédito parcial (0-1); cuenta como "correcta" desde este puntaje.
+SPEECH_PASS_THRESHOLD = 0.6
 
 
 def normalize_text(value: str) -> str:
@@ -31,6 +33,15 @@ def is_correct(
     raise ValueError(f"Formato de respuesta desconocido: {response_format}")
 
 
+def credit(
+    response_format: str, answer_key: Mapping[str, Any], response: Mapping[str, Any]
+) -> float:
+    """Fracción del puntaje ganada. Speaking ya viene calificado por el servidor al grabar."""
+    if response_format == "speech":
+        return max(0.0, min(1.0, float(response.get("score", 0))))
+    return float(is_correct(response_format, answer_key, response))
+
+
 @dataclass(frozen=True)
 class GradableItem:
     question_id: str
@@ -46,7 +57,7 @@ class GradableItem:
 class Tally:
     correct: int = 0
     total: int = 0
-    points: int = 0
+    points: float = 0
     max_points: int = 0
 
     @property
@@ -77,17 +88,19 @@ def grade(items: Iterable[GradableItem]) -> GradeResult:
     unanswered = 0
 
     for item in items:
-        ok = item.response is not None and is_correct(
-            item.response_format, item.answer_key, item.response
+        earned = (
+            credit(item.response_format, item.answer_key, item.response)
+            if item.response is not None
+            else 0.0
         )
+        ok = earned >= (SPEECH_PASS_THRESHOLD if item.response_format == "speech" else 1)
         unanswered += item.response is None
         per_question[item.question_id] = ok
         for tally in (overall, by_skill[item.skill_code], by_level[item.level_code]):
             tally.total += 1
             tally.max_points += item.points
-            if ok:
-                tally.correct += 1
-                tally.points += item.points
+            tally.points += item.points * earned
+            tally.correct += ok
 
     return GradeResult(
         score_pct=overall.pct,

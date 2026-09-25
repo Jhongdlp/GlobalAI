@@ -10,9 +10,10 @@ import uuid
 from datetime import datetime
 from typing import Any, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models import AttemptStatus, IntegrityEventType, QuestionType, ResponseFormat, StimulusKind
+from app.models.attempt import SERVER_ONLY_EVENTS
 
 
 class AssessmentSummaryOut(BaseModel):
@@ -25,6 +26,7 @@ class AssessmentSummaryOut(BaseModel):
     attempts_used: int
     best_score_pct: float | None
     open_attempt_id: uuid.UUID | None
+    available_at: datetime | None  # espera entre intentos; None = puede empezar ya
 
 
 class OptionOut(BaseModel):
@@ -78,6 +80,13 @@ class IntegrityEventIn(BaseModel):
     occurred_at: datetime
     question_id: uuid.UUID | None = None
 
+    @field_validator("type")
+    @classmethod
+    def client_reportable(cls, value: IntegrityEventType) -> IntegrityEventType:
+        if value in SERVER_ONLY_EVENTS:
+            raise ValueError("Este tipo de evento lo calcula el servidor")
+        return value
+
 
 class IntegrityEventsIn(BaseModel):
     events: list[IntegrityEventIn] = Field(max_length=100)
@@ -97,6 +106,15 @@ class SkillScoreOut(BaseModel):
     pct: float
 
 
+class RecommendationOut(BaseModel):
+    course: str
+    level: str
+    weeks: int
+    promise: str
+    focus: list[str]
+    script: str  # lo que Glo dice en voz alta
+
+
 class ResultOut(BaseModel):
     score_pct: float
     correct_count: int
@@ -107,6 +125,7 @@ class ResultOut(BaseModel):
     submitted_at: datetime
     duration_seconds: int
     ai_feedback: str | None
+    recommendation: RecommendationOut
 
 
 class ReviewItemOut(BaseModel):
@@ -141,6 +160,13 @@ class AttemptResultOut(BaseModel):
 class AnswerSavedOut(BaseModel):
     question_id: uuid.UUID
     saved_at: datetime
+
+
+class SpeechSavedOut(BaseModel):
+    question_id: uuid.UUID
+    saved_at: datetime
+    transcript: str
+    tries_left: int
 
 
 class FeedbackOut(BaseModel):

@@ -2,9 +2,9 @@
   "assessment": {
     "slug": "placement-a1-b2",
     "title": "English Placement Assessment",
-    "description": "Evaluación de ubicación de 10 preguntas (A1–B2) que mide Grammar, Vocabulary, Reading y Listening.",
+    "description": "Evaluación de ubicación de 13 preguntas (A1–B2) que mide Grammar, Vocabulary, Reading, Listening y Speaking.",
     "level_code": null,
-    "time_limit_minutes": 20,
+    "time_limit_minutes": 25,
     "max_attempts": null,
     "cooldown_minutes": 0,
     "shuffle_questions": true,
@@ -34,12 +34,26 @@
       "level_code": "A1",
       "prompt": "She ___ to school every day.",
       "options": [
-        { "id": "a", "text": "go" },
-        { "id": "b", "text": "goes" },
-        { "id": "c", "text": "going" },
-        { "id": "d", "text": "gone" }
+        {
+          "id": "a",
+          "text": "go"
+        },
+        {
+          "id": "b",
+          "text": "goes"
+        },
+        {
+          "id": "c",
+          "text": "going"
+        },
+        {
+          "id": "d",
+          "text": "gone"
+        }
       ],
-      "answer_key": { "option_id": "b" },
+      "answer_key": {
+        "option_id": "b"
+      },
       "explanation": "Con he/she/it en presente simple el verbo lleva -s o -es: she goes."
     },
     {
@@ -50,12 +64,26 @@
       "level_code": "A2",
       "prompt": "Yesterday we ___ a great movie at the cinema.",
       "options": [
-        { "id": "a", "text": "watch" },
-        { "id": "b", "text": "have watched" },
-        { "id": "c", "text": "watched" },
-        { "id": "d", "text": "are watching" }
+        {
+          "id": "a",
+          "text": "watch"
+        },
+        {
+          "id": "b",
+          "text": "have watched"
+        },
+        {
+          "id": "c",
+          "text": "watched"
+        },
+        {
+          "id": "d",
+          "text": "are watching"
+        }
       ],
-      "answer_key": { "option_id": "c" },
+      "answer_key": {
+        "option_id": "c"
+      },
       "explanation": "'Yesterday' indica un momento terminado en el pasado, así que se usa el pasado simple: watched."
     },
     {
@@ -66,12 +94,26 @@
       "level_code": "B1",
       "prompt": "If I ___ more free time, I would learn to play the guitar.",
       "options": [
-        { "id": "a", "text": "have" },
-        { "id": "b", "text": "had" },
-        { "id": "c", "text": "will have" },
-        { "id": "d", "text": "would have" }
+        {
+          "id": "a",
+          "text": "have"
+        },
+        {
+          "id": "b",
+          "text": "had"
+        },
+        {
+          "id": "c",
+          "text": "will have"
+        },
+        {
+          "id": "d",
+          "text": "would have"
+        }
       ],
-      "answer_key": { "option_id": "b" },
+      "answer_key": {
+        "option_id": "b"
+      },
       "explanation": "El segundo condicional (situaciones hipotéticas) usa if + pasado simple: If I had…, I would…"
     },
     {
@@ -82,12 +124,26 @@
       "level_code": "B2",
       "prompt": "By the time you arrive at the party, we ___ all the pizza.",
       "options": [
-        { "id": "a", "text": "will eat" },
-        { "id": "b", "text": "are eating" },
-        { "id": "c", "text": "ate" },
-        { "id": "d", "text": "will have eaten" }
+        {
+          "id": "a",
+          "text": "will eat"
+        },
+        {
+          "id": "b",
+          "text": "are eating"
+        },
+        {
+          "id": "c",
+          "text": "ate"
+        },
+        {
+          "id": "d",
+          "text": "will have eaten"
+        }
       ],
-      "answer_key": { "option_id": "d" },
+      "answer_key": {
+        "option_id": "d"
+      },
       "explanation": "'By the time…' marca una acción que ya estará terminada en el futuro: futuro perfecto (will have eaten)."
     },
     {
@@ -98,7 +154,11 @@
       "level_code": "A2",
       "prompt": "I have lived in Bogotá ___ 2019.",
       "options": null,
-      "answer_key": { "accepted": ["since"] },
+      "answer_key": {
+        "accepted": [
+          "since"
+        ]
+      },
       "explanation": "'Since' se usa con un punto de inicio (2019); 'for' se usa con una duración (for five years)."
     },
     {
@@ -109,7 +169,12 @@
       "level_code": "B1",
       "prompt": "Please ___ ___ the lights when you leave the room. (2 words)",
       "options": null,
-      "answer_key": { "accepted": ["turn off", "switch off"] },
+      "answer_key": {
+        "accepted": [
+          "turn off",
+          "switch off"
+        ]
+      },
       "explanation": "'Turn off' o 'switch off' significan apagar un aparato o una luz."
     },
     {
@@ -121,12 +186,26 @@
       "stimulus_code": "reading-laura-remote-job",
       "prompt": "Why did Laura start studying English every morning?",
       "options": [
-        { "id": "a", "text": "Because she wanted to move to Toronto." },
-        { "id": "b", "text": "Because her new job required reading reports in English." },
-        { "id": "c", "text": "Because her manager asked her to train new colleagues." },
-        { "id": "d", "text": "Because she wanted a better salary as a nurse in Medellín." }
+        {
+          "id": "a",
+          "text": "Because she wanted to move to Toronto."
+        },
+        {
+          "id": "b",
+          "text": "Because her new job required reading reports in English."
+        },
+        {
+          "id": "c",
+          "text": "Because her manager asked her to train new colleagues."
+        },
+        {
+          "id": "d",
+          "text": "Because she wanted a better salary as a nurse in Medellín."
+        }
       ],
-      "answer_key": { "option_id": "b" },
+      "answer_key": {
+        "option_id": "b"
+      },
       "explanation": "El texto dice que el trabajo era remoto y que 'every report was written in English'. Entrenar colegas fue una consecuencia, no la causa."
     },
     {
@@ -138,12 +217,26 @@
       "stimulus_code": "listening-flight-change",
       "prompt": "When is the new flight?",
       "options": [
-        { "id": "a", "text": "Tuesday at 9:30 a.m." },
-        { "id": "b", "text": "Thursday at 7:30 a.m." },
-        { "id": "c", "text": "Thursday at 9:30 a.m." },
-        { "id": "d", "text": "Tuesday at 7:30 a.m." }
+        {
+          "id": "a",
+          "text": "Tuesday at 9:30 a.m."
+        },
+        {
+          "id": "b",
+          "text": "Thursday at 7:30 a.m."
+        },
+        {
+          "id": "c",
+          "text": "Thursday at 9:30 a.m."
+        },
+        {
+          "id": "d",
+          "text": "Tuesday at 7:30 a.m."
+        }
       ],
-      "answer_key": { "option_id": "c" },
+      "answer_key": {
+        "option_id": "c"
+      },
       "explanation": "Mark dice 'a new flight on Thursday at nine thirty in the morning'. Las 7:30 es la hora de llegar al aeropuerto, no la del vuelo."
     },
     {
@@ -154,12 +247,26 @@
       "level_code": "A2",
       "prompt": "Choose the opposite of \"expensive\".",
       "options": [
-        { "id": "a", "text": "cheap" },
-        { "id": "b", "text": "rich" },
-        { "id": "c", "text": "poor" },
-        { "id": "d", "text": "costly" }
+        {
+          "id": "a",
+          "text": "cheap"
+        },
+        {
+          "id": "b",
+          "text": "rich"
+        },
+        {
+          "id": "c",
+          "text": "poor"
+        },
+        {
+          "id": "d",
+          "text": "costly"
+        }
       ],
-      "answer_key": { "option_id": "a" },
+      "answer_key": {
+        "option_id": "a"
+      },
       "explanation": "'Cheap' (barato) es el opuesto de 'expensive' (caro). 'Costly' es un sinónimo."
     },
     {
@@ -170,13 +277,715 @@
       "level_code": "B2",
       "prompt": "He was reluctant to share his opinion in the meeting. \"Reluctant\" means…",
       "options": [
-        { "id": "a", "text": "eager" },
-        { "id": "b", "text": "unwilling" },
-        { "id": "c", "text": "proud" },
-        { "id": "d", "text": "confused" }
+        {
+          "id": "a",
+          "text": "eager"
+        },
+        {
+          "id": "b",
+          "text": "unwilling"
+        },
+        {
+          "id": "c",
+          "text": "proud"
+        },
+        {
+          "id": "d",
+          "text": "confused"
+        }
       ],
-      "answer_key": { "option_id": "b" },
+      "answer_key": {
+        "option_id": "b"
+      },
       "explanation": "'Reluctant' describe a alguien que no quiere hacer algo: unwilling. 'Eager' es lo contrario."
+    },
+    {
+      "code": "sp-a2-read-aloud-bus",
+      "type": "read_aloud",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "A2",
+      "prompt": "I usually take the bus to work, but today I walked because the weather was nice.",
+      "options": null,
+      "answer_key": {
+        "target": "I usually take the bus to work, but today I walked because the weather was nice."
+      },
+      "explanation": "Se mide cuántas palabras del texto se entendieron, la claridad y el ritmo. Une las palabras sin pausas largas: 'take the bus' suena como una sola unidad."
+    },
+    {
+      "code": "sp-b1-read-aloud-cooking",
+      "type": "read_aloud",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "B1",
+      "prompt": "If I had more free time, I would join a cooking class and learn to make fresh pasta.",
+      "options": null,
+      "answer_key": {
+        "target": "If I had more free time, I would join a cooking class and learn to make fresh pasta."
+      },
+      "explanation": "Segundo condicional (If I had…, I would…). Pronuncia la 'd' final de 'had' y 'would'; el acento cae en 'free time' y 'fresh pasta'."
+    },
+    {
+      "code": "sp-b1-open-weekend",
+      "type": "open_response",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "B1",
+      "prompt": "Tell me about your last weekend. What did you do, and who were you with? Speak for about 30 seconds.",
+      "options": null,
+      "answer_key": {
+        "min_words": 35
+      },
+      "explanation": "Se califica con una rúbrica MCER (cumplimiento de la tarea, gramática y vocabulario) más claridad y fluidez. Usa el pasado simple: 'I went', 'we watched', 'it was'."
+    },
+    {
+      "code": "gr-a1-present-simple-2",
+      "variant_of": "gr-a1-present-simple",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "A1",
+      "prompt": "My brother ___ coffee every morning.",
+      "options": [
+        {
+          "id": "a",
+          "text": "drink"
+        },
+        {
+          "id": "b",
+          "text": "is drink"
+        },
+        {
+          "id": "c",
+          "text": "drinks"
+        },
+        {
+          "id": "d",
+          "text": "drinking"
+        }
+      ],
+      "answer_key": {
+        "option_id": "c"
+      },
+      "explanation": "Con he/she/it en presente simple el verbo lleva -s: my brother drinks."
+    },
+    {
+      "code": "gr-a1-present-simple-3",
+      "variant_of": "gr-a1-present-simple",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "A1",
+      "prompt": "___ your parents live in Cali?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Does"
+        },
+        {
+          "id": "b",
+          "text": "Do"
+        },
+        {
+          "id": "c",
+          "text": "Are"
+        },
+        {
+          "id": "d",
+          "text": "Is"
+        }
+      ],
+      "answer_key": {
+        "option_id": "b"
+      },
+      "explanation": "Las preguntas en presente simple con I/you/we/they usan 'do': Do your parents live…?"
+    },
+    {
+      "code": "gr-a2-past-simple-2",
+      "variant_of": "gr-a2-past-simple",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "A2",
+      "prompt": "Last summer my family ___ to Cartagena for a week.",
+      "options": [
+        {
+          "id": "a",
+          "text": "go"
+        },
+        {
+          "id": "b",
+          "text": "goes"
+        },
+        {
+          "id": "c",
+          "text": "have gone"
+        },
+        {
+          "id": "d",
+          "text": "went"
+        }
+      ],
+      "answer_key": {
+        "option_id": "d"
+      },
+      "explanation": "'Last summer' es un momento terminado: pasado simple. 'Go' es irregular: went."
+    },
+    {
+      "code": "gr-a2-past-simple-3",
+      "variant_of": "gr-a2-past-simple",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "A2",
+      "prompt": "She ___ her keys yesterday, so she couldn't open the door.",
+      "options": [
+        {
+          "id": "a",
+          "text": "lost"
+        },
+        {
+          "id": "b",
+          "text": "has lost"
+        },
+        {
+          "id": "c",
+          "text": "loses"
+        },
+        {
+          "id": "d",
+          "text": "is losing"
+        }
+      ],
+      "answer_key": {
+        "option_id": "a"
+      },
+      "explanation": "Con 'yesterday' no se usa present perfect: se usa el pasado simple, lost."
+    },
+    {
+      "code": "gr-b1-second-conditional-2",
+      "variant_of": "gr-b1-second-conditional",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "B1",
+      "prompt": "If she ___ the answer, she would tell us.",
+      "options": [
+        {
+          "id": "a",
+          "text": "knows"
+        },
+        {
+          "id": "b",
+          "text": "will know"
+        },
+        {
+          "id": "c",
+          "text": "knew"
+        },
+        {
+          "id": "d",
+          "text": "would know"
+        }
+      ],
+      "answer_key": {
+        "option_id": "c"
+      },
+      "explanation": "Situación hipotética: if + pasado simple (knew), would + verbo (would tell)."
+    },
+    {
+      "code": "gr-b1-second-conditional-3",
+      "variant_of": "gr-b1-second-conditional",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "B1",
+      "prompt": "What would you do if you ___ a million dollars?",
+      "options": [
+        {
+          "id": "a",
+          "text": "won"
+        },
+        {
+          "id": "b",
+          "text": "win"
+        },
+        {
+          "id": "c",
+          "text": "will win"
+        },
+        {
+          "id": "d",
+          "text": "would win"
+        }
+      ],
+      "answer_key": {
+        "option_id": "a"
+      },
+      "explanation": "El segundo condicional no lleva 'would' después de 'if': if you won…, what would you do?"
+    },
+    {
+      "code": "gr-b2-future-perfect-2",
+      "variant_of": "gr-b2-future-perfect",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "B2",
+      "prompt": "By next June, I ___ at this company for ten years.",
+      "options": [
+        {
+          "id": "a",
+          "text": "will work"
+        },
+        {
+          "id": "b",
+          "text": "work"
+        },
+        {
+          "id": "c",
+          "text": "will have worked"
+        },
+        {
+          "id": "d",
+          "text": "have worked"
+        }
+      ],
+      "answer_key": {
+        "option_id": "c"
+      },
+      "explanation": "'By next June' mira una acción completada en un punto del futuro: futuro perfecto, will have worked."
+    },
+    {
+      "code": "gr-b2-future-perfect-3",
+      "variant_of": "gr-b2-future-perfect",
+      "type": "multiple_choice",
+      "response_format": "choice",
+      "skill_code": "grammar",
+      "level_code": "B2",
+      "prompt": "Hurry up! By the time we get to the station, the train ___.",
+      "options": [
+        {
+          "id": "a",
+          "text": "will leave"
+        },
+        {
+          "id": "b",
+          "text": "will have left"
+        },
+        {
+          "id": "c",
+          "text": "leaves"
+        },
+        {
+          "id": "d",
+          "text": "has left"
+        }
+      ],
+      "answer_key": {
+        "option_id": "b"
+      },
+      "explanation": "La salida del tren ocurrirá antes de que lleguemos: futuro perfecto, will have left."
+    },
+    {
+      "code": "gr-a2-since-for-2",
+      "variant_of": "gr-a2-since-for",
+      "type": "fill_blank",
+      "response_format": "text",
+      "skill_code": "grammar",
+      "level_code": "A2",
+      "prompt": "We have known each other ___ ten years.",
+      "options": null,
+      "answer_key": {
+        "accepted": [
+          "for"
+        ]
+      },
+      "explanation": "'For' va con una duración (ten years); 'since' con un punto de inicio (since 2015)."
+    },
+    {
+      "code": "gr-a2-since-for-3",
+      "variant_of": "gr-a2-since-for",
+      "type": "fill_blank",
+      "response_format": "text",
+      "skill_code": "grammar",
+      "level_code": "A2",
+      "prompt": "She has worked at the hospital ___ last March.",
+      "options": null,
+      "answer_key": {
+        "accepted": [
+          "since"
+        ]
+      },
+      "explanation": "'Last March' es un punto de inicio, así que se usa 'since'."
+    },
+    {
+      "code": "vo-b1-phrasal-look-for",
+      "variant_of": "vo-b1-phrasal-turn-off",
+      "type": "fill_blank",
+      "response_format": "text",
+      "skill_code": "vocabulary",
+      "level_code": "B1",
+      "prompt": "I'm ___ ___ my phone. I can't find it anywhere! (2 words)",
+      "options": null,
+      "answer_key": {
+        "accepted": [
+          "looking for"
+        ]
+      },
+      "explanation": "'Look for' significa buscar algo que no encuentras. 'Look at' es mirar."
+    },
+    {
+      "code": "vo-b1-phrasal-fill-in",
+      "variant_of": "vo-b1-phrasal-turn-off",
+      "type": "fill_blank",
+      "response_format": "text",
+      "skill_code": "vocabulary",
+      "level_code": "B1",
+      "prompt": "Can you ___ ___ this form and give it back to me? (2 words)",
+      "options": null,
+      "answer_key": {
+        "accepted": [
+          "fill in",
+          "fill out"
+        ]
+      },
+      "explanation": "'Fill in' o 'fill out' significan completar un formulario."
+    },
+    {
+      "code": "re-b1-laura-now",
+      "variant_of": "re-b1-laura-motivation",
+      "type": "comprehension",
+      "response_format": "choice",
+      "skill_code": "reading",
+      "level_code": "B1",
+      "stimulus_code": "reading-laura-remote-job",
+      "prompt": "How long does Laura need to read a report now?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Almost two hours."
+        },
+        {
+          "id": "b",
+          "text": "Thirty minutes."
+        },
+        {
+          "id": "c",
+          "text": "Twenty minutes."
+        },
+        {
+          "id": "d",
+          "text": "Six months."
+        }
+      ],
+      "answer_key": {
+        "option_id": "c"
+      },
+      "explanation": "El texto dice 'she can read a report in twenty minutes'. Treinta minutos es lo que estudia cada mañana."
+    },
+    {
+      "code": "re-b1-laura-notebook",
+      "variant_of": "re-b1-laura-motivation",
+      "type": "comprehension",
+      "response_format": "choice",
+      "skill_code": "reading",
+      "level_code": "B1",
+      "stimulus_code": "reading-laura-remote-job",
+      "prompt": "What did Laura do to learn new medical words?",
+      "options": [
+        {
+          "id": "a",
+          "text": "She took classes at the hospital."
+        },
+        {
+          "id": "b",
+          "text": "She kept a notebook with them."
+        },
+        {
+          "id": "c",
+          "text": "Her manager taught her."
+        },
+        {
+          "id": "d",
+          "text": "She moved to Toronto."
+        }
+      ],
+      "answer_key": {
+        "option_id": "b"
+      },
+      "explanation": "El texto dice 'she kept a notebook with new medical words'. Nunca se mudó: el trabajo era remoto."
+    },
+    {
+      "code": "li-a2-flight-what-happened",
+      "variant_of": "li-a2-flight-new-time",
+      "type": "comprehension",
+      "response_format": "choice",
+      "skill_code": "listening",
+      "level_code": "A2",
+      "stimulus_code": "listening-flight-change",
+      "prompt": "What happened to the original flight?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It was delayed."
+        },
+        {
+          "id": "b",
+          "text": "It left early."
+        },
+        {
+          "id": "c",
+          "text": "It was cancelled."
+        },
+        {
+          "id": "d",
+          "text": "It moved to another airport."
+        }
+      ],
+      "answer_key": {
+        "option_id": "c"
+      },
+      "explanation": "Mark dice 'your flight on Tuesday has been cancelled'. No habla de retraso ni de otro aeropuerto."
+    },
+    {
+      "code": "li-a2-flight-arrive",
+      "variant_of": "li-a2-flight-new-time",
+      "type": "comprehension",
+      "response_format": "choice",
+      "skill_code": "listening",
+      "level_code": "A2",
+      "stimulus_code": "listening-flight-change",
+      "prompt": "How early should the passenger arrive at the airport?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Two hours before departure."
+        },
+        {
+          "id": "b",
+          "text": "One hour before departure."
+        },
+        {
+          "id": "c",
+          "text": "Thirty minutes before departure."
+        },
+        {
+          "id": "d",
+          "text": "At nine thirty."
+        }
+      ],
+      "answer_key": {
+        "option_id": "a"
+      },
+      "explanation": "Mark dice 'arrive at the airport two hours before departure'. Las 9:30 es la hora del vuelo."
+    },
+    {
+      "code": "vo-a2-opposite-noisy",
+      "variant_of": "vo-a2-opposite-expensive",
+      "type": "vocabulary",
+      "response_format": "choice",
+      "skill_code": "vocabulary",
+      "level_code": "A2",
+      "prompt": "Choose the opposite of \"noisy\".",
+      "options": [
+        {
+          "id": "a",
+          "text": "loud"
+        },
+        {
+          "id": "b",
+          "text": "busy"
+        },
+        {
+          "id": "c",
+          "text": "quiet"
+        },
+        {
+          "id": "d",
+          "text": "angry"
+        }
+      ],
+      "answer_key": {
+        "option_id": "c"
+      },
+      "explanation": "'Quiet' (tranquilo, silencioso) es el opuesto de 'noisy' (ruidoso). 'Loud' es un sinónimo."
+    },
+    {
+      "code": "vo-a2-opposite-arrive",
+      "variant_of": "vo-a2-opposite-expensive",
+      "type": "vocabulary",
+      "response_format": "choice",
+      "skill_code": "vocabulary",
+      "level_code": "A2",
+      "prompt": "Choose the opposite of \"arrive\".",
+      "options": [
+        {
+          "id": "a",
+          "text": "come"
+        },
+        {
+          "id": "b",
+          "text": "leave"
+        },
+        {
+          "id": "c",
+          "text": "stay"
+        },
+        {
+          "id": "d",
+          "text": "reach"
+        }
+      ],
+      "answer_key": {
+        "option_id": "b"
+      },
+      "explanation": "'Leave' (irse, salir) es el opuesto de 'arrive' (llegar). 'Reach' significa llegar a un lugar."
+    },
+    {
+      "code": "vo-b2-ambiguous",
+      "variant_of": "vo-b2-reluctant",
+      "type": "vocabulary",
+      "response_format": "choice",
+      "skill_code": "vocabulary",
+      "level_code": "B2",
+      "prompt": "The results were so ambiguous that nobody knew what to do. \"Ambiguous\" means…",
+      "options": [
+        {
+          "id": "a",
+          "text": "unclear"
+        },
+        {
+          "id": "b",
+          "text": "surprising"
+        },
+        {
+          "id": "c",
+          "text": "disappointing"
+        },
+        {
+          "id": "d",
+          "text": "exact"
+        }
+      ],
+      "answer_key": {
+        "option_id": "a"
+      },
+      "explanation": "'Ambiguous' describe algo que se puede entender de varias formas: unclear. 'Exact' es lo contrario."
+    },
+    {
+      "code": "vo-b2-thorough",
+      "variant_of": "vo-b2-reluctant",
+      "type": "vocabulary",
+      "response_format": "choice",
+      "skill_code": "vocabulary",
+      "level_code": "B2",
+      "prompt": "She gave a thorough explanation of the problem. \"Thorough\" means…",
+      "options": [
+        {
+          "id": "a",
+          "text": "quick"
+        },
+        {
+          "id": "b",
+          "text": "polite"
+        },
+        {
+          "id": "c",
+          "text": "confusing"
+        },
+        {
+          "id": "d",
+          "text": "complete and detailed"
+        }
+      ],
+      "answer_key": {
+        "option_id": "d"
+      },
+      "explanation": "'Thorough' significa minucioso, que no deja nada por fuera: complete and detailed."
+    },
+    {
+      "code": "sp-a2-read-aloud-bakery",
+      "variant_of": "sp-a2-read-aloud-bus",
+      "type": "read_aloud",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "A2",
+      "prompt": "My sister works in a small bakery, and she gets up very early every morning.",
+      "options": null,
+      "answer_key": {
+        "target": "My sister works in a small bakery, and she gets up very early every morning."
+      },
+      "explanation": "Cuida la -s final de 'works' y 'gets'. 'Every morning' se dice de corrido, sin pausa."
+    },
+    {
+      "code": "sp-a2-read-aloud-grandparents",
+      "variant_of": "sp-a2-read-aloud-bus",
+      "type": "read_aloud",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "A2",
+      "prompt": "We visited my grandparents last Sunday and had lunch together in the garden.",
+      "options": null,
+      "answer_key": {
+        "target": "We visited my grandparents last Sunday and had lunch together in the garden."
+      },
+      "explanation": "En 'visited' la -ed suena /ɪd/ porque el verbo termina en t. Une 'had lunch' como una sola unidad."
+    },
+    {
+      "code": "sp-b1-read-aloud-subtitles",
+      "variant_of": "sp-b1-read-aloud-cooking",
+      "type": "read_aloud",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "B1",
+      "prompt": "I have been studying English for two years, and I can finally watch movies without subtitles.",
+      "options": null,
+      "answer_key": {
+        "target": "I have been studying English for two years, and I can finally watch movies without subtitles."
+      },
+      "explanation": "Present perfect continuous: 'I have been studying'. El acento cae en 'finally' y 'without subtitles'."
+    },
+    {
+      "code": "sp-b1-read-aloud-hotel",
+      "variant_of": "sp-b1-read-aloud-cooking",
+      "type": "read_aloud",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "B1",
+      "prompt": "Although the hotel was expensive, we decided to stay there because it was close to the beach.",
+      "options": null,
+      "answer_key": {
+        "target": "Although the hotel was expensive, we decided to stay there because it was close to the beach."
+      },
+      "explanation": "Haz una pausa breve después de 'expensive' (la coma) y no antes. 'Decided' termina en /ɪd/."
+    },
+    {
+      "code": "sp-b1-open-favorite-place",
+      "variant_of": "sp-b1-open-weekend",
+      "type": "open_response",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "B1",
+      "prompt": "Describe your favorite place in your city. Where is it, and why do you like it? Speak for about 30 seconds.",
+      "options": null,
+      "answer_key": {
+        "min_words": 35
+      },
+      "explanation": "Se califica con una rúbrica MCER (tarea, gramática y vocabulario) más claridad y fluidez. Usa descripciones: 'It's near…', 'There is/are…', 'I like it because…'."
+    },
+    {
+      "code": "sp-b1-open-new-skill",
+      "variant_of": "sp-b1-open-weekend",
+      "type": "open_response",
+      "response_format": "speech",
+      "skill_code": "speaking",
+      "level_code": "B1",
+      "prompt": "Tell me about a skill you would like to learn. Why is it important to you? Speak for about 30 seconds.",
+      "options": null,
+      "answer_key": {
+        "min_words": 35
+      },
+      "explanation": "Se califica con una rúbrica MCER (tarea, gramática y vocabulario) más claridad y fluidez. Usa 'I would like to…', 'because…' y un ejemplo concreto."
     }
   ]
 }

@@ -15,18 +15,20 @@ os.environ["ENV"] = "test"
 # Los tests nunca llaman a proveedores externos (ni gastan créditos), aunque .env tenga keys.
 os.environ["AI_PROVIDER"] = "mock"
 os.environ["TTS_PROVIDER"] = "none"
+os.environ["STT_PROVIDER"] = "none"
 
 import httpx  # noqa: E402
 import pytest  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 
 from app.core.db import SessionLocal, engine  # noqa: E402
+from app.core.rate_limit import ALL_LIMITERS  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Base  # noqa: E402
 from seed.seed import DATA_DIR, seed_assessment, seed_catalog  # noqa: E402
 
-STUDENT = {"email": "estudiante@globalai.demo", "password": "Demo1234!"}
-TEACHER = {"email": "profesor@globalai.demo", "password": "Demo1234!"}
+STUDENT = {"email": "estudiante@globalai.demo", "password": "Demo1234!", "accept_terms": True}
+TEACHER = {"email": "profesor@globalai.demo", "password": "Demo1234!", "accept_terms": True}
 SLUG = "placement-a1-b2"
 
 
@@ -44,6 +46,8 @@ async def database():
 
 @pytest.fixture(autouse=True)
 async def clean_attempts():
+    for limiter in ALL_LIMITERS:
+        limiter._hits.clear()
     yield
     async with engine.begin() as conn:
         await conn.execute(text("delete from attempts"))

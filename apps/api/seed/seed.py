@@ -24,6 +24,7 @@ from app.models import (
     Stimulus,
     User,
 )
+from seed.demo import seed_demo_group
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -62,9 +63,14 @@ async def seed_assessment(session: AsyncSession, path: Path) -> str:
     await upsert(session, Stimulus, data["stimuli"], "code")
     stimulus_ids = dict((await session.execute(select(Stimulus.code, Stimulus.id))).all())
 
+    # Una pregunta con "variant_of" ocupa la misma posición que su base: en cada intento se
+    # presenta solo una de ellas (ver attempt_service._build_layout).
+    positions: dict[str, int] = {}
     questions = []
     for q in data["questions"]:
         q = dict(q)
+        base = q.pop("variant_of", None)
+        positions[q["code"]] = positions[base] if base else len(set(positions.values())) + 1
         stimulus_code = q.pop("stimulus_code", None)
         q["stimulus_id"] = stimulus_ids[stimulus_code] if stimulus_code else None
         questions.append(q)
@@ -84,7 +90,7 @@ async def seed_assessment(session: AsyncSession, path: Path) -> str:
         ).all()
     )
 
-    # La composición de la evaluación se reemplaza completa (orden = orden del JSON).
+    # La composición de la evaluación se reemplaza completa (orden base = orden del JSON).
     await session.execute(
         delete(AssessmentQuestion).where(AssessmentQuestion.assessment_id == assessment_id)
     )
@@ -92,10 +98,10 @@ async def seed_assessment(session: AsyncSession, path: Path) -> str:
         AssessmentQuestion(
             assessment_id=assessment_id,
             question_id=question_ids[q["code"]],
-            position=i,
+            position=positions[q["code"]],
             points=1,
         )
-        for i, q in enumerate(questions, start=1)
+        for q in questions
     )
     return data["assessment"]["slug"]
 
@@ -107,6 +113,7 @@ async def main() -> None:
             if path.name != "catalog.json":
                 slug = await seed_assessment(session, path)
                 print(f"✓ assessment {slug}")
+        print(f"✓ grupo demo: {await seed_demo_group(session, 'placement-a1-b2')} intentos")
     await engine.dispose()
     print("✓ seed completo")
 

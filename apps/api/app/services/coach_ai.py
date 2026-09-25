@@ -73,6 +73,8 @@ def _answer_text(item) -> str:
     response = item.response or {}
     if "text" in response:
         return response["text"] or "(vacío)"
+    if "transcript" in response:
+        return f"(dijo en voz alta) {response['transcript']} · puntaje oral {response['score']:.0%}"
     options = {o.id: o.text for o in item.question.options or []}
     return options.get(response.get("option_id"), "(sin responder)")
 
@@ -129,7 +131,16 @@ async def generate_feedback(data: AttemptResultOut) -> str:
 # ponytail: caché en memoria por proceso; con varias réplicas, guardar el mp3 en S3/R2.
 _audio_cache: OrderedDict[str, bytes] = OrderedDict()
 _AUDIO_CACHE_SIZE = 50
-DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # voz prediseñada de ElevenLabs, soporta español
+DEFAULT_VOICE_ID = "ihKwLOjVUMG4lgUI6meZ"  # voz en español del feedback
+# Glo: cálido pero adulto y claro. Estabilidad alta = dicción pareja; style moderado = amigable sin
+# sobreactuar; speed < 1 = el estudiante alcanza a oír los ejemplos en inglés.
+VOICE_SETTINGS = {
+    "stability": 0.55,
+    "similarity_boost": 0.8,
+    "style": 0.25,
+    "use_speaker_boost": True,
+    "speed": 0.95,
+}
 
 
 async def synthesize(key: str, text: str) -> bytes | None:
@@ -147,7 +158,11 @@ async def synthesize(key: str, text: str) -> bytes | None:
                 f"https://api.elevenlabs.io/v1/text-to-speech/{voice}",
                 params={"output_format": "mp3_44100_128"},
                 headers={"xi-api-key": settings.elevenlabs_api_key},
-                json={"text": text, "model_id": "eleven_multilingual_v2"},
+                json={
+                    "text": text,
+                    "model_id": "eleven_multilingual_v2",
+                    "voice_settings": VOICE_SETTINGS,
+                },
             )
             response.raise_for_status()
     except httpx.HTTPError as exc:

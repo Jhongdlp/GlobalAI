@@ -14,11 +14,14 @@ class QuestionType(StrEnum):
     FILL_BLANK = "fill_blank"
     COMPREHENSION = "comprehension"
     VOCABULARY = "vocabulary"
+    READ_ALOUD = "read_aloud"  # Speaking: leer en voz alta el texto del enunciado
+    OPEN_RESPONSE = "open_response"  # Speaking: responder libremente a una tarea
 
 
 class ResponseFormat(StrEnum):
     CHOICE = "choice"  # el estudiante elige una opción
     TEXT = "text"  # el estudiante escribe la respuesta
+    SPEECH = "speech"  # el estudiante graba su voz; se califica al subir el audio
 
 
 class StimulusKind(StrEnum):
@@ -53,6 +56,7 @@ class Question(UUIDPk, Timestamps, Base):
     options: Mapped[list[dict[str, str]] | None] = mapped_column(JSONB)
     # SENSIBLE: nunca se serializa hacia el cliente antes del envío del intento.
     # choice -> {"option_id": "b"} | text -> {"accepted": ["since"]}
+    # speech -> read_aloud: {"target": "..."} | open_response: {"min_words": 30}
     answer_key: Mapped[dict[str, Any]] = mapped_column(JSONB)
     explanation: Mapped[str | None] = mapped_column(Text)
     stimulus_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("stimuli.id"))

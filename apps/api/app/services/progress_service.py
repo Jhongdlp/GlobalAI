@@ -1,8 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain import courses
 from app.models import Assessment, Attempt, AttemptStatus, Level, Skill, User
-from app.schemas.attempt import LevelOut
+from app.schemas.attempt import LevelOut, RecommendationOut
 from app.schemas.progress import (
     AttemptSummaryOut,
     ProgressOut,
@@ -14,7 +15,7 @@ HISTORY_LIMIT = 50
 FINISHED = (AttemptStatus.SUBMITTED, AttemptStatus.EXPIRED)
 
 
-def _skill_pcts(attempt: Attempt) -> dict[str, float]:
+def skill_pcts(attempt: Attempt) -> dict[str, float]:
     return {code: v["pct"] for code, v in (attempt.skill_breakdown or {}).items() if code[0] != "_"}
 
 
@@ -40,7 +41,7 @@ async def get_progress(session: AsyncSession, user: User) -> ProgressOut:
             score_pct=float(a.score_pct),
             correct_count=a.correct_count,
             suggested_level=a.suggested_level_code,
-            skills=_skill_pcts(a),
+            skills=skill_pcts(a),
         )
         for a, title in rows
     ]
@@ -78,6 +79,9 @@ async def get_progress(session: AsyncSession, user: User) -> ProgressOut:
         current_level=LevelOut(code=level.code, name=level.name, description=level.description),
         skills=skills,
         attempts=attempts,
+        recommendation=RecommendationOut(
+            **courses.recommend(level.code, [(s.name, s.latest_pct) for s in skills])
+        ),
     )
 
 

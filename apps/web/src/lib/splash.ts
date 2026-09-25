@@ -10,7 +10,8 @@ const SPEED = reduced ? 100 : 0.7; // progreso mostrado por segundo: el llenado 
  * Estilos en src/styles/glo.css (.splash).
  */
 export function splash(word: string | null, from = 0) {
-  if (!word) return { progress() {}, done: async () => {}, cancel() {} };
+  const reveal = () => document.documentElement.classList.remove("splashing"); // ver Base.astro
+  if (!word) return reveal(), { progress() {}, done: async () => {}, cancel() {} };
 
   const el = document.createElement("div");
   el.className = "splash";
@@ -21,6 +22,7 @@ export function splash(word: string | null, from = 0) {
     <span class="sr-only">Cargando…</span>`;
   el.querySelector(".splash-word")!.setAttribute("lang", "en");
   document.body.append(el);
+  reveal();
   const pct = el.querySelector<HTMLElement>(".splash-pct")!;
   let target = from; // progreso real (from: donde lo dejó la página anterior)
   let shown = from; // progreso mostrado: persigue al real a velocidad legible

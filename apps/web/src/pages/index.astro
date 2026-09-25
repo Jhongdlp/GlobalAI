@@ -165,7 +165,8 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     box-shadow:
       0 1px 0 rgb(255 255 255 / 0.6) inset,
       0 40px 80px -30px rgb(0 0 0 / 0.65);
-    animation: card-in 0.9s 0.15s var(--ease-out) both;
+    /* backwards, no both: al terminar se suelta la capa animada (Chrome+Vulkan la dejaba en opacidad 0 sin repintar). */
+    animation: card-in 0.9s 0.15s var(--ease-out) backwards;
   }
   /* En oscuro: tarjeta índigo elevada sobre la medianoche, con filo de luz en vez de sombra blanca. */
   :global([data-theme="dark"]) .panel {

@@ -25,6 +25,13 @@ const { title } = Astro.props;
         let saved;
         try { saved = localStorage.theme; } catch {}
         apply(saved === "dark" ? "dark" : "light");
+        // Si esta página abrirá la pantalla de carga (ver lib/splash.ts), el contenido no se pinta antes que ella.
+        let splashing = location.pathname.startsWith("/results");
+        try { splashing ||= !!sessionStorage.getItem("ga:splash") || (location.pathname === "/" && !sessionStorage.getItem("ga:seen")); } catch {}
+        if (splashing) {
+          root.classList.add("splashing");
+          setTimeout(() => root.classList.remove("splashing"), 4000); // red de seguridad si el script falla
+        }
         // Revela el tema nuevo en círculo desde el punto (x, y) del clic y guarda la elección.
         window.toggleTheme = (x = innerWidth / 2, y = 0) => {
           const next = root.dataset.theme === "dark" ? "light" : "dark";

@@ -21,5 +21,6 @@ dist/
 .idea/
 .vscode/
 
-# Enunciado de la prueba (documento de la empresa)
+# Enunciado de la prueba (documento de la empresa); los PDFs de la entrega sí se suben
 *.pdf
+!docs/*.pdf

@@ -33,6 +33,9 @@ const POSES: Record<CoachState, Pose> = {
   success: { yaw: 0, pitch: -0.1, tilt: 0, gx: 0, gy: 0, eyeL: 0, eyeR: 0, brow: 0.8, browAng: 0, smile: 1, open: 0, grin: 1, wag: 1, ...CHEER },
 };
 
+// En celular la tarjeta/panel queda abajo de Glo (no a su derecha): mira al frente en vez de a la derecha.
+const PRESENT_FRONT: Pose = { yaw: 0, pitch: 0, tilt: 0, gx: 0, gy: 0, eyeL: 1, eyeR: 1, brow: 0.5, browAng: 0, smile: 0.9, open: 0, grin: 0.4, wag: 0.3, ...REST };
+
 const RED = "#ff4b3a"; // coral propio de Glo
 const CREAM = "#fff4e0";
 const SHAPE = new THREE.Vector3(1.12, 0.9, 0.88); // esfera → globo de diálogo "gordito"
@@ -47,6 +50,8 @@ const onSphere = (lat: number, lon: number, r = 1) => {
 
 export function createCoach(canvas: HTMLCanvasElement) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wide = typeof matchMedia === "function" ? matchMedia("(min-width: 900px)") : { matches: true };
+  const poseFor = (st: CoachState): Pose => (st === "present" && !wide.matches ? PRESENT_FRONT : POSES[st]);
   // En pantallas HiDPI el MSAA sobra (los píxeles ya son finos) y 1.5x basta para un personaje plano.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: devicePixelRatio < 1.5, alpha: true, powerPreference: "low-power" });
   const baseRatio = Math.min(devicePixelRatio, 1.5);
@@ -318,7 +323,6 @@ export function createCoach(canvas: HTMLCanvasElement) {
   resize();
 
   let state: CoachState = "idle";
-  let target = POSES.idle;
   const cur: Pose = { ...POSES.idle };
   let caret = 0.5; // 0..1: dónde está el cursor en el correo → las pupilas lo siguen
   let talk = 0; // segundos que le quedan "hablando" (boca animada)
@@ -365,6 +369,7 @@ export function createCoach(canvas: HTMLCanvasElement) {
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
     const k = reduced ? 1 : 1 - Math.exp(-dt * 8);
+    const target = poseFor(state);
     for (const key in cur) cur[key as keyof Pose] += (target[key as keyof Pose] - cur[key as keyof Pose]) * k;
 
     if (!reduced) {
@@ -491,7 +496,6 @@ export function createCoach(canvas: HTMLCanvasElement) {
       if (next === "error" && !reduced) nope = NOPE;
       if (next === "success" && !reduced) jump = 1.2;
       state = next;
-      target = POSES[next];
     },
     /** Cada tecla: pequeño rebote y una mano "teclea". */
     pulse() {

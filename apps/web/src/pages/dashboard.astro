@@ -1200,6 +1200,71 @@ const LEVELS = [
     location.replace("/");
   });
 
+  // ---------- Sonidos sintetizados (Web Audio API) ----------
+  let soundCtx: AudioContext | undefined;
+  function getSoundCtx() {
+    try {
+      soundCtx ??= new AudioContext();
+      if (soundCtx.state === "suspended") soundCtx.resume();
+      return soundCtx;
+    } catch {
+      return null;
+    }
+  }
+
+  // Sonido al repetir prueba: enérgico, motivador y breve (Fa5 → Sol5 → Do6)
+  function testStartChime() {
+    const ctx = getSoundCtx();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const notes = [
+      { f: 698.46, d: 0.00, gain: 0.11, decay: 0.18 }, // Fa5
+      { f: 783.99, d: 0.07, gain: 0.12, decay: 0.18 }, // Sol5
+      { f: 1046.50, d: 0.14, gain: 0.14, decay: 0.35 }, // Do6
+      { f: 523.25, d: 0.14, gain: 0.06, decay: 0.30 }, // Base Do5
+    ];
+    notes.forEach(({ f, d, gain, decay }) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = f;
+      const s = t + d;
+      g.gain.setValueAtTime(0, s);
+      g.gain.linearRampToValueAtTime(gain, s + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.001, s + decay);
+      o.connect(g).connect(ctx.destination);
+      o.start(s);
+      o.stop(s + decay + 0.05);
+    });
+  }
+
+  // Sonido para la mini clase de pronunciación: dulce, curioso y lúdico (Do5 → Mi5 → La5 → Do6)
+  function practiceChime() {
+    const ctx = getSoundCtx();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const notes = [
+      { f: 523.25, d: 0.00, gain: 0.10, decay: 0.22 }, // Do5
+      { f: 659.25, d: 0.07, gain: 0.11, decay: 0.22 }, // Mi5
+      { f: 880.00, d: 0.14, gain: 0.12, decay: 0.25 }, // La5
+      { f: 1046.50, d: 0.22, gain: 0.13, decay: 0.45 }, // Do6
+      { f: 659.25, d: 0.22, gain: 0.05, decay: 0.40 }, // Armónico suave
+    ];
+    notes.forEach(({ f, d, gain, decay }) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = f;
+      const s = t + d;
+      g.gain.setValueAtTime(0, s);
+      g.gain.linearRampToValueAtTime(gain, s + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.001, s + decay);
+      o.connect(g).connect(ctx.destination);
+      o.start(s);
+      o.stop(s + decay + 0.05);
+    });
+  }
+
   let pledgeHref = "";
   $("pledge-ok").addEventListener("change", (e) => {
     $<HTMLButtonElement>("pledge-go").disabled = !(e.target as HTMLInputElement).checked;
@@ -1249,10 +1314,11 @@ const LEVELS = [
           : [`Hi ${first}! Ready for your *first* test?`, `¡Hola, ${first}! ¿Empezamos tu primera evaluación?`];
 
     const cta = box.querySelector<HTMLAnchorElement>(".cta")!;
-    // Compromiso de honestidad solo al empezar un intento nuevo; reanudar entra directo.
+    // Compromiso de honestidad solo al empezar un intento nuevo; reanudar entra directo sin sonido ni espera.
     if (!resuming) {
       cta.addEventListener("click", (e) => {
         e.preventDefault();
+        if (a.attempts_used) testStartChime();
         pledgeHref = cta.href;
         $<HTMLInputElement>("pledge-ok").checked = false;
         $<HTMLButtonElement>("pledge-go").disabled = true;
@@ -1519,6 +1585,7 @@ const LEVELS = [
   $("pr-again").addEventListener("click", () => startPractice($("practice").dataset.lesson));
 
   async function startPractice(exclude?: string) {
+    practiceChime();
     const me = ++run;
     talking = true;
     if (!prStage.isOpen) prStage.open(document.querySelector<HTMLElement>(".practice-btn") ?? $("assessment"));

@@ -14,8 +14,10 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
       <div class="user">
         <span class="who" id="user-name"></span>
         <ThemeToggle />
-        <button class="link" id="export" type="button">Exportar CSV</button>
-        <button class="link" id="logout" type="button">Cerrar sesión</button>
+        <div class="user-actions">
+          <button class="link" id="export" type="button">Exportar CSV</button>
+          <button class="link" id="logout" type="button">Cerrar sesión</button>
+        </div>
       </div>
     </header>
 
@@ -145,6 +147,7 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     gap: clamp(10px, 1.8vh, 22px);
     min-height: 100dvh;
     padding: clamp(16px, 2.2vw, 32px) clamp(16px, 3vw, 48px);
+    overflow-x: clip;
   }
 
   .topbar {
@@ -165,6 +168,11 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     align-items: center;
     gap: 20px;
     font-size: 0.85rem;
+  }
+  .user-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
   }
   .who {
     color: var(--muted);
@@ -1177,12 +1185,25 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
       flex: 1;
     }
   }
+  @media (max-width: 960px) {
+    .who,
+    .role {
+      display: none;
+    }
+  }
   @media (max-width: 760px) {
+    .topbar {
+      flex-wrap: wrap;
+      gap: 12px 16px;
+    }
     .brand,
     .link {
       white-space: nowrap;
     }
     .user {
+      gap: 14px;
+    }
+    .user-actions {
       gap: 14px;
     }
     tbody :global(.mail) {
@@ -1234,6 +1255,28 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     th button,
     th:not(:has(button)) {
       padding-inline: 8px;
+    }
+  }
+  @media (max-width: 640px) {
+    .user {
+      display: contents;
+    }
+    :global(.theme) {
+      order: 1;
+      margin-left: auto;
+    }
+    .user-actions {
+      order: 2;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .user-actions .link {
+      padding: 4px 0;
+      min-height: 36px;
     }
   }
 </style>

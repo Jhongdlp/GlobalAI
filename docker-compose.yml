@@ -14,13 +14,22 @@ services:
 
   api:
     build: ./apps/api
-    env_file: ./apps/api/.env.example
+    env_file:
+      - ./apps/api/.env.example
+      # Opcional: keys de IA y voz. Si existe, sus valores reemplazan a los del ejemplo.
+      - path: ./apps/api/.env
+        required: false
     environment:
       DATABASE_URL: postgresql+asyncpg://globalai:globalai@db:5432/globalai
     command: sh -c "alembic upgrade head && python -m seed.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     ports: ["8000:8000"]
     depends_on:
       db: { condition: service_healthy }
+
+  web:
+    build: ./apps/web
+    ports: ["8080:80"]
+    depends_on: [api]
 
 volumes:
   pgdata:

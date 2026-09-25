@@ -55,6 +55,19 @@ const { title } = Astro.props;
       href="https://fonts.googleapis.com/css2?family=Lexend:wght@400..700&display=swap"
     />
     <title>{title}</title>
+    <!-- Vista previa al compartir el enlace (WhatsApp, Slack, X…). Las URLs deben ser absolutas. -->
+    <meta name="description" content="Descubre tu nivel de inglés MCER con Glo en 25 minutos. Resultados al instante por habilidad." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Global AI" />
+    <meta property="og:title" content="What's your English level? · Global AI" />
+    <meta property="og:description" content="Descubre tu nivel MCER con Glo en 25 minutos. Resultados al instante." />
+    <meta property="og:url" content="https://glob.jhongdlp.com/" />
+    <meta property="og:image" content="https://glob.jhongdlp.com/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Glo, la mascota coral de Global AI, junto al título What's your English level?" />
+    <meta property="og:locale" content="es_ES" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <slot />

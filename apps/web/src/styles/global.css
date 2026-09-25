@@ -1,4 +1,4 @@
-/* Tokens: papel cálido + un único acento (azul tinta de bolígrafo). Solo tema claro. */
+/* Tokens: papel cálido + un único acento (azul tinta de bolígrafo). El tema oscuro redefine solo estos tokens. */
 :root {
   --bg: #f6f1e7;
   --surface: #fffdf8;
@@ -12,10 +12,38 @@
   --danger-soft: #fbe4e2;
   --glo: #ff4b3a; /* coral de Glo, la mascota */
   --stage: #16205a; /* azul tinta profundo para el escenario del coach */
+  --paper: #f6f1e7; /* texto sobre el escenario: no cambia con el tema */
+  --ok: #1f7a4d;
+  --warn: #8a5a00;
+  --warn-line: #d9a400;
+  --shadow: rgb(31 27 22);
+  --grain: 0.3;
   --radius: 10px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   color-scheme: light;
+}
+
+/* Tema oscuro: "papel de noche". Carbón cálido (no negro puro, que vibra con el texto claro),
+   tinta color papel y un azul más luminoso para mantener contraste AA sobre fondo oscuro.
+   Siempre arranca en claro; lo activa el conmutador y la elección queda guardada (Base.astro). */
+:root[data-theme="dark"] {
+  --bg: #15130f;
+  --surface: #1e1b16;
+  --ink: #eee7d9;
+  --muted: #a89e8d;
+  --line: #36302a;
+  --accent: #8d9cff;
+  --accent-ink: #10143a;
+  --accent-soft: #252b52;
+  --danger: #ff8f85;
+  --danger-soft: #3d1f1c;
+  --stage: #0b1030; /* escena de medianoche: más profunda que en claro */
+  --ok: #72d3a2;
+  --warn: #f0c35f;
+  --shadow: rgb(0 0 0);
+  --grain: 0.5;
+  color-scheme: dark;
 }
 
 
@@ -47,8 +75,10 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 100;
-  opacity: 0.45;
-  mix-blend-mode: multiply;
+  /* Sin mix-blend-mode: fundir la capa a pantalla completa con el WebGL de Glo costaba cada frame.
+     Capa propia (translateZ) → se rasteriza una vez y el compositor solo la superpone. */
+  opacity: var(--grain);
+  transform: translateZ(0);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.24 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -81,4 +111,37 @@ body::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* En oscuro el grano es claro: el ruido oscuro desaparecería sobre el carbón. */
+:root[data-theme="dark"] body::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.95 0 0 0 0 0.86 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Cambio de tema: el nuevo se revela en círculo desde el botón (ver Base.astro). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Barra de scroll integrada: fina, pulgar coral de Glo, sin carril visible. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--glo) 75%, transparent) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--glo) 75%, transparent) padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--glo);
 }

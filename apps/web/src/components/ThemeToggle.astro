@@ -1,0 +1,55 @@
+<!-- Conmutador claro/oscuro. El estado vive en <html data-theme> (script de Base.astro). -->
+<button class="theme" type="button" aria-label="Modo oscuro" onclick="toggleTheme(event.clientX, event.clientY)">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="8.5"></circle>
+    <path d="M12 3.5a8.5 8.5 0 0 1 0 17z"></path>
+  </svg>
+</button>
+
+<script is:inline>
+  // aria-pressed refleja el tema real (también si cambia el sistema).
+  (() => {
+    const sync = () => document.querySelectorAll(".theme").forEach((b) => b.setAttribute("aria-pressed", String(document.documentElement.dataset.theme === "dark")));
+    sync();
+    new MutationObserver(sync).observe(document.documentElement, { attributeFilter: ["data-theme"] });
+  })();
+</script>
+
+<style>
+  .theme {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-left: auto;
+    flex: none;
+    padding: 0;
+    border: 1.5px solid var(--line);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      background-color 0.2s;
+  }
+  .theme:hover {
+    border-color: var(--ink);
+  }
+  .theme svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    transition: rotate 0.6s var(--ease-spring);
+  }
+  .theme path {
+    fill: currentColor;
+    stroke: none;
+  }
+  /* La mitad llena gira: la misma forma dice "claro" y "oscuro". */
+  :global([data-theme="dark"]) .theme svg {
+    rotate: 180deg;
+  }
+</style>

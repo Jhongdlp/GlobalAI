@@ -13,7 +13,33 @@ const { title } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f6f1e7" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Tema antes del primer pintado (sin destello). Siempre claro salvo que el usuario haya elegido oscuro. -->
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        const apply = (theme) => {
+          root.dataset.theme = theme;
+          document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#15130f" : "#f6f1e7");
+        };
+        let saved;
+        try { saved = localStorage.theme; } catch {}
+        apply(saved === "dark" ? "dark" : "light");
+        // Revela el tema nuevo en círculo desde el punto (x, y) del clic y guarda la elección.
+        window.toggleTheme = (x = innerWidth / 2, y = 0) => {
+          const next = root.dataset.theme === "dark" ? "light" : "dark";
+          const swap = () => { try { localStorage.theme = next; } catch {} apply(next); };
+          if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return swap();
+          const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+          document.startViewTransition(swap).ready.then(() =>
+            root.animate(
+              { clipPath: [`circle(0 at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+              { duration: 550, easing: "cubic-bezier(0.22, 1, 0.36, 1)", pseudoElement: "::view-transition-new(root)" },
+            ),
+          );
+        };
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,5 +51,6 @@ const { title } = Astro.props;
   </head>
   <body>
     <slot />
+    {import.meta.env.PROD && <script is:inline>navigator.serviceWorker?.register("/sw.js")</script>}
   </body>
 </html>

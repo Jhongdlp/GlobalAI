@@ -1,0 +1,407 @@
+/* Lenguaje visual compartido de "Glo habla": escena nocturna, tipografía cinética y ráfaga de "hola".
+   Global (no scoped) porque las palabras y la ráfaga se crean desde JS (src/lib/glo.ts). */
+
+.night {
+  --night: var(--stage);
+  color: var(--paper);
+  background:
+    radial-gradient(circle at var(--glow-x, 40%) var(--glow-y, 64%), rgb(255 75 58 / 0.22), transparent 36%),
+    linear-gradient(170deg, color-mix(in srgb, var(--night) 80%, #3a4bd0), var(--night) 55%, color-mix(in srgb, var(--night) 75%, black));
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: inherit;
+  text-decoration: none;
+}
+/* Marca: Glo en miniatura (el mismo SVG que el favicon). */
+.mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  background: url(/favicon.svg) center / contain no-repeat;
+}
+
+/* Comilla gigante: ornamento tipográfico que rima con el mechón de Glo. Va en un contenedor relative. */
+.quote-mark::before {
+  content: "\201C";
+  position: absolute;
+  top: clamp(-40px, -4vh, 0px);
+  left: -0.06em;
+  font-size: clamp(14rem, 30vw, 26rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--glo);
+  opacity: 0.12;
+  translate: calc(var(--px, 0) * -26px) calc(var(--py, 0) * -18px);
+  transition: translate 0.9s var(--ease-out);
+  pointer-events: none;
+}
+
+/* Lo que dice Glo, en tamaño póster. Cada página ajusta font-size y max-width. */
+.say {
+  position: relative;
+  margin: 0;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  translate: calc(var(--px, 0) * -10px) calc(var(--py, 0) * -6px);
+  transition: translate 0.9s var(--ease-out);
+}
+.say .w {
+  display: inline-block;
+  overflow: clip;
+  overflow-clip-margin: 0.12em;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+  vertical-align: top;
+}
+.say .w > span {
+  display: inline-block;
+  animation: glo-word 0.7s calc(var(--i) * 0.07s) var(--ease-out) both;
+}
+.say .hi {
+  color: var(--glo);
+  text-decoration: underline wavy var(--glo);
+  text-decoration-thickness: 0.055em;
+  text-underline-offset: 0.14em;
+}
+.say-es {
+  position: relative;
+  max-width: 30ch;
+  margin: 20px 0 0;
+  font-size: 1rem;
+  opacity: 0.7;
+}
+.say-es.in {
+  animation: glo-fade 0.6s 0.35s var(--ease-out) both;
+}
+/* Atribución estilo cita, no una "insignia". */
+.by {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+.by::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--glo);
+}
+
+/* Ráfaga de "hola" al tocar a Glo. */
+.hello-pop {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  font: 700 1.1rem "Lexend", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--pop, var(--paper)); /* cada página elige el color que contrasta con su fondo */
+  translate: -50% -50%;
+  animation: glo-pop 1.1s var(--ease-out) forwards;
+}
+.hello-pop:nth-child(odd) {
+  color: var(--glo);
+}
+.hello-ring {
+  position: fixed;
+  z-index: 50;
+  width: 24px;
+  aspect-ratio: 1;
+  border: 2px solid var(--glo);
+  border-radius: 50%;
+  pointer-events: none;
+  translate: -50% -50%;
+  animation: glo-ring 0.6s var(--ease-out) forwards;
+}
+
+@keyframes glo-word {
+  from {
+    translate: 0 105%;
+  }
+}
+@keyframes glo-fade {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+@keyframes glo-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+    translate: 0 40px;
+  }
+}
+@keyframes glo-pop {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  25% {
+    opacity: 1;
+    scale: 1.1;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.9;
+    transform: translate(var(--x), var(--y)) rotate(var(--r));
+  }
+}
+@keyframes glo-ring {
+  to {
+    opacity: 0;
+    scale: 7;
+  }
+}
+
+/* Pantalla de carga (src/lib/splash.ts): Glo gris que se llena de color + "Loading" en ola. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  background: var(--bg);
+  transition:
+    opacity 0.5s var(--ease-out),
+    scale 0.5s var(--ease-out);
+}
+.splash.out {
+  opacity: 0;
+  scale: 1.04;
+  pointer-events: none;
+}
+.splash canvas {
+  width: min(62vw, 280px);
+  aspect-ratio: 1;
+  opacity: 0;
+  scale: 0.85;
+  transition:
+    opacity 0.5s var(--ease-out),
+    scale 0.6s var(--ease-spring);
+}
+.splash.has-glo canvas {
+  opacity: 1;
+  scale: 1;
+}
+.splash-word {
+  display: flex;
+  margin: 8px 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.splash-word span {
+  animation: splash-wave 1.4s calc(var(--i) * 0.08s) ease-in-out infinite;
+}
+.splash-pct {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+@keyframes splash-wave {
+  0%,
+  60%,
+  100% {
+    translate: 0 0;
+    color: var(--ink);
+  }
+  25% {
+    translate: 0 -8px;
+    color: var(--glo);
+  }
+}
+/* Escenario de voz (src/lib/stage.ts): Glo vuela al centro sobre un velo de papel; anillos con el volumen,
+   subtítulos y, en el acto 2, la tarjeta que presenta a su derecha (en móvil, debajo). */
+canvas.center-stage {
+  position: relative;
+  z-index: 70;
+}
+.spotlight {
+  --amp: 0;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  justify-items: center;
+  padding: 6vh 20px calc(28px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-out);
+}
+.spotlight.on {
+  opacity: 1;
+}
+.sp-ring {
+  position: relative;
+  align-self: center;
+  width: min(46vh, 80vw, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.sp-ring::before,
+.sp-ring::after {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border: 2px solid var(--glo);
+  border-radius: 50%;
+  opacity: calc(var(--amp) * 1.3);
+  scale: calc(1 + var(--amp) * 0.25);
+}
+.sp-ring::after {
+  opacity: calc(var(--amp) * 0.7);
+  scale: calc(1.1 + var(--amp) * 0.45);
+}
+.sp-rec {
+  width: min(100%, 400px);
+  margin-bottom: 18px;
+  text-align: left;
+  animation: stage-card-in 0.8s var(--ease-spring) both;
+}
+.spotlight .sp-rec [data-stage-hide] {
+  display: none;
+}
+.spotlight.act2 .sp-ring {
+  width: min(24vh, 46vw, 240px);
+}
+@media (min-width: 900px) {
+  .spotlight.act2 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr auto auto;
+    column-gap: clamp(24px, 4vw, 64px);
+  }
+  .spotlight.act2 .sp-ring {
+    grid-row: 1;
+    justify-self: end;
+    width: min(40vh, 34vw, 380px);
+  }
+  .spotlight.act2 .sp-rec {
+    grid-row: 1;
+    align-self: center;
+    justify-self: start;
+    margin: 0;
+  }
+  .spotlight.act2 .sp-caption,
+  .spotlight.act2 .sp-ui {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+}
+.sp-caption {
+  min-height: 3.2em;
+  max-width: 32ch;
+  margin: 0 0 22px;
+  font-size: clamp(1.1rem, 2.4vw, 1.45rem);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  text-align: center;
+}
+.sp-caption small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.62em;
+  font-weight: 400;
+  color: var(--muted);
+}
+.sp-caption em {
+  font-style: normal;
+  color: var(--glo);
+}
+/* Escenario interactivo (práctica): el panel es real; en pantallas bajas se desplaza. */
+.sp-live {
+  overflow-y: auto;
+}
+.sp-live .sp-caption {
+  margin: 14px 0 0;
+}
+@media (max-width: 899px) {
+  .sp-live {
+    grid-template-rows: auto auto auto;
+    align-content: start;
+  }
+  .sp-live .sp-caption {
+    grid-row: 2;
+    min-height: 0;
+    margin: 0 0 14px;
+  }
+}
+.sp-caption.in {
+  animation: glo-fade 0.4s var(--ease-out);
+}
+.sp-ui {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 440px);
+}
+.sp-toggle,
+.sp-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.sp-toggle {
+  background: var(--glo);
+  color: #fff;
+}
+.sp-toggle svg {
+  width: 20px;
+  fill: currentColor;
+}
+.sp-close {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.sp-close svg {
+  width: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.sp-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.sp-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--ink);
+  transition: width 0.25s linear;
+}
+
+
+@keyframes stage-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94) rotate(-2deg);
+  }
+}

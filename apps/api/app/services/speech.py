@@ -19,7 +19,7 @@ from app.domain.speaking import (
     words_from_stt,
 )
 from app.models import QuestionType
-from app.services.coach_ai import get_provider
+from app.services.coach_ai import PROVIDER_ERRORS, get_provider
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ async def rate_open_response(task: str, transcript: str) -> dict[str, Any] | Non
         return None
     try:
         text = await provider.complete(RUBRIC_SYSTEM, f"Tarea: {task}\nTranscripción: {transcript}")
-    except (httpx.HTTPError, KeyError, IndexError) as exc:
+    except PROVIDER_ERRORS as exc:
         log.warning("AI rubric provider failed, using heuristic: %s", exc)
         return None
     return parse_rubric(text)
@@ -128,7 +128,7 @@ async def chat_reply(turns: list[str], closing: bool) -> dict[str, str | None]:
             )
             if parsed:
                 return parsed
-        except (httpx.HTTPError, KeyError, IndexError) as exc:
+        except PROVIDER_ERRORS as exc:
             log.warning("AI chat provider failed, using template: %s", exc)
     reply = (
         "Great job today! Keep practicing and see you soon."

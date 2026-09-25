@@ -1,7 +1,8 @@
 """English Coach: feedback educativo con IA, desacoplado del proveedor.
 
-El resto del sistema solo conoce `generate_feedback()` y `synthesize()`. Cambiar OpenAI por
-Claude (u otro modelo) = una clase con `complete()` + `AI_PROVIDER` en el entorno.
+El resto del sistema solo conoce `generate_feedback()` y `synthesize()`. El proveedor se elige
+solo con el .env: `AI_PROVIDER=anthropic|openai|mock`; con `openai` + `OPENAI_BASE_URL` sirve
+cualquier API compatible (Groq, OpenRouter, Ollama, Gemini). Otro SDK = una clase con `complete()`.
 Si el proveedor falla o no hay key, se usa un feedback por plantilla: el estudiante
 siempre recibe una respuesta y la IA nunca bloquea la entrega de resultados.
 
@@ -12,6 +13,7 @@ import logging
 from collections import OrderedDict
 from typing import Protocol
 
+import anthropic
 import httpx
 
 from app.core.config import get_settings
@@ -35,14 +37,15 @@ class CoachProvider(Protocol):
 
 
 class OpenAIProvider:
-    def __init__(self, api_key: str, model: str):
+    def __init__(self, api_key: str, model: str, base_url: str):
         self.api_key = api_key
         self.model = model
+        self.base_url = base_url.rstrip("/")
 
     async def complete(self, system: str, prompt: str) -> str:
         async with httpx.AsyncClient(timeout=25) as client:
             response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
+                f"{self.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={
                     "model": self.model,
@@ -58,10 +61,36 @@ class OpenAIProvider:
             return response.json()["choices"][0]["message"]["content"].strip()
 
 
+class AnthropicProvider:
+    def __init__(self, api_key: str, model: str):
+        self.client = anthropic.AsyncAnthropic(api_key=api_key, timeout=30, max_retries=1)
+        self.model = model
+
+    async def complete(self, system: str, prompt: str) -> str:
+        # Solo parámetros que acepta cualquier modelo Claude (sin temperature: los actuales la
+        # rechazan), así cambiar ANTHROPIC_MODEL en el .env nunca rompe la llamada.
+        message = await self.client.messages.create(
+            model=self.model,
+            max_tokens=16000,
+            system=system,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = "".join(b.text for b in message.content if b.type == "text").strip()
+        if message.stop_reason == "refusal" or not text:
+            raise ValueError(f"Respuesta vacía del modelo (stop_reason={message.stop_reason})")
+        return text
+
+
+# Fallas de cualquier proveedor: quien llama cae a la plantilla o a la heurística.
+PROVIDER_ERRORS = (httpx.HTTPError, anthropic.APIError, KeyError, IndexError, ValueError)
+
+
 def get_provider() -> CoachProvider | None:
-    settings = get_settings()
-    if settings.ai_provider == "openai" and settings.openai_api_key:
-        return OpenAIProvider(settings.openai_api_key, settings.openai_model)
+    s = get_settings()
+    if s.ai_provider == "openai" and s.openai_api_key:
+        return OpenAIProvider(s.openai_api_key, s.openai_model, s.openai_base_url)
+    if s.ai_provider == "anthropic" and s.anthropic_api_key:
+        return AnthropicProvider(s.anthropic_api_key, s.anthropic_model)
     return None
 
 
@@ -119,7 +148,7 @@ async def generate_feedback(data: AttemptResultOut) -> str:
     if provider:
         try:
             return await provider.complete(SYSTEM_PROMPT, build_prompt(data))
-        except (httpx.HTTPError, KeyError, IndexError) as exc:
+        except PROVIDER_ERRORS as exc:
             log.warning("AI feedback provider failed, using template: %s", exc)
     return template_feedback(data)
 

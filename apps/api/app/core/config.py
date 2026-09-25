@@ -27,9 +27,13 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:4321"]
 
     # Proveedores externos (opcionales: sin key se usan los mocks)
-    ai_provider: Literal["openai", "mock"] = "mock"
+    ai_provider: Literal["openai", "anthropic", "mock"] = "mock"
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
+    # Cualquier API compatible con OpenAI (Groq, OpenRouter, Ollama, Gemini) cambiando la URL.
+    openai_base_url: str = "https://api.openai.com/v1"
+    anthropic_api_key: str | None = None
+    anthropic_model: str = "claude-opus-5"
     tts_provider: Literal["elevenlabs", "none"] = "none"
     elevenlabs_api_key: str | None = None
     elevenlabs_voice_id: str | None = None

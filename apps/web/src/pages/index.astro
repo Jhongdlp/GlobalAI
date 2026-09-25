@@ -1,27 +1,28 @@
 ---
 import Base from "../layouts/Base.astro";
+import "../styles/glo.css";
 
 // "Hola" en varios idiomas para la cinta inferior (se duplica para que el bucle no tenga corte).
 const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんにちは", "Merhaba", "안녕하세요", "Hej", "Привет", "你好", "Namaste", "Salut"];
 ---
 
 <Base title="Iniciar sesión · Global AI">
-  <main class="login">
+  <main class="login night">
     <header class="top">
       <div class="brand"><span class="mark" aria-hidden="true"></span>Global AI</div>
       <p class="meta">Evaluación de nivel <span aria-hidden="true">·</span> MCER Pre-A1 → C1</p>
     </header>
 
-    <section class="hero" aria-hidden="true">
-      <p class="tag"><span class="live"></span>Glo · tu coach de inglés</p>
+    <section class="hero quote-mark" aria-hidden="true">
       <p class="say" id="say" lang="en"></p>
       <p class="say-es" id="say-es"></p>
+      <p class="by">Glo, tu coach de inglés</p>
       <canvas id="coach"></canvas>
     </section>
 
     <section class="panel" aria-labelledby="title">
       <h1 id="title">Descubre tu nivel de inglés</h1>
-      <p class="lead">10 preguntas · ~10 minutos · resultados al instante por habilidad.</p>
+      <p class="lead">10 preguntas + 3 orales · 25 min · resultados al instante por habilidad.</p>
 
       <form id="login" novalidate>
         <div class="field">
@@ -61,6 +62,14 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
           <p class="field-error" id="password-error"></p>
         </div>
 
+        <div class="field consent">
+          <label>
+            <input id="terms" name="terms" type="checkbox" aria-describedby="terms-error" required />
+            <span>Acepto los <a href="/terminos" target="_blank">Términos</a> y la <a href="/privacidad" target="_blank">Política de privacidad</a>.</span>
+          </label>
+          <p class="field-error" id="terms-error"></p>
+        </div>
+
         <p class="form-error" id="form-error" role="alert"></p>
 
         <button type="submit" class="primary" id="submit">
@@ -68,9 +77,21 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
           <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
         </button>
 
+        <!-- Solo visual: muestra que el login social encaja en el flujo; se activa con OAuth real. -->
+        <button type="button" class="google" disabled aria-describedby="google-soon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"
+            ><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8Z"></path><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24Z"></path><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1Z"></path><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9Z"></path></svg
+          >
+          Continuar con Google
+          <span class="soon" id="google-soon">Próximamente</span>
+        </button>
+
+        <!-- Cuentas de prueba a un clic: quien evalúa entra sin buscar credenciales. -->
         <div class="demo-row">
-          <span>¿Solo quieres explorar?</span>
-          <button type="button" class="link" id="demo">Usar la cuenta demo</button>
+          <span>Entrar con cuenta demo:</span>
+          <button type="button" class="link" data-demo="student">Estudiante</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" class="link" data-demo="teacher">Profesor</button>
         </div>
       </form>
     </section>
@@ -86,8 +107,6 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
 <style>
   /* Escena nocturna a sangre completa: Glo es el protagonista, el formulario es "la respuesta". */
   .login {
-    --night: var(--stage);
-    --cream: var(--bg);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
     grid-template-rows: auto 1fr auto;
@@ -95,12 +114,6 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     min-height: 100dvh;
     padding: clamp(16px, 2.4vw, 36px) clamp(16px, 3vw, 48px) 0;
     overflow: hidden;
-    color: var(--cream);
-    background:
-      radial-gradient(circle at 36% 62%, rgb(255 75 58 / 0.28), transparent 38%),
-      radial-gradient(circle at 90% 10%, rgb(43 68 199 / 0.45), transparent 45%),
-      radial-gradient(circle, rgb(246 241 231 / 0.1) 1px, transparent 1.4px) 0 0 / 26px 26px,
-      var(--night);
   }
 
   .top {
@@ -110,31 +123,6 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     justify-content: space-between;
     gap: 16px;
     animation: fade 0.8s var(--ease-out) both;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-  /* Marca: mini globo de diálogo coral, el mismo gesto que Glo. */
-  .mark {
-    position: relative;
-    width: 22px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--glo);
-  }
-  .mark::after {
-    content: "";
-    position: absolute;
-    left: 2px;
-    bottom: -4px;
-    border: 5px solid transparent;
-    border-top-color: var(--glo);
-    border-left-width: 2px;
-    rotate: 20deg;
   }
   .meta {
     margin: 0;
@@ -150,65 +138,10 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     min-height: 0;
     padding-block: clamp(16px, 4vh, 48px);
   }
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 0 18px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    opacity: 0.75;
-  }
-  .live {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--glo);
-    box-shadow: 0 0 0 0 var(--glo);
-    animation: live 2s ease-out infinite;
-  }
   /* Lo que dice Glo, en tamaño póster. Glo flota por delante de las letras. */
   .say {
-    position: relative;
-    z-index: 0;
     max-width: 8.5ch;
-    margin: 0;
     font-size: clamp(2.6rem, min(7.4vw, 13vh), 7rem);
-    font-weight: 700;
-    line-height: 0.95;
-    letter-spacing: -0.045em;
-  }
-  /* Las palabras se crean en JS: :global para que les lleguen los estilos con scope. */
-  .say :global(.w) {
-    display: inline-block;
-    overflow: clip;
-    overflow-clip-margin: 0.12em;
-    padding-bottom: 0.08em;
-    margin-bottom: -0.08em;
-    vertical-align: top;
-  }
-  .say :global(.w > span) {
-    display: inline-block;
-    animation: word 0.7s calc(var(--i) * 0.07s) var(--ease-out) both;
-  }
-  .say :global(.hi) {
-    color: var(--glo);
-    text-decoration: underline wavy var(--glo);
-    text-decoration-thickness: 0.055em;
-    text-underline-offset: 0.14em;
-  }
-  .say-es {
-    position: relative;
-    z-index: 0;
-    max-width: 30ch;
-    margin: 20px 0 0;
-    font-size: 1rem;
-    opacity: 0.7;
-  }
-  .say-es.in {
-    animation: fade 0.6s 0.35s var(--ease-out) both;
   }
   canvas {
     position: absolute;
@@ -217,12 +150,13 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     bottom: 0;
     width: min(60%, 68vh, 600px);
     aspect-ratio: 1;
-    animation: glo-in 1.1s 0.2s var(--ease-spring) both;
+    animation: glo-in 1.1s 0.2s var(--ease-spring) both; /* keyframes en glo.css */
   }
 
   /* Tarjeta de papel con colita de diálogo apuntando a Glo: responder es conversar. */
   .panel {
     position: relative;
+    z-index: 2; /* si la tarjeta crece, tapa la cinta de "hola" en vez de quedar debajo */
     align-self: center;
     padding: clamp(28px, 3vw, 40px);
     border-radius: 28px;
@@ -232,6 +166,17 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
       0 1px 0 rgb(255 255 255 / 0.6) inset,
       0 40px 80px -30px rgb(0 0 0 / 0.65);
     animation: card-in 0.9s 0.15s var(--ease-out) both;
+  }
+  /* En oscuro: tarjeta índigo elevada sobre la medianoche, con filo de luz en vez de sombra blanca. */
+  :global([data-theme="dark"]) .panel {
+    --surface: #171d44;
+    --bg: #0d1232;
+    --line: #2e3672;
+    --muted: #a9aed0;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.07) inset,
+      0 1px 0 rgb(255 255 255 / 0.1) inset,
+      0 40px 80px -30px rgb(0 0 0 / 0.8);
   }
   .panel::before {
     content: "";
@@ -266,6 +211,10 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     font-weight: 500;
     font-size: 0.85rem;
     margin-bottom: 6px;
+    transition: color 0.2s;
+  }
+  .field:focus-within label {
+    color: var(--accent);
   }
   input {
     width: 100%;
@@ -300,6 +249,37 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
 
   .password {
     position: relative;
+  }
+
+  .consent label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .consent input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 1px 0 0;
+    padding: 0;
+    box-shadow: none;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .consent input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .consent:focus-within label {
+    color: var(--ink);
+  }
+  .consent a {
+    color: var(--accent);
+    text-underline-offset: 3px;
   }
   .password input {
     padding-right: 56px;
@@ -423,6 +403,33 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     animation: dots 1s steps(4) infinite;
   }
 
+  .google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 48px;
+    margin-top: 10px;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 500;
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .google svg {
+    width: 18px;
+  }
+  .soon {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+
   .demo-row {
     display: flex;
     flex-wrap: wrap;
@@ -472,22 +479,15 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     opacity: 0.45;
   }
   .track span::after {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--glo);
+    content: "/";
+    color: var(--glo);
+    font-weight: 300;
   }
 
   .shake {
     animation: shake 0.4s var(--ease-out);
   }
 
-  @keyframes word {
-    from {
-      translate: 0 105%;
-    }
-  }
   @keyframes fade {
     from {
       opacity: 0;
@@ -510,12 +510,6 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
   @keyframes marquee {
     to {
       translate: -50% 0;
-    }
-  }
-  @keyframes live {
-    70%,
-    100% {
-      box-shadow: 0 0 0 8px transparent;
     }
   }
   @keyframes shake {
@@ -548,72 +542,124 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     }
   }
 
-  /* Portátiles bajos: compacta sin tocar la legibilidad. */
-  @media (min-width: 861px) and (max-height: 720px) {
+  /* Escritorio: el login mide exactamente la ventana. Los espacios verticales escalan con la altura,
+     así un error de contraseña no empuja la página ni hace aparecer scroll. */
+  @media (min-width: 861px) and (min-height: 560px) {
+    .login {
+      height: 100dvh;
+      min-height: 0;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+    .panel {
+      padding: clamp(20px, 4vh, 40px) clamp(28px, 3vw, 40px);
+    }
     .lead {
-      margin-bottom: 20px;
+      margin-bottom: clamp(12px, 3vh, 28px);
     }
     .field {
-      margin-bottom: 12px;
+      margin-bottom: clamp(8px, 1.6vh, 16px);
+    }
+    input {
+      height: clamp(44px, 6vh, 52px);
+    }
+    .toggle {
+      top: 50%;
+      translate: 0 -50%;
+      height: calc(100% - 8px);
+    }
+    .primary {
+      height: clamp(46px, 6vh, 54px);
+    }
+    .google {
+      height: clamp(40px, 5.2vh, 48px);
+      margin-top: clamp(6px, 1.2vh, 10px);
+    }
+    .form-error {
+      margin-bottom: clamp(8px, 1.6vh, 16px);
+      padding-block: clamp(8px, 1.2vh, 12px);
+    }
+    .demo-row {
+      margin-top: clamp(10px, 2vh, 18px);
     }
     .marquee {
-      padding-block: 10px;
+      padding-block: clamp(8px, 1.6vh, 14px);
     }
   }
 
+  /* Móvil: Glo se sienta en el borde de la tarjeta (su sombra cae sobre el papel). */
   @media (max-width: 860px) {
     .login {
       grid-template-columns: 1fr;
       grid-template-rows: auto auto 1fr auto;
-      row-gap: 16px;
-    }
-    .hero {
-      display: grid;
-      grid-template-columns: 1fr 120px;
-      align-items: end;
-      padding-block: 8px 0;
-    }
-    .tag,
-    .say-es {
-      grid-column: 1 / -1;
-    }
-    .say {
-      grid-column: 1;
-      max-width: none;
-      font-size: clamp(2rem, 9vw, 3rem);
-    }
-    .say-es {
-      margin-top: 10px;
-      font-size: 0.85rem;
-    }
-    canvas {
-      position: static;
-      grid-column: 2;
-      grid-row: 2;
-      width: 120px;
-    }
-    .panel {
-      align-self: start;
-      margin-bottom: 16px;
-    }
-    .panel::before {
-      left: auto;
-      right: 48px;
-      top: -12px;
-      rotate: 135deg;
+      row-gap: 0;
     }
     .top .meta {
       display: none;
+    }
+    .hero {
+      z-index: 2;
+      display: block;
+      padding: 28px 0 44px;
+    }
+    .hero::before {
+      top: -24px;
+      font-size: 13rem;
+    }
+    .say {
+      max-width: 7.5ch;
+      font-size: clamp(2.4rem, 12vw, 3.6rem);
+    }
+    .say-es,
+    .by {
+      max-width: 52%;
+    }
+    .say-es {
+      margin-top: 14px;
+      font-size: 0.85rem;
+    }
+    canvas {
+      right: -10px;
+      bottom: -64px;
+      width: min(56vw, 260px);
+    }
+    .panel {
+      align-self: start;
+      margin-bottom: 20px;
+      padding-top: 32px;
+      animation-name: sheet-in;
+    }
+    .panel::before {
+      display: none;
+    }
+    h1 {
+      max-width: 10ch;
+    }
+    .marquee {
+      margin-top: auto;
+    }
+  }
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      translate: 0 40px;
     }
   }
 </style>
 
 <script>
   import type { CoachState } from "../lib/coach";
+  import { mountGlo } from "../lib/glo";
+  import { firstVisit, handoff, splash } from "../lib/splash";
 
   const API = "/api/v1";
-  const DEMO = { email: "estudiante@globalai.demo", password: "Demo1234!" };
-  const LINES: Record<CoachState, [string, string]> = {
+  const DEMO = {
+    student: { email: "estudiante@globalai.demo", password: "Demo1234!" },
+    teacher: { email: "profesor@globalai.demo", password: "Demo1234!" },
+  };
+  // Cada rol aterriza en su pantalla.
+  const home = (role: string) => (role === "student" ? "/dashboard" : "/teacher");
+  type LoginState = Exclude<CoachState, "present">;
+  const LINES: Record<LoginState, [string, string]> = {
     // *palabra* = se resalta en coral.
     idle: ["Hi, I'm Glo. Let's find your *level.*", "Hola, soy Glo. Descubramos tu nivel de inglés."],
     email: ["Nice to *meet* you!", "¡Un gusto conocerte!"],
@@ -628,47 +674,27 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
   const form = $<HTMLFormElement>("login");
   const email = $<HTMLInputElement>("email");
   const password = $<HTMLInputElement>("password");
+  const terms = $<HTMLInputElement>("terms");
   const toggle = $<HTMLButtonElement>("toggle");
   const submit = $<HTMLButtonElement>("submit");
-  const demo = $<HTMLButtonElement>("demo");
   const formError = $("form-error");
-  const say = $("say");
-  const sayEs = $("say-es");
-
-  // Three.js se carga después: el formulario funciona desde el primer instante.
-  let coach: { setState(s: CoachState): void; pulse(): void; gaze(x: number): void; say(s: number): void } | undefined;
-  import("../lib/coach")
-    .then(({ createCoach }) => (coach = createCoach($<HTMLCanvasElement>("coach"))))
-    .catch(() => $("coach").remove()); // sin WebGL: queda la tipografía
-
-  let current: CoachState = "idle";
-  function mood(s: CoachState) {
-    coach?.setState(s);
+  // Primera visita de la sesión: Glo gris que se llena de color mientras carga la página.
+  const load = splash(firstVisit());
+  const glo = mountGlo({
+    canvas: $<HTMLCanvasElement>("coach"),
+    say: $("say"),
+    sayEs: $("say-es"),
+    scene: document.querySelector<HTMLElement>(".login")!,
+  });
+  glo.speak(...LINES.idle);
+  let current: LoginState = "idle";
+  function mood(s: LoginState) {
+    glo.coach?.setState(s);
     if (s === current) return;
     current = s;
-    speak(...LINES[s]);
+    glo.speak(...LINES[s]);
   }
 
-  // Tipografía cinética: cada palabra sube desde una máscara, al ritmo en que Glo mueve la boca.
-  function speak(en: string, es: string) {
-    say.replaceChildren();
-    en.split(" ").forEach((word, i) => {
-      const mask = document.createElement("span");
-      const w = document.createElement("span");
-      mask.className = "w";
-      w.textContent = word.replaceAll("*", "");
-      if (word.startsWith("*")) w.className = "hi";
-      w.style.setProperty("--i", String(i));
-      mask.append(w);
-      say.append(mask, " ");
-    });
-    sayEs.textContent = es;
-    sayEs.classList.remove("in");
-    void sayEs.offsetWidth; // reinicia la animación
-    sayEs.classList.add("in");
-    coach?.say(0.5 + en.split(" ").length * 0.22);
-  }
-  speak(...LINES.idle);
 
   const fieldMood = () =>
     document.activeElement === email ? "email"
@@ -680,13 +706,13 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
   for (const input of [email, password]) {
     input.addEventListener("blur", () => setTimeout(() => current !== "loading" && mood(fieldMood()), 0));
     input.addEventListener("input", () => {
-      coach?.pulse();
+      glo.coach?.pulse();
       setFieldError(input, "");
     });
   }
 
   // Glo sigue con la mirada el cursor mientras escribes el correo (~32 caracteres llenan el campo).
-  const followCaret = () => coach?.gaze((email.selectionStart ?? email.value.length) / 32);
+  const followCaret = () => glo.coach?.gaze((email.selectionStart ?? email.value.length) / 32);
   for (const ev of ["input", "keyup", "click", "focus"]) email.addEventListener(ev, followCaret);
 
   toggle.addEventListener("click", () => {
@@ -716,9 +742,16 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
     const passMsg = password.value ? "" : "Escribe tu contraseña.";
     setFieldError(email, emailMsg);
     setFieldError(password, passMsg);
-    (emailMsg ? email : passMsg ? password : null)?.focus();
-    return !emailMsg && !passMsg;
+    const termsOk = checkTerms();
+    (emailMsg ? email : passMsg ? password : termsOk ? null : terms)?.focus();
+    return !emailMsg && !passMsg && termsOk;
   }
+
+  function checkTerms() {
+    setFieldError(terms, terms.checked ? "" : "Acepta los Términos y la Política de privacidad para continuar.");
+    return terms.checked;
+  }
+  terms.addEventListener("change", () => setFieldError(terms, ""));
 
   function fail(msg: string) {
     formError.textContent = msg;
@@ -743,13 +776,15 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
       const res = await fetch(`${API}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.value.trim(), password: password.value }),
+        body: JSON.stringify({ email: email.value.trim(), password: password.value, accept_terms: terms.checked }),
       });
       if (res.ok) {
         submit.removeAttribute("aria-busy");
         submit.querySelector(".label")!.textContent = "¡Listo!";
         mood("success");
-        setTimeout(() => location.assign("/dashboard"), 900);
+        const { role } = await res.json();
+        handoff.mark("Loading"); // la siguiente pantalla abre con la carga de Glo mientras trae los datos
+        setTimeout(() => location.assign(home(role)), 900);
         return;
       }
       const body = await res.json().catch(() => null);
@@ -763,10 +798,13 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
   });
 
   // Cuenta demo: se "escribe" sola para que el coach reaccione, y entra.
-  demo.addEventListener("click", async () => {
+  document.querySelectorAll<HTMLButtonElement>("[data-demo]").forEach((b) => b.addEventListener("click", async () => {
     if (busy) return;
+    // El consentimiento no se marca solo, ni siquiera en la cuenta demo.
+    if (!checkTerms()) return terms.focus(), fail("");
+    const account = DEMO[b.dataset.demo as keyof typeof DEMO];
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    for (const [input, value] of [[email, DEMO.email], [password, DEMO.password]] as const) {
+    for (const [input, value] of [[email, account.email], [password, account.password]] as const) {
       input.focus();
       input.value = "";
       for (const ch of value) {
@@ -776,8 +814,23 @@ const HELLOS = ["Hello", "Hola", "Bonjour", "Olá", "Ciao", "Hallo", "こんに�
       }
     }
     form.requestSubmit();
-  });
+  }));
 
   // Si ya hay sesión, no tiene sentido mostrar el login.
-  fetch(`${API}/auth/me`).then((r) => r.ok && location.replace("/dashboard"), () => {});
+  // Progreso real de la carga: fuentes, motor 3D y comprobación de sesión.
+  const me = fetch(`${API}/auth/me`).then(
+    async (r) => {
+      if (!r.ok) return;
+      const { role } = await r.json();
+      handoff.mark("Loading");
+      location.replace(home(role));
+      return new Promise(() => {}); // se navega: la pantalla sigue hasta que cargue el dashboard
+    },
+    () => {},
+  );
+  Promise.all([
+    document.fonts.ready.then(() => load.progress(0.35)),
+    glo.ready.then(() => load.progress(0.75)),
+    me.then(() => load.progress(0.95)),
+  ]).then(load.done);
 </script>

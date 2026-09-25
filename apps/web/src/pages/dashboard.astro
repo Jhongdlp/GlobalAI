@@ -1,7 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
+import "../styles/glo.css";
 
-// Escala MCER completa para la regla de nivel (el backend solo devuelve el nivel actual).
+// Escala MCER completa para el camino de nivel (el backend solo devuelve el nivel actual).
 // ponytail: duplicado de catalog.json; exponer GET /levels si los niveles cambian a menudo.
 const LEVELS = [
   ["PRE_A1", "Pre-A1"],
@@ -14,405 +16,881 @@ const LEVELS = [
 ---
 
 <Base title="Inicio · Global AI">
-  <header class="topbar">
-    <a class="brand" href="/dashboard"><span class="dot"></span>Global AI</a>
-    <div class="user">
-      <span class="avatar" id="avatar" aria-hidden="true"></span>
-      <span class="name" id="user-name"></span>
-      <button class="logout" id="logout" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"></path></svg>
-        Cerrar sesión
-      </button>
+  <div class="dash">
+    <header class="bar">
+      <a class="brand" href="/dashboard"><span class="mark" aria-hidden="true"></span>Global AI</a>
+      <div class="user">
+        <span class="who" id="user-name"></span>
+        <ThemeToggle />
+        <button class="logout" id="logout" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10"></path></svg>
+          Cerrar sesión
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- Glo integrado en la página: te habla junto a la acción principal. -->
+      <section class="hello" aria-labelledby="greeting">
+        <div class="glo-row">
+          <canvas id="coach" aria-hidden="true"></canvas>
+          <div class="voice">
+            <h1 class="sr-only" id="greeting">Inicio</h1>
+            <p class="say" id="say" lang="en" aria-hidden="true"></p>
+            <p class="say-es" id="say-es"></p>
+          </div>
+        </div>
+
+        <div class="start" id="assessment">
+          <div class="skeleton" style="width: 240px; height: 56px"></div>
+        </div>
+
+        <!-- Mini clase de pronunciación: se abre en el escenario de Glo, junto a él. -->
+          <div class="practice" id="practice" hidden>
+            <div class="pr-head">
+              <p class="pr-kicker">Mini clase · sonido <strong id="pr-sound"></strong></p>
+              <button type="button" class="pr-close" id="pr-close" aria-label="Salir de la práctica">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+              </button>
+            </div>
+            <div class="pr-lesson" id="pr-lesson">
+              <p class="pr-word" id="pr-word" lang="en"></p>
+              <p class="pr-tip" id="pr-tip"></p>
+            </div>
+            <ol class="pr-chat" id="pr-chat" aria-live="polite" hidden></ol>
+            <div class="pr-mic">
+              <button type="button" class="mic" id="pr-mic" aria-pressed="false" aria-label="Grabar" disabled></button>
+              <p class="pr-status" id="pr-status" aria-live="polite"></p>
+            </div>
+            <div class="pr-end" id="pr-end" hidden>
+              <button type="button" class="pr-again" id="pr-again">Otra clase</button>
+              <button type="button" class="pr-exit" id="pr-exit">Listo</button>
+            </div>
+          </div>
+
+        <!-- Cifras + tu siguiente paso, en la misma fila: la pantalla no crece en vertical. -->
+        <div class="tally">
+          <dl class="stats">
+            <div><dd id="stat-attempts">—</dd><dt>intentos</dt></div>
+            <div><dd id="stat-best">—</dd><dt>mejor puntaje</dt></div>
+            <div><dd id="stat-delta">—</dd><dt>vs. anterior</dt></div>
+          </dl>
+
+          <div class="course" data-glo="course" id="course" hidden>
+            <p class="course-kicker">Tu siguiente paso</p>
+            <p class="course-title" id="course-title"></p>
+            <p class="course-meta" id="course-meta"></p>
+            <div class="course-actions">
+              <button type="button" class="course-listen" id="course-listen" aria-pressed="false" aria-label="Que Glo te lo cuente" title="Que Glo te lo cuente" data-stage-hide hidden>
+                <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"></path></svg>
+                <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+              </button>
+              <a class="course-cta" id="course-cta" target="_blank" rel="noopener">Quiero empezar <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Resumen en un solo panel. Al pasar el puntero por un bloque, Glo lo comenta. -->
+      <section class="sheet" aria-label="Tu progreso">
+        <div class="block" data-glo="level">
+          <h2>Tu nivel</h2>
+          <div class="level">
+            <p class="code" id="level-code">—</p>
+            <div>
+              <p class="level-name" id="level-name">Aún sin nivel</p>
+              <p class="level-desc" id="level-desc">Completa una evaluación para conocerlo.</p>
+            </div>
+          </div>
+          <ol class="path" id="path" aria-label="Escala MCER">
+            {LEVELS.map(([code, label]) => <li data-level={code}><span>{label}</span></li>)}
+          </ol>
+        </div>
+
+        <div class="block" data-glo="skills">
+          <h2>Por habilidad</h2>
+          <ul class="skills" id="skills">
+            <li class="skeleton"></li>
+            <li class="skeleton"></li>
+          </ul>
+        </div>
+
+        <div class="block" data-glo="history">
+          <h2>Últimos intentos</h2>
+          <ul class="history" id="history">
+            <li class="skeleton"></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+  <dialog id="pledge" aria-labelledby="pledge-title">
+    <h2 id="pledge-title">Antes de empezar</h2>
+    <p>
+      Esta evaluación te ubica en tu nivel real; no se aprueba ni se reprueba. Si alguien o algo te
+      ayuda, el resultado te pondrá en un nivel que no es el tuyo.
+    </p>
+    <label class="pledge-check">
+      <input type="checkbox" id="pledge-ok" />
+      <span>Responderé por mi cuenta, sin traductores, buscadores ni ayuda de otras personas.</span>
+    </label>
+    <p class="pledge-note">
+      Para que tu profesor pueda revisarlo, registramos si sales de la pestaña, si pegas texto y el
+      ritmo de tus respuestas.
+    </p>
+    <div class="dialog-actions">
+      <button type="button" class="ghost" id="pledge-cancel">Ahora no</button>
+      <button type="button" class="primary" id="pledge-go" disabled>Comenzar</button>
     </div>
-  </header>
-
-  <main class="dash">
-    <section class="hero" aria-labelledby="greeting">
-      <div class="hero-text">
-        <p class="eyebrow">Tu evaluación</p>
-        <h1 id="greeting">Hola</h1>
-        <p class="hero-lead" id="hero-lead">Mide tu inglés y recibe recomendaciones de tu coach.</p>
-
-        <div class="assessment" id="assessment">
-          <div class="skeleton" style="width: 70%"></div>
-          <div class="skeleton" style="width: 90%"></div>
-        </div>
-      </div>
-
-      <div class="coach" aria-hidden="true">
-        <canvas id="coach"></canvas>
-        <div class="caption" id="caption">
-          <p class="en" lang="en">Ready when you are.</p>
-          <p class="es">Cuando quieras, empezamos.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="progress" aria-labelledby="progress-title">
-      <h2 id="progress-title">Tu progreso</h2>
-
-      <dl class="stats">
-        <div><dt>Intentos</dt><dd id="stat-attempts">—</dd></div>
-        <div><dt>Mejor puntaje</dt><dd id="stat-best">—</dd></div>
-        <div><dt>Promedio</dt><dd id="stat-avg">—</dd></div>
-      </dl>
-
-      <div class="block">
-        <h3>Nivel MCER</h3>
-        <ol class="ruler" id="ruler">
-          {LEVELS.map(([code, label]) => <li data-level={code}><span>{label}</span></li>)}
-        </ol>
-        <p class="note" id="level-note">Completa tu primera evaluación para conocer tu nivel.</p>
-      </div>
-
-      <div class="block">
-        <h3>Por habilidad</h3>
-        <ul class="skills" id="skills">
-          <li class="skeleton"></li>
-          <li class="skeleton"></li>
-          <li class="skeleton"></li>
-        </ul>
-      </div>
-
-      <div class="block">
-        <h3>Historial</h3>
-        <ul class="history" id="history">
-          <li class="skeleton"></li>
-          <li class="skeleton"></li>
-        </ul>
-      </div>
-    </section>
-  </main>
+  </dialog>
 </Base>
 
 <style>
+  dialog {
+    width: min(92vw, 460px);
+    padding: 28px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 30px 80px -20px color-mix(in srgb, var(--shadow) 40%, transparent);
+  }
+  dialog[open] {
+    animation: glo-fade 0.35s var(--ease-out);
+  }
+  dialog::backdrop {
+    background: color-mix(in srgb, var(--shadow) 30%, transparent);
+    backdrop-filter: blur(3px);
+  }
+  dialog h2 {
+    margin: 0 0 8px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  dialog p {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .pledge-check {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin: 0 0 14px;
+    padding: 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    font-size: 0.92rem;
+    cursor: pointer;
+  }
+  .pledge-check:has(:checked) {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+  .pledge-check input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--accent);
+  }
+  dialog .pledge-note {
+    font-size: 0.8rem;
+  }
+  .dialog-actions {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .primary,
+  .ghost {
+    height: 48px;
+    padding: 0 20px;
+    border-radius: 12px;
+    font-weight: 500;
+    transition:
+      background 0.2s,
+      opacity 0.2s;
+  }
+  .primary {
+    border: 0;
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 88%, black);
+  }
+  .primary:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .ghost {
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+  }
+
+  /* Una sola pantalla: en escritorio no hay scroll. Papel claro, Glo dentro de la composición. */
   :global(body) {
+    --pop: var(--ink); /* la ráfaga de "hola" en tinta sobre papel */
+  }
+  .dash {
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
+    padding: clamp(16px, 2.2vw, 32px) clamp(16px, 3vw, 48px);
   }
 
-  .topbar {
+  .bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 14px 24px;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
   }
   .user {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     font-size: 0.85rem;
   }
-  .avatar {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 600;
-    font-size: 0.8rem;
-  }
-  .logout {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 36px;
-    padding: 0 12px;
-    border: 1.5px solid var(--line);
-    border-radius: 8px;
-    background: transparent;
+  .who {
     color: var(--muted);
-    font: inherit;
-    cursor: pointer;
-    transition:
-      color 0.2s,
-      border-color 0.2s,
-      background 0.2s;
   }
-  .logout:hover {
-    color: var(--ink);
-    border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
-    background: var(--surface);
-  }
-  .logout svg {
-    width: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .dash {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1.25fr 1fr;
-    gap: 20px;
-    padding: 0 20px 20px;
-    min-height: 0;
-  }
-
-  /* Tarjeta principal: mismo escenario azul tinta que el login, continuidad visual. */
-  .hero {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    align-items: center;
-    gap: 24px;
-    padding: 40px;
-    border-radius: 20px;
-    color: var(--bg);
-    background:
-      radial-gradient(circle, rgb(246 241 231 / 0.12) 1px, transparent 1.4px) 0 0 / 24px 24px,
-      var(--stage);
-    overflow: hidden;
-    animation: rise 0.8s var(--ease-out) both;
-  }
-  .eyebrow {
-    margin: 0 0 12px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    opacity: 0.7;
-  }
-  h1 {
-    margin: 0 0 10px;
-    font-size: clamp(1.8rem, 3vw, 2.4rem);
-    font-weight: 600;
-    line-height: 1.15;
-    letter-spacing: -0.025em;
-  }
-  .hero-lead {
-    margin: 0 0 32px;
-    max-width: 36ch;
-    opacity: 0.75;
-  }
-
-  .assessment {
-    padding: 22px;
-    border-radius: 14px;
-    background: rgb(246 241 231 / 0.07);
-    border: 1px solid rgb(246 241 231 / 0.14);
-  }
-  .assessment :global(h2) {
-    margin: 0 0 6px;
-    font-size: 1.05rem;
-    font-weight: 600;
-  }
-  .assessment :global(.desc) {
-    margin: 0 0 16px;
-    font-size: 0.85rem;
-    opacity: 0.7;
-  }
-  .assessment :global(.meta) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 0 0 20px;
-    padding: 0;
-    list-style: none;
-    font-size: 0.78rem;
-  }
-  .assessment :global(.meta li) {
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgb(246 241 231 / 0.1);
-  }
-  .assessment :global(.cta) {
+  /* Botón de pastilla con icono: se encuentra de un vistazo sin competir con la acción principal. */
+  .logout {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    height: 50px;
-    padding: 0 22px;
-    border-radius: 10px;
-    background: var(--bg);
-    color: var(--stage);
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px 0 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
     font-weight: 500;
-    text-decoration: none;
+    cursor: pointer;
     transition:
-      transform 0.15s var(--ease-out),
-      box-shadow 0.25s var(--ease-out);
+      border-color 0.2s,
+      background 0.2s,
+      color 0.2s;
   }
-  .assessment :global(.cta:hover) {
-    box-shadow: 0 10px 28px -10px rgb(0 0 0 / 0.5);
-  }
-  .assessment :global(.cta:active) {
-    transform: translateY(1px) scale(0.99);
-  }
-  .assessment :global(.cta svg) {
+  .logout svg {
     width: 18px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: translate 0.3s var(--ease-out);
+    transition: translate 0.3s var(--ease-spring);
   }
-  .assessment :global(.cta:hover svg) {
-    translate: 3px 0;
+  .logout:hover {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+    color: var(--danger);
   }
-  .assessment :global(.resume) {
-    margin: 12px 0 0;
-    font-size: 0.8rem;
-    opacity: 0.75;
+  .logout:hover svg {
+    translate: -3px 0;
   }
-  .assessment .skeleton {
-    height: 14px;
-    margin-bottom: 12px;
-    background: rgb(246 241 231 / 0.1);
+  .logout:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    border-color: var(--accent);
   }
 
-  .coach {
+  .main {
+    flex: 1;
     display: grid;
-    justify-items: center;
-    gap: 12px;
-    text-align: center;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(24px, 5vw, 80px);
+    min-height: 0;
+    padding-block: clamp(12px, 3vh, 32px);
+  }
+
+  .glo-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1.5vw, 20px);
   }
   canvas {
-    width: min(100%, 320px, 42dvh);
+    flex: none;
+    width: min(22vw, 34vh, 300px);
     aspect-ratio: 1;
+    margin-left: -3%;
+    animation: glo-in 1s 0.1s var(--ease-spring) both;
   }
-  .caption p {
-    margin: 0;
+  .say {
+    max-width: 11ch;
+    font-size: clamp(1.8rem, min(3.4vw, 6.4vh), 3.2rem);
+    translate: none;
   }
-  .caption.swap p {
-    animation: rise 0.45s var(--ease-out);
-  }
-  .en {
-    font-weight: 500;
-  }
-  .es {
-    font-size: 0.8rem;
-    opacity: 0.7;
+  .say-es {
+    margin-top: 12px;
+    font-size: 0.9rem;
   }
 
-  /* Progreso */
-  .progress {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    padding: 28px;
-    border-radius: 20px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    min-height: 0;
-    overflow: auto;
-    animation: rise 0.8s 0.1s var(--ease-out) both;
+  .start {
+    margin: clamp(16px, 3vh, 32px) 0 0;
   }
-  h2 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-  h3 {
-    margin: 0 0 12px;
-    font-size: 0.72rem;
+  .start :global(.cta) {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    height: 56px;
+    padding: 0 24px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: var(--accent-ink);
     font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      0 12px 24px -12px color-mix(in srgb, var(--accent) 80%, transparent);
+    transition:
+      background 0.2s,
+      transform 0.15s var(--ease-out);
+  }
+  .start :global(.cta.wait) {
+    margin: 0;
+    background: var(--line);
+    color: var(--muted);
+    box-shadow: none;
+    cursor: default;
+  }
+  .start :global(.cta:hover) {
+    background: color-mix(in srgb, var(--accent) 88%, black);
+  }
+  .start :global(.cta:active) {
+    transform: translateY(1px) scale(0.99);
+  }
+  .start :global(.cta svg) {
+    width: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 0.3s var(--ease-spring);
+  }
+  .start :global(.cta:hover svg) {
+    translate: 4px 0;
+  }
+  .start :global(.facts) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .start :global(.facts li + li::before) {
+    content: "/";
+    margin-right: 10px;
+    color: var(--glo);
+  }
+  .start :global(.note) {
+    margin: 8px 0 0;
+    font-size: 0.8rem;
     color: var(--muted);
   }
 
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+  /* Botón secundario junto a la evaluación: práctica corta de pronunciación. */
+  .start :global(.cta-row) {
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
+  }
+  .start :global(.practice-btn),
+  .pr-again,
+  .pr-exit {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    padding: 0 20px;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      transform 0.15s var(--ease-out);
+  }
+  .start :global(.practice-btn:hover),
+  .pr-again:hover,
+  .pr-exit:hover {
+    border-color: var(--accent);
+  }
+  .start :global(.practice-btn:active) {
+    transform: translateY(1px) scale(0.99);
+  }
+  .start :global(.practice-btn svg) {
+    width: 18px;
+    fill: none;
+    stroke: var(--glo);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .practice {
+    width: min(100%, 420px);
+    padding: 18px;
+    border: 1.5px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+    animation: glo-fade 0.35s var(--ease-out);
+  }
+  .pr-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pr-kicker {
     margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .pr-kicker strong {
+    color: var(--glo);
+  }
+  .pr-close {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .pr-close:hover {
+    background: var(--bg);
+  }
+  .pr-close svg {
+    width: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .pr-word {
+    margin: 6px 0 4px;
+    font-size: 2.6rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    transition: color 0.3s;
+  }
+  .pr-word.ok {
+    color: var(--ok);
+  }
+  .pr-word.miss {
+    animation: pr-shake 0.4s;
+  }
+  @keyframes pr-shake {
+    25% { translate: -6px 0; }
+    75% { translate: 6px 0; }
+  }
+  .pr-tip {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .pr-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 34vh;
+    margin: 12px 0 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+  .pr-chat :global(li) {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 14px 14px 14px 4px;
+    background: var(--bg);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    animation: glo-fade 0.3s var(--ease-out);
+  }
+  .pr-chat :global(li.me) {
+    align-self: flex-end;
+    border-radius: 14px 14px 4px 14px;
+    background: var(--accent-soft);
+  }
+  .pr-chat :global(mark) {
+    background: none;
+    color: inherit;
+    text-decoration: underline wavy var(--glo);
+    text-underline-offset: 4px;
+  }
+  .pr-chat :global(li.fix) {
+    align-self: flex-end;
+    border: 1.5px dashed var(--ok);
+    background: transparent;
+  }
+  .pr-chat :global(li.fix b) {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--ok);
+  }
+  .pr-chat :global(li.fix small),
+  .pr-chat :global(li.me small) {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .pr-mic {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .pr-end:not([hidden]) {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .practice:has(.pr-end:not([hidden])) .pr-mic {
+    display: none;
+  }
+  .pr-exit {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .pr-status {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  .pr-status.error {
+    color: var(--danger);
+  }
+  .pr-status :global(small) {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .mic {
+    --amp: 0;
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s var(--ease-out);
+  }
+  .mic:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .mic:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+  .mic[aria-pressed="true"] {
+    background: var(--danger);
+  }
+  /* Anillo que crece con tu volumen: "te estoy oyendo". */
+  .mic::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border: 2px solid var(--danger);
+    border-radius: 50%;
+    opacity: calc(var(--amp) * 1.5);
+    scale: calc(1 + var(--amp) * 0.4);
+  }
+  .mic :global(svg) {
+    width: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .mic[aria-pressed="true"] :global(svg) {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  /* Números grandes separados por filetes: tipografía, no tarjetas. */
+  .stats {
+    display: flex;
+    margin: clamp(20px, 5vh, 48px) 0 0;
   }
   .stats div {
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: var(--bg);
+    display: flex;
+    flex-direction: column-reverse;
+    padding-right: clamp(16px, 2.4vw, 32px);
+  }
+  .stats div + div {
+    padding-left: clamp(16px, 2.4vw, 32px);
+    border-left: 1.5px solid var(--line);
+  }
+  dd {
+    margin: 0;
+    font-size: clamp(1.6rem, 2.6vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
   }
   dt {
     font-size: 0.75rem;
     color: var(--muted);
   }
-  dd {
-    margin: 2px 0 0;
-    font-size: 1.4rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
+
+  /* Panel de resumen */
+  .sheet {
+    display: grid;
+    gap: clamp(14px, 2.6vh, 24px);
+    padding: clamp(20px, 2.4vw, 32px);
+    border-radius: 24px;
+    background: var(--surface);
+    box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--shadow) 35%, transparent);
+    animation: glo-fade 0.8s 0.15s var(--ease-out) both;
+  }
+  .block + .block {
+    padding-top: clamp(14px, 2.6vh, 24px);
+    border-top: 1.5px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
   }
 
-  .ruler {
+  /* Tu siguiente paso: el único bloque en color del panel (misma tarjeta que en resultados, compacta). */
+  .tally {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 2.4vw, 32px);
+    margin-top: clamp(20px, 5vh, 48px);
+  }
+  .tally .stats {
+    margin: 0;
+  }
+  .course {
+    position: relative;
+    flex: 0 1 260px;
+    min-width: 0;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .course[hidden] {
+    display: none;
+  }
+  .course::after {
+    content: attr(data-level);
+    position: absolute;
+    z-index: -1;
+    right: -0.04em;
+    bottom: -0.3em;
+    font-size: 5.5rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.07em;
+    opacity: 0.13;
+  }
+  .course p {
+    margin: 0;
+  }
+  .course-kicker {
+    font-size: 0.72rem;
+    opacity: 0.8;
+  }
+  .course-title {
+    font-size: 1.1rem;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .course-meta {
+    font-size: 0.78rem;
+    opacity: 0.88;
+  }
+  .course-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .course-listen,
+  .course-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 99px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .course-listen {
+    flex: none;
+    justify-content: center;
+    width: 40px;
+    padding: 0;
+    /* Deriva del texto de la tarjeta: contrasta igual en claro (tinta blanca) y en oscuro (tinta azul noche). */
+    border: 1.5px solid currentColor;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    color: inherit;
+    transition: background 0.2s;
+  }
+  .course-listen:hover,
+  .course-listen[aria-pressed="true"] {
+    background: color-mix(in srgb, currentColor 22%, transparent);
+  }
+  .course-listen[aria-busy="true"] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .course-listen svg {
+    width: 15px;
+    fill: currentColor;
+  }
+  .course-listen .i-pause,
+  .course-listen[aria-pressed="true"] .i-play {
+    display: none;
+  }
+  .course-listen[aria-pressed="true"] .i-pause {
+    display: block;
+  }
+  .course-cta {
+    background: var(--surface);
+    color: var(--accent);
+    transition: transform 0.25s var(--ease-spring);
+  }
+  .course-cta:hover {
+    transform: translateY(-2px);
+  }
+  .course-cta svg {
+    width: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .course :focus-visible {
+    outline-color: var(--surface);
+  }
+  /* "vs. intento anterior": el progreso entre intentos, de un vistazo. */
+  #stat-delta:global(.up) {
+    color: var(--ok);
+  }
+  #stat-delta:global(.down) {
+    color: var(--danger);
+  }
+
+  .level {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+  .code {
+    margin: 0;
+    font-size: clamp(2.4rem, 3.6vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+  }
+  .level-name {
+    margin: 0;
+    font-weight: 600;
+  }
+  .level-desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  /* Camino de niveles: paradas en una línea; la tuya, en coral. */
+  .path {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 4px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
-  .ruler li {
-    position: relative;
-    padding-top: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--muted);
-    text-align: center;
-  }
-  .ruler li::before {
+  .path::before {
     content: "";
     position: absolute;
-    inset: 0 0 auto;
-    height: 6px;
-    border-radius: 3px;
+    top: 5px;
+    left: 8.33%;
+    right: 8.33%;
+    height: 2px;
     background: var(--line);
-    transition: background 0.5s var(--ease-out);
   }
-  .ruler :global(li.reached::before) {
-    background: color-mix(in srgb, var(--accent) 35%, var(--line));
-  }
-  .ruler :global(li.current) {
-    color: var(--accent);
-    font-weight: 600;
-  }
-  .ruler :global(li.current::before) {
-    background: var(--accent);
-    animation: grow 0.7s 0.3s var(--ease-out) both;
-  }
-  .note {
-    margin: 10px 0 0;
-    font-size: 0.8rem;
+  .path li {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
     color: var(--muted);
   }
-  .note :global(strong) {
+  .path li::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--surface);
+  }
+  .path :global(li.reached::before) {
+    border-color: var(--ink);
+    background: var(--ink);
+  }
+  .path :global(li.current) {
     color: var(--ink);
-    font-weight: 600;
+    font-weight: 700;
+  }
+  .path :global(li.current::before) {
+    border-color: var(--glo);
+    background: var(--glo);
   }
 
   .skills,
   .history {
     display: grid;
-    gap: 10px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
+  .skills {
+    gap: 10px;
+  }
   .skills :global(li:not(.skeleton, .empty)) {
     display: grid;
-    grid-template-columns: 90px 1fr 44px 48px;
+    grid-template-columns: 96px 1fr 44px 34px;
     align-items: center;
     gap: 12px;
     font-size: 0.85rem;
@@ -420,7 +898,7 @@ const LEVELS = [
   .skills :global(.bar) {
     height: 8px;
     border-radius: 4px;
-    background: var(--bg);
+    background: color-mix(in srgb, var(--line) 60%, var(--surface));
     overflow: hidden;
   }
   .skills :global(.bar span) {
@@ -428,9 +906,12 @@ const LEVELS = [
     height: 100%;
     width: var(--pct);
     border-radius: inherit;
-    background: var(--accent);
+    background: var(--ink);
     transform-origin: left;
     animation: grow 0.9s var(--delay, 0s) var(--ease-out) both;
+  }
+  .skills :global(.best .bar span) {
+    background: var(--glo);
   }
   .skills :global(.pct) {
     font-weight: 600;
@@ -438,49 +919,40 @@ const LEVELS = [
     font-variant-numeric: tabular-nums;
   }
   .skills :global(.delta) {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     text-align: right;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
   .skills :global(.delta.up) {
-    color: #1f7a4d;
+    color: var(--ok);
   }
   .skills :global(.delta.down) {
     color: var(--danger);
   }
 
+  .history :global(li + li) {
+    border-top: 1px solid var(--line);
+  }
   .history :global(a) {
     display: grid;
-    grid-template-columns: 1fr auto auto 20px;
+    grid-template-columns: 1fr auto 52px 18px;
     align-items: center;
     gap: 14px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: var(--bg);
+    padding: 9px 0;
     color: var(--ink);
     text-decoration: none;
     font-size: 0.85rem;
-    transition:
-      background 0.2s,
-      translate 0.25s var(--ease-out);
-  }
-  .history :global(a:hover) {
-    background: var(--accent-soft);
-    translate: 2px 0;
   }
   .history :global(.date) {
     color: var(--muted);
   }
-  .history :global(.level) {
-    padding: 2px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--line);
-    font-size: 0.75rem;
+  .history :global(.lvl) {
     font-weight: 500;
   }
   .history :global(.score) {
-    font-weight: 600;
+    font-weight: 700;
+    text-align: right;
     font-variant-numeric: tabular-nums;
   }
   .history :global(svg) {
@@ -490,20 +962,23 @@ const LEVELS = [
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition:
+      stroke 0.2s,
+      translate 0.3s var(--ease-spring);
+  }
+  .history :global(a:hover svg) {
+    stroke: var(--glo);
+    translate: 3px 0;
   }
 
-  .progress :global(.empty) {
-    padding: 16px;
-    border-radius: 12px;
-    border: 1.5px dashed var(--line);
+  .sheet :global(.empty) {
     font-size: 0.85rem;
     color: var(--muted);
   }
-
   .skeleton {
-    height: 40px;
+    height: 32px;
     border-radius: 10px;
-    background: linear-gradient(90deg, var(--bg) 30%, color-mix(in srgb, var(--line) 60%, var(--bg)) 50%, var(--bg) 70%) 0 0 / 300% 100%;
+    background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--line) 60%, transparent) 50%, transparent 70%) 0 0 / 300% 100%;
     animation: shimmer 1.4s linear infinite;
   }
 
@@ -518,87 +993,158 @@ const LEVELS = [
     }
   }
 
-  /* Escritorio: todo cabe en el alto de la ventana; si falta espacio, solo el panel de progreso hace scroll. */
-  @media (min-width: 861px) and (min-height: 540px) {
-    :global(body) {
+  /* Escritorio: fija la altura de la ventana y escala los espacios verticales del panel con ella,
+     para que con todas las habilidades e intentos siga cabiendo sin scroll. */
+  @media (min-width: 961px) and (min-height: 560px) {
+    .dash {
       height: 100dvh;
     }
-  }
-  @media (min-width: 861px) and (max-height: 760px) {
-    .dash {
-      gap: 16px;
+    .sheet {
+      padding-block: clamp(16px, 3vh, 32px);
     }
-    .hero {
-      padding: 28px 32px;
+    h2 {
+      margin-bottom: clamp(6px, 1.4vh, 12px);
     }
-    .hero-lead {
-      margin-bottom: 20px;
+    .level {
+      margin-bottom: clamp(10px, 2.2vh, 18px);
     }
-    .assessment :global(.desc) {
-      display: none;
-    }
-    .progress {
-      gap: 16px;
-      padding: 20px 24px;
-    }
-    .stats div {
-      padding: 8px 12px;
-    }
-    dd {
-      font-size: 1.2rem;
+    .skills {
+      gap: clamp(4px, 1.2vh, 10px);
     }
     .history :global(a) {
-      padding: 9px 14px;
+      padding-block: clamp(4px, 1.1vh, 9px);
+    }
+  }
+  /* Ventanas bajas: compacta el panel. */
+  @media (min-width: 961px) and (max-height: 720px) {
+    .level-desc,
+    .course-kicker {
+      display: none;
+    }
+    .course {
+      padding: 10px 14px;
+    }
+    .course-actions {
+      margin-top: 6px;
+    }
+    .history :global(li:nth-child(n + 3)) {
+      display: none;
     }
   }
 
-  @media (max-width: 1100px) {
-    .hero {
-      grid-template-columns: 1fr;
-    }
-    .coach {
-      display: none;
-    }
-  }
-  @media (max-width: 860px) {
+  /* Móvil (pulgar primero): Glo grande junto a su frase, cifras en una fila, el panel fluye
+     y la acción principal vive fija abajo con sus datos justo encima. */
+  @media (max-width: 960px) {
     .dash {
-      grid-template-columns: 1fr;
-      padding: 0 16px 16px;
+      padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px));
     }
-    .topbar {
-      padding: 12px 16px;
-    }
-    .name {
+    .who {
       display: none;
     }
-    .hero {
-      padding: 28px 24px;
+    .main {
+      grid-template-columns: 1fr;
+      align-items: start;
+      gap: 22px;
+      padding-top: 8px;
     }
-    .progress {
-      padding: 22px 18px;
-      overflow: visible;
+    .glo-row {
+      flex-direction: row-reverse;
+      gap: 4px;
     }
-    .assessment :global(.cta) {
+    canvas {
+      width: min(40vw, 170px);
+      margin: 0 -12px 0 0;
+    }
+    .say {
+      font-size: clamp(1.55rem, 7vw, 2.2rem);
+    }
+    .say-es {
+      font-size: 0.8rem;
+    }
+    .start {
+      position: fixed;
+      z-index: 30;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      background: var(--surface);
+      border-top: 1.5px solid var(--line);
+      box-shadow: 0 -16px 32px -24px color-mix(in srgb, var(--shadow) 40%, transparent);
+    }
+    .start :global(.facts) {
+      order: -1;
+      justify-content: center;
+      margin: 0 0 10px;
+    }
+    .start :global(.note) {
+      order: -1;
+      margin: 0 0 4px;
+      text-align: center;
+    }
+    .start :global(.cta) {
       width: 100%;
       justify-content: space-between;
-      white-space: nowrap;
     }
-  }
-  @media (max-width: 480px) {
-    .logout {
-      width: 36px;
-      padding: 0;
+    .start .skeleton {
+      width: 100% !important;
+    }
+    .pr-word {
+      font-size: 2rem;
+    }
+    .start :global(.practice-btn) {
+      width: 100%;
       justify-content: center;
-      font-size: 0;
+    }
+    .tally {
+      flex-direction: column;
+      align-items: stretch;
+      margin-top: 18px;
+    }
+    .course {
+      flex: none;
+    }
+    .stats div {
+      flex: 1;
+    }
+    .sheet {
+      padding: 20px 18px;
+    }
+    .level {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .skills {
+      gap: 14px;
+    }
+    .skills :global(li:not(.skeleton, .empty)) {
+      grid-template-columns: 1fr 44px 30px;
+      row-gap: 6px;
+    }
+    .skills :global(.bar) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+    .history :global(a) {
+      grid-template-columns: 1fr auto 44px 16px;
+      gap: 10px;
+      min-height: 48px;
     }
   }
 </style>
 
 <script>
-  import { api, esc } from "../lib/api";
-  import type { CoachState } from "../lib/coach";
+  import { api, ApiError, esc } from "../lib/api";
+  import { audioLevel, hatFor, micLevel, mountGlo } from "../lib/glo";
+  import { createPanelStage, createStage } from "../lib/stage";
+  import { salesLink } from "../lib/sales";
+  import { handoff, splash } from "../lib/splash";
 
-  type User = { full_name: string };
+  type User = { full_name: string; role: string };
   type Assessment = {
     slug: string;
     title: string;
@@ -608,6 +1154,7 @@ const LEVELS = [
     attempts_used: number;
     best_score_pct: number | null;
     open_attempt_id: string | null;
+    available_at: string | null;
   };
   type Progress = {
     total_attempts: number;
@@ -616,98 +1163,190 @@ const LEVELS = [
     current_level: { code: string; name: string; description: string | null } | null;
     skills: { code: string; name: string; latest_pct: number; previous_pct: number | null }[];
     attempts: { id: string; submitted_at: string; score_pct: number; suggested_level: string }[];
+    recommendation: { course: string; level: string; weeks: number; promise: string; focus: string[]; script: string } | null;
   };
+  const RANKS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
+  type Line = [string, string];
 
-  const $ = (id: string) => document.getElementById(id)!;
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
   const pct = (n: number | null) => (n == null ? "—" : `${Math.round(n)}%`);
+  const lvl = (code: string) => code.replace("_", "-");
+  const PRACTICE = '<button type="button" class="practice-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Practicar pronunciación</button>';
   const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
 
-  let coach: { setState(s: CoachState): void; pulse(): void } | undefined;
-  import("../lib/coach")
-    .then(({ createCoach }) => (coach = createCoach($("coach") as HTMLCanvasElement)))
-    .catch(() => $("coach").remove());
+  // Recién iniciada la sesión: Glo gris se llena de color a medida que llegan tus datos.
+  const load = splash(...handoff.take());
+  let loaded = 0;
+  const step = <T,>(p: Promise<T>) => p.finally(() => load.progress((loaded += 0.24)));
+  const glo = mountGlo({
+    canvas: $("coach") as HTMLCanvasElement,
+    say: $("say"),
+    sayEs: $("say-es"),
+    scene: document.querySelector<HTMLElement>(".dash")!,
+  });
+  glo.speak("Hi! Let me *look*…", "¡Hola! Déjame ver…");
 
-  function say(en: string, es: string) {
-    const c = $("caption");
-    c.querySelector(".en")!.textContent = en;
-    c.querySelector(".es")!.textContent = es;
-    c.classList.remove("swap");
-    void c.offsetWidth;
-    c.classList.add("swap");
-  }
+  // Lo que Glo dice sobre cada parte (se llena con tus datos reales).
+  const lines: Record<string, Line> = {};
+  let talking = false; // mientras Glo habla con su voz, el hover no le cambia la frase
+  const back = () => {
+    if (talking) return;
+    glo.coach?.setState("idle");
+    if (lines.intro) glo.speak(...lines.intro);
+  };
 
   $("logout").addEventListener("click", async () => {
     await api("/auth/logout", { method: "POST" }).catch(() => {});
     location.replace("/");
   });
 
-  function renderUser(u: User) {
-    const first = u.full_name.split(" ")[0];
-    $("greeting").textContent = `Hola, ${first}`;
-    $("user-name").textContent = u.full_name;
-    $("avatar").textContent = u.full_name
-      .split(" ")
-      .slice(0, 2)
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase();
-  }
+  let pledgeHref = "";
+  $("pledge-ok").addEventListener("change", (e) => {
+    $<HTMLButtonElement>("pledge-go").disabled = !(e.target as HTMLInputElement).checked;
+  });
+  $("pledge-cancel").addEventListener("click", () => $<HTMLDialogElement>("pledge").close());
+  $("pledge-go").addEventListener("click", () => location.assign(pledgeHref));
 
-  function renderAssessment(a: Assessment | undefined) {
+  function renderAssessment(a: Assessment | undefined, first: string, level: string | null) {
     const box = $("assessment");
     if (!a) {
-      box.innerHTML = '<p class="desc">No hay evaluaciones disponibles por ahora.</p>';
+      box.innerHTML = '<p class="note">No hay evaluaciones disponibles por ahora.</p>';
+      lines.intro = [`Hi ${first}! No tests *today.*`, `¡Hola, ${first}! Hoy no hay evaluaciones.`];
       return;
     }
     const resuming = !!a.open_attempt_id;
+    const facts = [`${a.question_count} preguntas`, a.time_limit_minutes ? `${a.time_limit_minutes} min` : null, "Guardado automático"].filter(Boolean);
+    const factsHtml = `<ul class="facts">${facts.map((f) => `<li>${f}</li>`).join("")}</ul>`;
+
+    // Espera entre intentos: el servidor la exige igual; aquí solo se explica y se cuenta.
+    const waitMs = !resuming && a.available_at ? Date.parse(a.available_at) - Date.now() : 0;
+    queueMicrotask(() => box.querySelector(".practice-btn")?.addEventListener("click", () => startPractice()));
+    if (waitMs > 0) {
+      const mins = Math.ceil(waitMs / 60000);
+      box.innerHTML = `
+        <div class="cta-row"><p class="cta wait" aria-disabled="true">Disponible en ${mins} min</p>${PRACTICE}</div>
+        ${factsHtml}
+        <p class="note">Un descanso entre intentos hace que el resultado muestre lo que sabes, no lo que recuerdas.</p>`;
+      lines.intro = [`Nice work, ${first}! Take a *short break.*`, `¡Buen trabajo, ${first}! Tómate un descanso antes de repetir.`];
+      setTimeout(() => renderAssessment({ ...a, available_at: null }, first, level), waitMs);
+      return;
+    }
+
     const label = resuming ? "Continuar evaluación" : a.attempts_used ? "Repetir evaluación" : "Comenzar evaluación";
-    const meta = [
-      `${a.question_count} preguntas`,
-      a.time_limit_minutes ? `${a.time_limit_minutes} minutos` : null,
-      "Guardado automático",
-    ].filter(Boolean);
     box.innerHTML = `
-      <h2>${esc(a.title)}</h2>
-      ${a.description ? `<p class="desc">${esc(a.description)}</p>` : ""}
-      <ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>
-      <a class="cta" href="/test?slug=${encodeURIComponent(a.slug)}">${label} ${ARROW}</a>
-      ${resuming ? '<p class="resume">Tus respuestas anteriores siguen guardadas.</p>' : ""}`;
+      <div class="cta-row"><a class="cta" href="/test?slug=${encodeURIComponent(a.slug)}">${label} ${ARROW}</a>${PRACTICE}</div>
+      ${factsHtml}
+      ${resuming ? '<p class="note">Tus respuestas anteriores siguen guardadas.</p>' : ""}`;
 
-    if (resuming) say("Your answers are saved. Let's continue.", "Tus respuestas están guardadas. Sigamos.");
-    else if (a.attempts_used) say("Let's try to beat your best score.", "Intentemos superar tu mejor puntaje.");
+    // Quien vuelve con nivel: Glo lo recuerda y le propone el siguiente peldaño del camino MCER.
+    const next = document.querySelector("#path li.current + li")?.textContent;
+    lines.intro = resuming
+      ? [`Welcome back, ${first}. Let's *finish* it.`, `Qué bueno verte, ${first}. Terminemos lo que empezaste.`]
+      : level && next
+        ? [`Welcome back, ${first}. Ready for *${next}?*`, `Qué bueno verte, ${first}. Vas en ${level}, ¿vamos por ${next}?`]
+        : level
+          ? [`Welcome back, ${first}. You're at the *top!*`, `Qué bueno verte, ${first}. Llegaste a ${level}, el nivel más alto.`]
+          : [`Hi ${first}! Ready for your *first* test?`, `¡Hola, ${first}! ¿Empezamos tu primera evaluación?`];
 
-    const cta = box.querySelector(".cta")!;
+    const cta = box.querySelector<HTMLAnchorElement>(".cta")!;
+    // Compromiso de honestidad solo al empezar un intento nuevo; reanudar entra directo.
+    if (!resuming) {
+      cta.addEventListener("click", (e) => {
+        e.preventDefault();
+        pledgeHref = cta.href;
+        $<HTMLInputElement>("pledge-ok").checked = false;
+        $<HTMLButtonElement>("pledge-go").disabled = true;
+        $<HTMLDialogElement>("pledge").showModal();
+      });
+    }
     cta.addEventListener("pointerenter", () => {
-      coach?.setState("success");
-      coach?.pulse();
+      glo.coach?.setState("success");
+      glo.speak("Yes! *Let's go!*", "¡Sí! ¡Vamos!");
     });
-    cta.addEventListener("pointerleave", () => coach?.setState("idle"));
+    cta.addEventListener("pointerleave", back);
+  }
+
+  // ---------- Tu siguiente paso: curso recomendado, con la voz de Glo ----------
+  function renderCourse(p: Progress) {
+    const rec = p.recommendation;
+    if (!rec) return;
+    const box = $("course");
+    box.hidden = false;
+    box.dataset.level = rec.level;
+    $("course-title").textContent = rec.course;
+    $("course-meta").textContent = `Nivel ${rec.level} · ${rec.weeks} semanas`;
+    ($("course-cta") as HTMLAnchorElement).href = salesLink(rec.level, rec.course, p.attempts[0]?.score_pct);
+    lines.course = [`Your *next* step: ${rec.course}.`, `Te recomiendo ${rec.course}: ${rec.weeks} semanas para ${rec.promise}.`];
+
+    // El audio se pide en segundo plano (el servidor lo guarda en caché): al tocar, suena al instante.
+    // Al darle play, Glo vuela al escenario y presenta la tarjeta, igual que en resultados.
+    const btn = $<HTMLButtonElement>("course-listen");
+    btn.hidden = false;
+    btn.setAttribute("aria-busy", "true");
+    fetch(`/api/v1/attempts/${p.attempts[0].id}/recommendation/audio`)
+      .then((r) => (r.ok ? r.blob() : null))
+      .then((b) => (b ? new Audio(URL.createObjectURL(b)) : null))
+      .catch(() => null)
+      .then((audio) => {
+        btn.removeAttribute("aria-busy");
+        if (!audio) return (btn.hidden = true);
+        const card = { audio, text: rec.script, card: box, intro: ["Your *next* step.", "Tu siguiente paso."] as Line };
+        // Mientras Glo habla, el hover no le cambia la frase; al cerrar, vuelve a mandar.
+        const stage = createStage(glo, $("coach") as HTMLCanvasElement, [card], () => {
+          talking = false;
+          back();
+        });
+        btn.addEventListener("click", () => {
+          talking = true;
+          stage.open(0, btn);
+        });
+      });
   }
 
   function renderProgress(p: Progress) {
     $("stat-attempts").textContent = String(p.total_attempts);
     $("stat-best").textContent = pct(p.best_score_pct);
-    $("stat-avg").textContent = pct(p.average_score_pct);
+    // Progreso entre intentos: el último contra el anterior.
+    const [last, prev] = p.attempts;
+    const delta = $("stat-delta");
+    if (last && prev) {
+      const d = Math.round(last.score_pct - prev.score_pct);
+      delta.textContent = d > 0 ? `+${d}` : d < 0 ? `−${-d}` : "=";
+      delta.classList.add(d > 0 ? "up" : d < 0 ? "down" : "same");
+    }
+    renderCourse(p);
 
     const level = p.current_level;
     if (level) {
-      const items = [...$("ruler").children] as HTMLElement[];
+      const items = [...$("path").children] as HTMLElement[];
       const idx = items.findIndex((li) => li.dataset.level === level.code);
       items.forEach((li, i) => li.classList.toggle(i === idx ? "current" : "reached", i <= idx));
-      $("level-note").innerHTML = `<strong>${esc(level.code.replace("_", "-"))} · ${esc(level.name)}.</strong> ${esc(level.description ?? "")}`;
+      items[idx]?.setAttribute("aria-current", "step");
+      $("level-code").textContent = lvl(level.code);
+      $("level-name").textContent = level.name;
+      $("level-desc").textContent = level.description ?? "";
+      lines.level = [`You're *${lvl(level.code)}.* ${level.name}!`, `Estás en ${lvl(level.code)}: ${level.name}.`];
+    } else {
+      lines.level = ["Your level will *show up* here.", "Aquí aparecerá tu nivel."];
     }
 
+    const sorted = [...p.skills].sort((a, b) => b.latest_pct - a.latest_pct);
+    const best = sorted[0], worst = sorted.at(-1);
     $("skills").innerHTML = p.skills.length
       ? p.skills
           .map((s, i) => {
             const d = s.previous_pct == null ? null : Math.round(s.latest_pct - s.previous_pct);
             const delta = d == null ? "" : d > 0 ? `<span class="delta up">+${d}</span>` : d < 0 ? `<span class="delta down">${d}</span>` : '<span class="delta">=</span>';
-            return `<li><span>${esc(s.name)}</span>
+            return `<li class="${s === best ? "best" : ""}"><span>${esc(s.name)}</span>
               <span class="bar" role="img" aria-label="${esc(s.name)} ${pct(s.latest_pct)}"><span style="--pct:${s.latest_pct}%;--delay:${0.1 * i}s"></span></span>
               <span class="pct">${pct(s.latest_pct)}</span>${delta || '<span class="delta"></span>'}</li>`;
           })
           .join("")
-      : '<li class="empty">Aquí verás cómo te va en Grammar, Vocabulary, Reading y Listening.</li>';
+      : '<li class="empty">Aquí verás cómo te va en cada habilidad.</li>';
+    lines.skills =
+      best && worst && best !== worst
+        ? [`Your *${best.name}* shines. Let's practice ${worst.name}.`, `Tu ${best.name} brilla. Practiquemos ${worst.name}.`]
+        : ["Let's discover your *skills.*", "Descubramos tus habilidades."];
 
     const date = new Intl.DateTimeFormat("es", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     $("history").innerHTML = p.attempts.length
@@ -716,23 +1355,338 @@ const LEVELS = [
           .map(
             (a) => `<li><a href="/results?id=${a.id}">
               <span class="date">${date.format(new Date(a.submitted_at))}</span>
-              <span class="level">${esc(a.suggested_level.replace("_", "-"))}</span>
+              <span class="lvl">${esc(lvl(a.suggested_level))}</span>
               <span class="score">${pct(a.score_pct)}</span>${ARROW}</a></li>`,
           )
           .join("")
-      : '<li class="empty">Tus intentos aparecerán aquí, con su puntaje y nivel.</li>';
+      : '<li class="empty">Tus intentos aparecerán aquí.</li>';
+    const n = p.total_attempts;
+    lines.history = n
+      ? [`${n} ${n === 1 ? "try" : "tries"} so far. *Keep going!*`, `${n} ${n === 1 ? "intento" : "intentos"} hasta ahora. ¡Sigue así!`]
+      : ["Your story *starts* today.", "Tu historia empieza hoy."];
   }
 
+  // ---------- Mini clase: un sonido, una palabra y una charla corta con Glo ----------
+  // El servidor transcribe y decide si la dijiste bien; aquí solo se graba, se muestra y se oye.
+  type Lesson = { id: string; sound: string; word: string; tip: string; question: string };
+  type Heard = { text: string; ok: boolean | null; unclear: string[] };
+  type Reply = { text: string; fix: string | null; why: string | null; audio: string | null; done: boolean };
+  const MIC = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+  const STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  const WORD_TRIES = 3;
+  const voice = new Audio();
+  // Mientras dura la clase, Glo está en el escenario (como al presentar el curso o el feedback).
+  const prStage = createPanelStage(glo, $("coach") as HTMLCanvasElement, $("practice"), () => endPractice());
+  const amp = (v: number) => {
+    glo.coach?.voice(v);
+    prStage.amp(v);
+  };
+  const lips = audioLevel(voice, amp);
+  /** Glo habla: subtítulo en el escenario (y su frase en la página, para cuando vuelva). */
+  const talk = (en: string, es: string) => {
+    glo.speak(en, es);
+    prStage.caption(en, es);
+  };
+  let run = 0; // cada clase tiene su número; al salir cambia y lo pendiente se descarta
+  let cancelRec: (() => void) | null = null;
+
+  const prStatus = (main: string, sub = "", error = false) => {
+    $("pr-status").innerHTML = esc(main) + (sub ? `<small>${esc(sub)}</small>` : "");
+    $("pr-status").classList.toggle("error", error);
+  };
+  const bubble = (html: string, cls = "") => {
+    const li = document.createElement("li");
+    li.lang = "en";
+    li.className = cls;
+    li.innerHTML = html;
+    $("pr-chat").append(li);
+    li.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  };
+  /** Lo que dijiste, con las palabras que no se entendieron bien subrayadas (a practicar). */
+  const said = (h: Heard) => {
+    const clean = (w: string) => w.toLowerCase().replace(/[^a-z']/g, "");
+    const doubt = new Set(h.unclear.map(clean));
+    const html = h.text
+      .split(/(\s+)/)
+      .map((w) => (doubt.has(clean(w)) ? `<mark>${esc(w)}</mark>` : esc(w)))
+      .join("");
+    return html + (doubt.size ? '<small lang="es">Lo subrayado no se entendió bien: repítelo más claro.</small>' : "");
+  };
+  const toUrl = (b: Blob | null) => (b ? URL.createObjectURL(b) : null);
+
+  /** Glo dice un audio (boca con el volumen real). Sin voz configurada, una pausa breve. */
+  function play(url: string | null) {
+    return new Promise<void>((done) => {
+      if (!url) return setTimeout(done, 1200);
+      const end = () => {
+        lips.stop();
+        done();
+      };
+      voice.onended = voice.onerror = end;
+      voice.src = url;
+      voice
+        .play()
+        .then(() => lips.start() || glo.coach?.say(voice.duration || 3))
+        .catch(end);
+    });
+  }
+
+  /** Espera a que toques el micrófono; graba hasta que lo toques otra vez o se cumplan maxS. */
+  function record(maxS: number) {
+    const mic = $<HTMLButtonElement>("pr-mic");
+    return new Promise<Blob | null>((resolve) => {
+      mic.disabled = false;
+      mic.onclick = async () => {
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        } catch {
+          glo.coach?.setState("error");
+          return prStatus("No pudimos usar tu micrófono", "Permite el acceso junto a la dirección web y vuelve a intentarlo.", true);
+        }
+        const recorder = new MediaRecorder(stream);
+        const chunks: Blob[] = [];
+        let keep = true;
+        const stopMeter = micLevel(stream, (v) => {
+          mic.style.setProperty("--amp", v.toFixed(3));
+          amp(v); // tu volumen: Glo asiente y los anillos laten
+        });
+        const t0 = Date.now();
+        const clock = setInterval(() => {
+          const s = Math.floor((Date.now() - t0) / 1000);
+          prStatus(`Grabando… 0:${String(s).padStart(2, "0")}`, "Toca de nuevo para terminar");
+          if (s >= maxS) recorder.stop();
+        }, 250);
+        cancelRec = () => {
+          keep = false;
+          recorder.stop();
+        };
+        recorder.ondataavailable = (e) => chunks.push(e.data);
+        recorder.onstop = () => {
+          clearInterval(clock);
+          stopMeter();
+          stream.getTracks().forEach((t) => t.stop());
+          cancelRec = null;
+          mic.onclick = null;
+          mic.disabled = true;
+          mic.setAttribute("aria-pressed", "false");
+          mic.setAttribute("aria-label", "Grabar");
+          mic.innerHTML = MIC;
+          resolve(keep ? new Blob(chunks, { type: recorder.mimeType || "audio/webm" }) : null);
+        };
+        mic.onclick = () => recorder.state === "recording" && recorder.stop();
+        recorder.start();
+        mic.setAttribute("aria-pressed", "true");
+        mic.setAttribute("aria-label", "Terminar grabación");
+        mic.innerHTML = STOP;
+        glo.coach?.setState("listen");
+        talk("I'm *listening…*", "Te escucho…");
+        prStatus("Grabando… 0:00", "Toca de nuevo para terminar");
+      };
+    });
+  }
+
+  /** Graba y transcribe; ante un error lo explica y deja volver a intentarlo. null = saliste. */
+  async function hear(me: number, maxS: number, lesson?: string) {
+    for (;;) {
+      const blob = await record(maxS);
+      if (!blob || me !== run) return null;
+      prStatus("Glo te está escuchando…");
+      glo.coach?.setState("loading");
+      try {
+        const q = lesson ? `?lesson=${lesson}` : "";
+        return await api<Heard>(`/practice/listen${q}`, { method: "POST", body: blob, headers: { "Content-Type": blob.type } });
+      } catch (e) {
+        if (me !== run) return null;
+        glo.coach?.setState("error");
+        prStatus((e as Error).message, e instanceof ApiError && e.code === "stt_unavailable" ? "Vuelve a intentarlo más tarde." : "Toca el micrófono para intentarlo otra vez.", true);
+        if (e instanceof ApiError && e.code === "stt_unavailable") return null;
+      }
+    }
+  }
+
+  // Cerrar (X, Esc o "Listo"): se corta lo que esté sonando o grabando y Glo vuelve a su sitio.
+  function endPractice() {
+    run++;
+    cancelRec?.();
+    voice.pause();
+    lips.stop();
+    talking = false;
+    back();
+  }
+  $("pr-close").addEventListener("click", () => prStage.close());
+  $("pr-exit").addEventListener("click", () => prStage.close());
+  $("pr-again").addEventListener("click", () => startPractice($("practice").dataset.lesson));
+
+  async function startPractice(exclude?: string) {
+    const me = ++run;
+    talking = true;
+    if (!prStage.isOpen) prStage.open(document.querySelector<HTMLElement>(".practice-btn") ?? $("assessment"));
+    $("pr-end").hidden = true;
+    $("pr-chat").hidden = true;
+    $("pr-chat").replaceChildren();
+    $("pr-lesson").hidden = false;
+    $("pr-word").className = "pr-word";
+    $("pr-mic").innerHTML = MIC;
+    $<HTMLButtonElement>("pr-mic").disabled = true;
+    prStatus("Preparando tu clase…");
+    glo.coach?.setState("loading");
+
+    let lesson: Lesson;
+    try {
+      lesson = await api<Lesson>(`/practice/lesson${exclude ? `?exclude=${encodeURIComponent(exclude)}` : ""}`);
+    } catch (e) {
+      glo.coach?.setState("error");
+      return prStatus((e as Error).message, "", true);
+    }
+    if (me !== run) return;
+    $("practice").dataset.lesson = lesson.id;
+    // Frases fijas de Glo: se piden todas ya (el servidor las guarda en caché) y suenan al instante.
+    const clip = (name: string) =>
+      fetch(`/api/v1/practice/${lesson.id}/audio/${name}`)
+        .then((r) => (r.ok ? r.blob() : null))
+        .then(toUrl)
+        .catch(() => null);
+    const clips = { intro: clip("intro"), word: clip("word"), good: clip("good"), again: clip("again"), question: clip("question") };
+    $("pr-sound").textContent = lesson.sound;
+    $("pr-word").textContent = lesson.word;
+    $("pr-tip").textContent = lesson.tip;
+
+    // 1. Glo explica el sonido y dice la palabra.
+    glo.coach?.setState("present");
+    talk(`The *${lesson.sound}* sound`, lesson.tip);
+    prStatus("Escucha a Glo…");
+    await play(await clips.intro);
+    if (me !== run) return;
+    talk(`*${lesson.word}*`, "Escucha cómo se dice.");
+    await play(await clips.word);
+
+    // 2. Tú la dices: si suena bien, te felicita; si no, te la repite (hasta 3 veces).
+    for (let tries = 1; ; tries++) {
+      if (me !== run) return;
+      glo.coach?.setState("idle");
+      talk(`Your turn: *${lesson.word}!*`, "Toca el micrófono y dila en voz alta.");
+      prStatus("Toca el micrófono y di la palabra", "Máximo 5 segundos");
+      const heard = await hear(me, 5, lesson.id);
+      if (!heard) return;
+      if (heard.ok) {
+        $("pr-word").classList.add("ok");
+        glo.coach?.setState("success");
+        talk("Very *good!*", `¡Muy bien! Te entendí «${heard.text}».`);
+        prStatus("¡Así se dice!");
+        await play(await clips.good);
+        break;
+      }
+      const word = $("pr-word");
+      word.classList.remove("miss");
+      void word.offsetWidth; // reinicia la animación
+      word.classList.add("miss");
+      glo.coach?.setState("error");
+      if (tries >= WORD_TRIES) {
+        talk("Nice *try!*", "Buen intento. Sigue practicándola; ahora conversemos.");
+        prStatus(`Entendí «${heard.text}»`, "La seguimos practicando otro día.");
+        await new Promise((r) => setTimeout(r, 1800));
+        break;
+      }
+      talk(`Almost! *${lesson.word}*`, `Entendí «${heard.text}». Escúchala otra vez.`);
+      prStatus(`Entendí «${heard.text}»`, "Escucha a Glo y vuelve a intentarlo.");
+      await play(await clips.again);
+      if (me !== run) return;
+      await play(await clips.word);
+    }
+    if (me !== run) return;
+
+    // 3. Charla corta en inglés sobre una pregunta: Glo reacciona y repregunta, luego se despide.
+    $("pr-lesson").hidden = true;
+    $("pr-chat").hidden = false;
+    const turns = [lesson.question];
+    bubble(esc(lesson.question));
+    glo.coach?.setState("present");
+    talk("Let's *talk!*", "Respóndele en inglés, como puedas.");
+    prStatus("Escucha a Glo…");
+    await play(await clips.question);
+    for (;;) {
+      if (me !== run) return;
+      glo.coach?.setState("idle");
+      talk("Your *turn!*", "Respóndele en inglés, como puedas.");
+      prStatus("Toca el micrófono y responde", "Máximo 20 segundos");
+      const heard = await hear(me, 20);
+      if (!heard) return;
+      bubble(said(heard), "me");
+      turns.push(heard.text);
+      prStatus("Glo está pensando…");
+      let reply: Reply;
+      try {
+        reply = await api<Reply>("/practice/reply", { method: "POST", body: JSON.stringify({ turns }) });
+      } catch (e) {
+        turns.pop();
+        $("pr-chat").lastElementChild?.remove();
+        glo.coach?.setState("error");
+        prStatus((e as Error).message, "Toca el micrófono para intentarlo otra vez.", true);
+        continue;
+      }
+      if (me !== run) return;
+      turns.push(reply.text);
+      // Glo te corrige: tu frase bien dicha (y por qué), antes de seguir la charla.
+      if (reply.fix) bubble(`<b lang="es">Mejor dicho</b>${esc(reply.fix)}${reply.why ? `<small lang="es">${esc(reply.why)}</small>` : ""}`, "fix");
+      bubble(esc(reply.text));
+      glo.coach?.setState(reply.done ? "success" : "present");
+      if (reply.fix) talk(`You can say: *${reply.fix}*`, reply.why ?? "Así suena más natural.");
+      else talk(reply.done ? "Great *job!*" : "*Nice!*", reply.done ? "¡Terminaste tu mini clase!" : "Glo te responde…");
+      prStatus("Escucha a Glo…");
+      const audio = reply.audio && toUrl(new Blob([Uint8Array.from(atob(reply.audio), (c) => c.charCodeAt(0))], { type: "audio/mpeg" }));
+      await play(audio);
+      if (me !== run) return;
+      if (reply.done) break;
+    }
+    prStatus("");
+    $("pr-end").hidden = false;
+    $("pr-again").focus();
+  }
+
+  // Al pasar el puntero por un bloque del panel, Glo lo mira y lo comenta.
+  document.querySelectorAll<HTMLElement>("[data-glo]").forEach((el) => {
+    el.addEventListener("pointerenter", () => {
+      const line = lines[el.dataset.glo!];
+      if (!line || talking) return;
+      glo.coach?.setState("present");
+      glo.speak(...line);
+    });
+    el.addEventListener("pointerleave", back);
+  });
+
   try {
+    step(glo.ready);
     const [user, assessments, progress] = await Promise.all([
-      api<User>("/auth/me"),
-      api<Assessment[]>("/assessments"),
-      api<Progress>("/me/progress"),
+      step(api<User>("/auth/me")),
+      step(api<Assessment[]>("/assessments")),
+      step(api<Progress>("/me/progress")),
     ]);
-    renderUser(user);
-    renderAssessment(assessments[0]);
+    if (user.role !== "student") {
+      location.replace("/teacher"); // profesor/admin: su panel
+      await new Promise(() => {});
+    }
+    const first = user.full_name.split(" ")[0];
+    $("user-name").textContent = user.full_name;
     renderProgress(progress);
+    // Glo lleva el sombrero que ganaste con tu nivel.
+    if (progress.current_level) glo.ready.then((c) => c?.wear(hatFor(progress.current_level!.code)));
+    renderAssessment(assessments[0], first, progress.current_level && lvl(progress.current_level.code));
+    const [last, prev] = progress.attempts;
+    const climbed = last && prev && RANKS.indexOf(last.suggested_level) > RANKS.indexOf(prev.suggested_level);
+    if (climbed && !assessments[0]?.open_attempt_id) {
+      lines.intro = [`You *leveled up,* ${first}!`, `¡Subiste de ${lvl(prev.suggested_level)} a ${lvl(last.suggested_level)}, ${first}! Mira tu progreso.`];
+      glo.ready.then((c) => c?.setState("success"));
+    } else if (last && prev && last.score_pct - prev.score_pct >= 5 && !assessments[0]?.open_attempt_id) {
+      const d = Math.round(last.score_pct - prev.score_pct);
+      lines.intro = [`*+${d}* points, ${first}. Nice!`, `¡${d} puntos más que en tu intento anterior, ${first}!`];
+    }
+    glo.speak(...lines.intro);
+    load.done();
   } catch (e) {
-    $("assessment").innerHTML = `<p class="desc">${esc((e as Error).message)}</p>`;
+    load.done();
+    $("assessment").innerHTML = `<p class="note">${esc((e as Error).message)}</p>`;
+    glo.coach?.setState("error");
+    glo.speak("Hmm. Something went *wrong.*", "Mmm. Algo salió mal.");
   }
 </script>

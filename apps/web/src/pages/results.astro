@@ -1,136 +1,181 @@
 ---
 import Base from "../layouts/Base.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
+import "../styles/glo.css";
 
 // ponytail: misma escala que el dashboard; exponer GET /levels si cambia a menudo.
 const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
 ---
 
 <Base title="Resultados · Global AI">
-  <header class="topbar">
-    <a class="brand" href="/dashboard"><span class="dot"></span>Global AI</a>
-    <a class="back" href="/dashboard">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
-      Volver al inicio
-    </a>
-  </header>
+  <div class="res">
+    <header class="bar">
+      <a class="brand" href="/dashboard"><span class="mark" aria-hidden="true"></span>Global AI</a>
+      <ThemeToggle />
+      <a class="back" href="/dashboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+        Volver al inicio
+      </a>
+    </header>
 
-  <main class="results" id="results" hidden>
-    <section class="stage" aria-labelledby="score-title">
-      <p class="eyebrow" id="assessment-title"></p>
-
-      <div class="ring-wrap">
-        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="track" cx="60" cy="60" r="56"></circle>
-          <circle class="fill" id="ring-fill" cx="60" cy="60" r="56" pathLength="100"></circle>
-        </svg>
-        <canvas id="coach" aria-hidden="true"></canvas>
-      </div>
-
-      <h1 id="score-title"><span id="score">0</span><small>%</small></h1>
-      <p class="score-sub" id="score-sub"></p>
-
-      <div class="level">
-        <p class="level-label">Nivel sugerido</p>
-        <p class="level-code"><strong id="level-code"></strong> <span id="level-name"></span></p>
-        <ol class="ruler" id="ruler" aria-hidden="true">
-          {LEVELS.map((code) => <li data-level={code}>{code.replace("PRE_", "Pre-")}</li>)}
-        </ol>
-        <p class="level-desc" id="level-desc"></p>
-      </div>
-
-      <dl class="stats">
-        <div><dt>Correctas</dt><dd id="st-correct"></dd></div>
-        <div><dt>Incorrectas</dt><dd id="st-incorrect"></dd></div>
-        <div><dt>Sin responder</dt><dd id="st-empty"></dd></div>
-        <div><dt>Tiempo</dt><dd id="st-time"></dd></div>
-      </dl>
-    </section>
-
-    <section class="detail">
-      <article class="feedback" aria-labelledby="fb-title" aria-busy="true" id="feedback">
-        <header>
-          <h2 id="fb-title">Tu coach dice</h2>
-          <button type="button" class="listen" id="listen" hidden>
-            <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"></path></svg>
-            <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
-            <span>Escuchar</span>
-          </button>
-        </header>
-        <div class="fb-body" id="fb-body">
-          <p class="writing">Glo está escribiendo tu feedback<span class="dots"></span></p>
-          <div class="skeleton" style="width: 95%"></div>
-          <div class="skeleton" style="width: 88%"></div>
-          <div class="skeleton" style="width: 60%"></div>
+    <main class="main" id="results" hidden>
+      <!-- Glo celebra tu resultado y se pone el sombrero de tu nivel. -->
+      <section class="hero" aria-labelledby="score-title">
+        <div class="glo-row">
+          <canvas id="coach" aria-hidden="true"></canvas>
+          <div class="voice" aria-hidden="true">
+            <p class="say" id="say" lang="en"></p>
+            <p class="say-es" id="say-es"></p>
+          </div>
         </div>
-      </article>
 
-      <div class="block">
-        <h2>Por habilidad</h2>
-        <ul class="skills" id="skills"></ul>
-      </div>
-
-      <div class="block">
-        <div class="block-head">
-          <h2>Revisión de respuestas</h2>
-          <p class="legend" id="review-legend"></p>
+        <div class="score-line">
+          <h1 id="score-title"><span id="score">0</span><small>%</small><span class="sr-only"> de puntaje</span></h1>
+          <div>
+            <p class="score-sub" id="score-sub"></p>
+            <p class="assess" id="assessment-title"></p>
+          </div>
         </div>
-        <ol class="review" id="review"></ol>
+
+        <div class="level">
+          <p class="lbl">Nivel sugerido</p>
+          <div class="code-row">
+            <p class="code"><strong id="level-code"></strong> <span id="level-name"></span></p>
+            <button type="button" class="share-btn" id="share-open"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>Compartir mi nivel</button>
+          </div>
+          <ol class="path" id="ruler" aria-hidden="true">
+            {LEVELS.map((code) => <li data-level={code}><span>{code.replace("PRE_", "Pre-")}</span></li>)}
+          </ol>
+          <p class="level-desc" id="level-desc"></p>
+        </div>
+
+        <dl class="stats">
+          <div><dd id="st-correct"></dd><dt>correctas</dt></div>
+          <div><dd id="st-incorrect"></dd><dt>incorrectas</dt></div>
+          <div><dd id="st-empty"></dd><dt>sin responder</dt></div>
+          <div><dd id="st-time"></dd><dt>tiempo</dt></div>
+        </dl>
+      </section>
+
+      <!-- Detalle en un panel: feedback de Glo (con su voz), habilidades y revisión. -->
+      <section class="sheet">
+        <article class="feedback" aria-labelledby="fb-title" aria-busy="true" id="feedback">
+          <header>
+            <h2 id="fb-title">Glo dice</h2>
+            <button type="button" class="listen" id="listen" aria-pressed="false" hidden>
+              <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"></path></svg>
+              <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+              <span>Escuchar a Glo</span>
+            </button>
+          </header>
+          <div class="fb-body" id="fb-body">
+            <p class="writing">Glo está escribiendo tu feedback<span class="dots"></span></p>
+            <div class="skeleton" style="width: 95%"></div>
+            <div class="skeleton" style="width: 80%"></div>
+          </div>
+        </article>
+
+        <!-- Tu siguiente paso: el curso de tu nivel. Glo lo presenta con su voz al final del feedback. -->
+        <article class="rec" id="rec" aria-labelledby="rec-course">
+          <p class="rec-kicker">Tu siguiente paso</p>
+          <h2 class="rec-course" id="rec-course"></h2>
+          <p class="rec-meta" id="rec-meta"></p>
+          <p class="rec-focus" id="rec-focus"></p>
+          <div class="rec-actions">
+            <a class="rec-cta" id="rec-cta" target="_blank" rel="noopener">
+              Quiero empezar
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            </a>
+            <button type="button" class="rec-listen" id="rec-listen" data-stage-hide hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"></path></svg>
+              Que Glo te lo cuente
+            </button>
+          </div>
+          <p class="rec-note" data-stage-hide>Te atiende un asesor de Global por WhatsApp.</p>
+        </article>
+
+        <div class="block">
+          <h2>Por habilidad</h2>
+          <ul class="skills" id="skills"></ul>
+        </div>
+
+        <div class="block">
+          <div class="block-head">
+            <h2>Revisión de respuestas</h2>
+            <p class="legend" id="review-legend"></p>
+          </div>
+          <ol class="review" id="review"></ol>
+        </div>
+      </section>
+    </main>
+
+    <!-- Móvil: la acción principal en la zona del pulgar. -->
+    <nav class="dock" aria-label="Acciones">
+      <a class="home" href="/dashboard" aria-label="Volver al inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+      <a class="cta" id="dock-cta" href="/dashboard" target="_blank" rel="noopener"><span id="dock-label">Quiero empezar</span> <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+    </nav>
+  </div>
+
+  <!-- Compartir: vista previa de la imagen (historia o post) → menú nativo del móvil o descarga. -->
+  <dialog class="share" id="share" aria-labelledby="share-title">
+    <div class="share-head">
+      <h2 id="share-title">Comparte tu nivel</h2>
+      <form method="dialog"><button class="share-x" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></form>
+    </div>
+    <fieldset class="share-fmt">
+      <legend class="sr-only">Formato</legend>
+      <label><input type="radio" name="fmt" value="story" checked />Historia <small>9:16</small></label>
+      <label><input type="radio" name="fmt" value="post" />Post <small>4:5</small></label>
+    </fieldset>
+    <div class="share-frame" id="share-frame" data-fmt="story">
+      <!-- Mientras se dibuja: el mismo lenguaje de la pantalla de carga (palabra en ola + Glo). -->
+      <div class="share-load" id="share-load" role="status">
+        <img src="/favicon.svg" alt="" class="share-load-glo" />
+        <p class="splash-word" lang="en" aria-hidden="true">{[..."Creating"].map((c, i) => <span style={`--i:${i}`}>{c}</span>)}</p>
+        <p class="share-load-es">Creando tu post viral…</p>
       </div>
-    </section>
-  </main>
+      <img id="share-img" alt="" hidden />
+    </div>
+    <div class="share-actions">
+      <button type="button" class="share-go" id="share-go" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>Compartir</button>
+      <a class="share-dl" id="share-dl" download="mi-nivel-global-ai.png">Descargar imagen</a>
+    </div>
+  </dialog>
 
   <div class="screen" id="screen" role="status">
     <div class="spinner" aria-hidden="true"></div>
     <p id="screen-text">Cargando tu resultado…</p>
-    <a href="/dashboard" class="link" id="screen-back" hidden>Volver al inicio</a>
+    <a href="/dashboard" class="back-link" id="screen-back" hidden>Volver al inicio</a>
   </div>
 </Base>
 
 <style>
+  /* Mismo lenguaje que dashboard y evaluación: papel claro, una pantalla, Glo dentro de la composición. */
   :global(body) {
+    --pop: var(--ink);
+  }
+  .res {
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
+    padding: clamp(14px, 2vw, 28px) clamp(16px, 3vw, 48px);
   }
-
-  .topbar {
+  .bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 24px;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
+    gap: 16px;
   }
   .back {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 38px;
-    padding: 0 14px;
-    border: 1.5px solid var(--line);
-    border-radius: 8px;
     color: var(--ink);
     font-size: 0.85rem;
-    text-decoration: none;
-    transition:
-      border-color 0.2s,
-      background 0.2s;
-  }
-  .back:hover {
-    border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
-    background: var(--surface);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
   }
   .back svg {
     width: 16px;
@@ -139,252 +184,475 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: translate 0.3s var(--ease-out);
+    transition: translate 0.3s var(--ease-spring);
   }
   .back:hover svg {
     translate: -3px 0;
   }
 
-  .results {
+  .main {
     flex: 1;
     display: grid;
-    grid-template-columns: minmax(320px, 0.8fr) 1.4fr;
-    gap: 20px;
-    padding: 0 20px 20px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(24px, 5vw, 72px);
     min-height: 0;
+    padding-top: clamp(12px, 2.4vh, 28px);
   }
-  .results[hidden] {
+  .main[hidden] {
     display: none;
   }
 
-  /* Escenario del resultado */
-  .stage {
+  .glo-row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: safe center;
-    gap: 6px;
-    padding: 26px 28px;
-    border-radius: 20px;
-    color: var(--bg);
-    background:
-      radial-gradient(circle, rgb(246 241 231 / 0.12) 1px, transparent 1.4px) 0 0 / 24px 24px,
-      var(--stage);
-    text-align: center;
-    overflow: auto;
-    animation: rise 0.8s var(--ease-out) both;
-  }
-  .eyebrow {
-    margin: 0 0 8px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    opacity: 0.7;
-  }
-  .ring-wrap {
-    position: relative;
-    width: min(190px, 26dvh);
-    aspect-ratio: 1;
-    flex: none;
-  }
-  .ring {
-    position: absolute;
-    inset: 0;
-    rotate: -90deg;
-  }
-  .ring circle {
-    fill: none;
-    stroke-width: 5;
-  }
-  .track {
-    stroke: rgb(246 241 231 / 0.14);
-  }
-  .fill {
-    stroke: var(--bg);
-    stroke-linecap: round;
-    stroke-dasharray: 100;
-    stroke-dashoffset: 100;
-    transition: stroke-dashoffset 1.6s var(--ease-out);
+    gap: clamp(8px, 1.5vw, 20px);
   }
   canvas {
-    position: absolute;
-    inset: 12%;
-    width: 76%;
-    height: 76%;
+    flex: none;
+    width: min(18vw, 28vh, 240px);
+    aspect-ratio: 1;
+    margin-left: -3%;
+    animation: glo-in 1s 0.1s var(--ease-spring) both;
+  }
+  .say {
+    max-width: 11ch;
+    font-size: clamp(1.6rem, min(2.8vw, 5.4vh), 2.7rem);
+    translate: none;
+  }
+  .say-es {
+    margin-top: 10px;
+    font-size: 0.85rem;
+  }
+
+  /* Puntaje: el número manda. */
+  .score-line {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    margin-top: clamp(10px, 2vh, 20px);
   }
   h1 {
-    margin: 4px 0 0;
-    font-size: clamp(2.6rem, 6dvh, 3.4rem);
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.03em;
+    margin: 0;
+    font-size: clamp(3.4rem, min(6vw, 12vh), 5.4rem);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -0.06em;
     font-variant-numeric: tabular-nums;
   }
   h1 small {
-    font-size: 0.5em;
-    opacity: 0.7;
+    font-size: 0.45em;
+    letter-spacing: -0.02em;
+    color: var(--glo);
   }
   .score-sub {
-    margin: 0 0 14px;
-    font-size: 0.85rem;
-    opacity: 0.7;
-  }
-
-  .level {
-    width: 100%;
-    padding: 16px 18px;
-    border-radius: 14px;
-    background: rgb(246 241 231 / 0.07);
-    border: 1px solid rgb(246 241 231 / 0.14);
-    text-align: left;
-  }
-  .level p {
     margin: 0;
-  }
-  .level-label {
-    font-size: 0.75rem;
-    opacity: 0.7;
-  }
-  .level-code {
-    margin: 2px 0 12px !important;
-    font-size: 1.05rem;
-  }
-  .level-code strong {
-    font-size: 1.6rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    margin-right: 4px;
-  }
-  .ruler {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 4px;
-    margin: 0 0 10px;
-    padding: 0;
-    list-style: none;
-  }
-  .ruler li {
-    white-space: nowrap;
-    position: relative;
-    padding-top: 10px;
-    font-size: 0.68rem;
-    text-align: center;
-    opacity: 0.55;
-  }
-  .ruler li::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 5px;
-    border-radius: 3px;
-    background: rgb(246 241 231 / 0.18);
-  }
-  .ruler :global(li.reached) {
-    opacity: 0.8;
-  }
-  .ruler :global(li.reached::before) {
-    background: rgb(246 241 231 / 0.45);
-  }
-  .ruler :global(li.current) {
-    opacity: 1;
     font-weight: 600;
   }
-  .ruler :global(li.current::before) {
-    background: var(--bg);
-    animation: grow 0.7s 0.6s var(--ease-out) both;
-  }
-  .level-desc {
+  .assess {
+    margin: 2px 0 0;
     font-size: 0.8rem;
-    opacity: 0.75;
-  }
-
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    width: 100%;
-    margin: 10px 0 0;
-  }
-  .stats div {
-    padding: 8px 6px;
-    border-radius: 10px;
-    background: rgb(246 241 231 / 0.07);
-  }
-  dt {
-    font-size: 0.68rem;
-    opacity: 0.7;
-  }
-  dd {
-    margin: 0;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Detalle */
-  .detail {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    min-height: 0;
-    padding: 26px 28px;
-    border-radius: 20px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    overflow: auto;
-    animation: rise 0.8s 0.1s var(--ease-out) both;
-  }
-  h2 {
-    margin: 0;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
     color: var(--muted);
   }
 
-  .feedback {
-    padding: 20px 22px;
-    border-radius: 14px;
-    background: var(--accent-soft);
+  .level {
+    margin-top: clamp(16px, 3vh, 28px);
   }
+  .lbl {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .code {
+    margin: 0 0 14px;
+    font-size: 1.05rem;
+  }
+  .code strong {
+    font-size: 1.6rem;
+    letter-spacing: -0.03em;
+    text-decoration: underline wavy var(--glo);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+  .code-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin: 0 0 14px;
+  }
+  .code-row .code {
+    margin: 0;
+  }
+  .share-btn,
+  .share-go,
+  .share-dl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px 0 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.25s var(--ease-spring);
+  }
+  .share-btn:hover,
+  .share-dl:hover {
+    border-color: var(--glo);
+  }
+  /* Compartir: relleno de tinta, se ve a simple vista sin competir con el azul del curso. */
+  .share-btn {
+    height: 42px;
+    padding: 0 18px 0 14px;
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--surface);
+    font-weight: 600;
+    box-shadow: 0 10px 20px -12px color-mix(in srgb, var(--shadow) 60%, transparent);
+  }
+  .share-btn:hover {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+  }
+  .share-btn svg,
+  .share-go svg {
+    width: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .share-btn svg {
+    stroke: var(--glo);
+  }
+
+  /* Diálogo nativo: foco atrapado, Esc y backdrop gratis. */
+  .share {
+    width: min(440px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 20px;
+    border: 0;
+    border-radius: 24px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 40px 80px -40px color-mix(in srgb, var(--shadow) 50%, transparent);
+  }
+  .share[open] {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: rec-in 0.5s var(--ease-spring);
+  }
+  .share::backdrop {
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .share-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .share-head h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .share-x {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .share-x svg {
+    width: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  /* Selector de formato segmentado (radios nativos). */
+  .share-fmt {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 0;
+    padding: 4px;
+    border: 0;
+    border-radius: 99px;
+    background: var(--bg);
+  }
+  .share-fmt label {
+    display: grid;
+    place-items: center;
+    grid-auto-flow: column;
+    gap: 6px;
+    height: 38px;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .share-fmt small {
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+  .share-fmt input {
+    position: absolute;
+    opacity: 0;
+  }
+  .share-fmt label:has(:checked) {
+    background: var(--surface);
+    box-shadow: 0 2px 8px -4px color-mix(in srgb, var(--shadow) 35%, transparent);
+  }
+  .share-fmt label:has(:focus-visible) {
+    outline: 3px solid var(--accent);
+  }
+  /* El marco ya tiene la proporción final: la imagen aparece sin saltos. */
+  .share-frame {
+    position: relative;
+    align-self: center;
+    height: min(58dvh, 560px);
+    max-width: 100%;
+    aspect-ratio: 9 / 16;
+    border-radius: 14px;
+    background: var(--bg);
+    box-shadow: 0 20px 40px -24px color-mix(in srgb, var(--shadow) 50%, transparent);
+    overflow: hidden;
+  }
+  .share-frame[data-fmt="post"] {
+    height: auto;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+  }
+  #share-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    animation: glo-fade 0.4s var(--ease-out);
+  }
+  #share-img[hidden],
+  .share-load[hidden] {
+    display: none;
+  }
+  .share-load {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    text-align: center;
+  }
+  .share-load-glo {
+    width: 64px;
+    animation: share-hop 0.9s var(--ease-out) infinite alternate;
+  }
+  .share-load .splash-word {
+    font-size: 1.2rem;
+  }
+  .share-load-es {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  @keyframes share-hop {
+    from {
+      translate: 0 6px;
+      scale: 1.04 0.96;
+    }
+    to {
+      translate: 0 -10px;
+      scale: 0.98 1.02;
+    }
+  }
+  .share-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .share-actions > * {
+    flex: 1;
+    height: 50px;
+    font-size: 0.9rem;
+  }
+  .share-go {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .level-desc {
+    margin: 12px 0 0;
+    max-width: 44ch;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  /* Camino de niveles, como en el dashboard. */
+  .path {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    max-width: 440px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .path::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 8.33%;
+    right: 8.33%;
+    height: 2px;
+    background: var(--line);
+  }
+  .path li {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .path li::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--bg);
+    transition:
+      background 0.4s var(--delay, 0s),
+      border-color 0.4s var(--delay, 0s);
+  }
+  .path :global(li.reached::before) {
+    border-color: var(--ink);
+    background: var(--ink);
+  }
+  .path :global(li.current) {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .path :global(li.current::before) {
+    border-color: var(--glo);
+    background: var(--glo);
+  }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 12px;
+    margin: clamp(16px, 3vh, 28px) 0 0;
+  }
+  .stats div {
+    display: flex;
+    flex-direction: column-reverse;
+    padding-right: clamp(14px, 2vw, 26px);
+  }
+  .stats div + div {
+    padding-left: clamp(14px, 2vw, 26px);
+    border-left: 1.5px solid var(--line);
+  }
+  dd {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  dt {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  /* Panel de detalle: en escritorio solo él hace scroll. */
+  .sheet {
+    display: grid;
+    align-content: start;
+    gap: 24px;
+    max-height: 100%;
+    padding: clamp(20px, 2.6vw, 36px);
+    border-radius: 24px;
+    background: var(--surface);
+    box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--shadow) 35%, transparent);
+    overflow: auto;
+    overscroll-behavior: contain;
+    animation: glo-fade 0.8s 0.15s var(--ease-out) backwards;
+  }
+  .block {
+    padding-top: 22px;
+    border-top: 1.5px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .block-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 12px;
+  }
+  .legend {
+    margin: 0 0 12px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* Feedback de Glo */
   .feedback header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 10px;
   }
   .feedback h2 {
-    color: var(--accent);
+    margin: 0;
   }
   .listen {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 36px;
+    height: 38px;
     padding: 0 14px 0 10px;
-    border: 0;
-    border-radius: 999px;
-    background: var(--accent);
-    color: var(--accent-ink);
+    border: 1.5px solid var(--line);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--ink);
     font: inherit;
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
     transition:
-      transform 0.15s var(--ease-out),
+      border-color 0.2s,
       background 0.2s;
   }
   .listen:hover {
-    background: color-mix(in srgb, var(--accent) 88%, black);
+    border-color: var(--glo);
   }
-  .listen:active {
-    transform: scale(0.97);
+  .listen[aria-pressed="true"] {
+    border-color: var(--glo);
+    background: color-mix(in srgb, var(--glo) 10%, transparent);
   }
   .listen svg {
     width: 16px;
-    fill: currentColor;
+    fill: var(--glo);
   }
   .listen .i-pause,
   .listen[aria-pressed="true"] .i-play {
@@ -393,72 +661,167 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
   .listen[aria-pressed="true"] .i-pause {
     display: block;
   }
-  .listen[aria-busy="true"] {
-    opacity: 0.7;
-    cursor: progress;
+  .listen[disabled] {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .fb-body {
+    margin-top: 14px;
+    font-size: 0.95rem;
+    line-height: 1.65;
   }
   .fb-body :global(p) {
     margin: 0 0 10px;
-    line-height: 1.65;
-    font-size: 0.95rem;
-  }
-  .fb-body :global(p:last-child) {
-    margin-bottom: 0;
   }
   .writing {
-    color: var(--accent);
-    font-size: 0.85rem !important;
+    color: var(--muted);
+    font-size: 0.85rem;
   }
   .dots::after {
     content: "";
     animation: dots 1s steps(4) infinite;
-  }
-  .fb-body .skeleton {
-    height: 12px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    background: linear-gradient(90deg, rgb(255 255 255 / 0.4) 30%, rgb(255 255 255 / 0.85) 50%, rgb(255 255 255 / 0.4) 70%) 0 0 / 300% 100%;
-    animation: shimmer 1.4s linear infinite;
   }
   .fb-body :global(.caret) {
     display: inline-block;
     width: 2px;
     height: 1em;
     margin-left: 2px;
-    vertical-align: text-bottom;
+    vertical-align: -0.12em;
+    background: var(--glo);
+    animation: caret 0.8s steps(2) infinite;
+  }
+
+  /* Tu siguiente paso: el único bloque en color de la página, porque es la acción que importa.
+     El nivel gigante de fondo (data-level) es el detalle tipográfico. */
+  .rec {
+    position: relative;
+    padding: 22px 24px 18px;
+    border-radius: 20px;
     background: var(--accent);
-    animation: blink 0.8s steps(2) infinite;
+    color: var(--accent-ink);
+    overflow: hidden;
+    isolation: isolate;
   }
-
-  .block h2,
-  .block-head {
-    margin-bottom: 12px;
+  .rec::after {
+    content: attr(data-level);
+    position: absolute;
+    z-index: -1;
+    right: -0.04em;
+    bottom: -0.26em;
+    font-size: 8.5rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.07em;
+    opacity: 0.13;
   }
-  .block-head {
+  .rec p {
+    margin: 0;
+  }
+  .rec-kicker {
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+  .rec-course {
+    margin: 4px 0 2px;
+    font-size: clamp(1.35rem, 2vw, 1.7rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: inherit;
+  }
+  .rec-meta {
+    max-width: 36ch;
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+  .rec-focus {
+    margin-top: 10px !important;
+    font-size: 0.85rem;
+  }
+  .rec-focus :global(strong) {
+    text-decoration: underline wavy var(--glo);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 4px;
+  }
+  .rec-actions {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
   }
-  .block-head h2 {
-    margin: 0;
+  .rec-cta,
+  .rec-listen {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 99px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
   }
-  .legend {
-    margin: 0;
-    font-size: 0.78rem;
-    color: var(--muted);
+  .rec-cta {
+    background: var(--surface);
+    color: var(--accent);
+    transition: transform 0.25s var(--ease-spring);
+  }
+  .rec-cta:hover {
+    transform: translateY(-2px);
+  }
+  .rec-cta svg {
+    width: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 0.3s var(--ease-spring);
+  }
+  .rec-cta:hover svg {
+    translate: 3px 0;
+  }
+  .rec-listen {
+    padding-left: 14px;
+    border: 1.5px solid rgb(255 255 255 / 0.45);
+    background: transparent;
+    color: inherit;
+    transition: border-color 0.2s;
+  }
+  .rec-listen:hover {
+    border-color: #fff;
+  }
+  .rec-listen svg {
+    width: 14px;
+    fill: currentColor;
+  }
+  .rec-note {
+    margin-top: 10px !important;
+    font-size: 0.72rem;
+    opacity: 0.75;
+  }
+  .rec:focus-visible,
+  .rec-cta:focus-visible,
+  .rec-listen:focus-visible {
+    outline-color: var(--surface);
   }
 
-  .skills {
+  /* Habilidades */
+  .skills,
+  .review {
     display: grid;
-    gap: 10px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
+  .skills {
+    gap: 10px;
+  }
   .skills :global(li) {
     display: grid;
-    grid-template-columns: 90px 1fr 40px 48px;
+    grid-template-columns: 96px 1fr 36px 44px;
     align-items: center;
     gap: 12px;
     font-size: 0.85rem;
@@ -466,7 +829,7 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
   .skills :global(.bar) {
     height: 8px;
     border-radius: 4px;
-    background: var(--bg);
+    background: color-mix(in srgb, var(--line) 60%, var(--surface));
     overflow: hidden;
   }
   .skills :global(.bar span) {
@@ -474,13 +837,16 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     height: 100%;
     width: var(--pct);
     border-radius: inherit;
-    background: var(--accent);
+    background: var(--ink);
     transform-origin: left;
     animation: grow 0.9s var(--delay, 0s) var(--ease-out) both;
   }
+  .skills :global(.best .bar span) {
+    background: var(--glo);
+  }
   .skills :global(.frac) {
+    font-size: 0.75rem;
     color: var(--muted);
-    font-size: 0.78rem;
     text-align: right;
     font-variant-numeric: tabular-nums;
   }
@@ -490,52 +856,36 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     font-variant-numeric: tabular-nums;
   }
 
-  /* Revisión: <details> nativo = accesible y sin JS para abrir/cerrar. */
-  .review {
-    display: grid;
-    gap: 8px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .review :global(details) {
-    border-radius: 12px;
-    background: var(--bg);
-    transition: background 0.2s;
-  }
-  .review :global(details[open]) {
-    background: color-mix(in srgb, var(--bg) 60%, var(--surface));
-    box-shadow: inset 0 0 0 1.5px var(--line);
+  /* Revisión: <details> nativo (teclado y lector de pantalla gratis). */
+  .review :global(li + li) {
+    border-top: 1px solid var(--line);
   }
   .review :global(summary) {
     display: grid;
-    grid-template-columns: 26px 1fr auto 16px;
+    grid-template-columns: 22px 1fr auto 16px;
     align-items: center;
     gap: 12px;
-    padding: 11px 14px;
+    padding: 12px 0;
+    font-size: 0.85rem;
     cursor: pointer;
     list-style: none;
-    font-size: 0.88rem;
   }
   .review :global(summary::-webkit-details-marker) {
     display: none;
   }
-  .review :global(.mark) {
+  .review :global(.tick) {
     display: grid;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 700;
+    color: var(--surface);
+    background: var(--ink);
   }
-  .review :global(.ok .mark) {
-    background: #dcefe4;
-    color: #1f7a4d;
-  }
-  .review :global(.ko .mark) {
-    background: var(--danger-soft);
-    color: var(--danger);
+  .review :global(.ko .tick) {
+    background: var(--glo);
   }
   .review :global(.q) {
     overflow: hidden;
@@ -543,12 +893,9 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     text-overflow: ellipsis;
   }
   .review :global(.tag) {
-    text-transform: capitalize;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--surface);
     font-size: 0.72rem;
     color: var(--muted);
+    white-space: nowrap;
   }
   .review :global(.chev) {
     width: 16px;
@@ -556,54 +903,76 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     stroke: var(--muted);
     stroke-width: 2;
     stroke-linecap: round;
-    transition: rotate 0.25s var(--ease-out);
+    stroke-linejoin: round;
+    transition: rotate 0.3s var(--ease-out);
   }
   .review :global(details[open] .chev) {
     rotate: 180deg;
   }
-  .review :global(.body) {
-    display: grid;
-    gap: 8px;
-    padding: 0 14px 14px 52px;
-    font-size: 0.85rem;
-    animation: rise 0.3s var(--ease-out);
-  }
-  .review :global(.body p) {
-    margin: 0;
-  }
   .review :global(details[open] .q) {
     white-space: normal;
+  }
+  .review :global(.body) {
+    padding: 0 0 14px 34px;
+    font-size: 0.85rem;
+    animation: glo-fade 0.3s var(--ease-out);
+  }
+  .review :global(.body p) {
+    margin: 0 0 6px;
   }
   .review :global(.ans) {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px 14px;
   }
-  .review :global(.ans span) {
-    padding: 4px 10px;
-    border-radius: 8px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-  }
-  .review :global(.ans .wrong) {
-    border-color: color-mix(in srgb, var(--danger) 40%, var(--line));
+  .review :global(.wrong) {
     color: var(--danger);
     text-decoration: line-through;
-    text-decoration-thickness: 1px;
   }
-  .review :global(.ans .right) {
-    border-color: color-mix(in srgb, #1f7a4d 40%, var(--line));
-    color: #1f7a4d;
+  .review :global(.right) {
+    color: var(--ok);
+    font-weight: 600;
   }
-  .review :global(.why),
-  .review :global(.transcript) {
+  .review :global(.why) {
     color: var(--muted);
-    line-height: 1.6;
+  }
+  .review :global(.metrics) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0 !important;
+    padding: 0;
+    list-style: none;
+  }
+  .review :global(.metrics li) {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--bg);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .review :global(.metrics li:first-child) {
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 600;
   }
   .review :global(.transcript) {
     padding-left: 12px;
-    border-left: 2px solid var(--line);
+    border-left: 2px solid var(--glo);
     font-style: italic;
+    color: var(--muted);
+  }
+
+  .dock {
+    display: none;
+  }
+
+  .skeleton {
+    height: 14px;
+    margin-bottom: 10px;
+    border-radius: 7px;
+    background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--line) 60%, transparent) 50%, transparent 70%) 0 0 / 300% 100%;
+    animation: shimmer 1.4s linear infinite;
   }
 
   .screen {
@@ -625,22 +994,28 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     max-width: 40ch;
     color: var(--muted);
   }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid var(--line);
+    border-top-color: var(--glo);
+    animation: spin 0.8s linear infinite;
+  }
   .screen.error .spinner {
     display: none;
   }
-  .spinner {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 3px solid var(--line);
-    border-top-color: var(--accent);
-    animation: spin 0.8s linear infinite;
-  }
-  .link {
+  .back-link {
     color: var(--accent);
     font-weight: 500;
   }
 
+  @keyframes rec-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.94) rotate(-2deg);
+    }
+  }
   @keyframes grow {
     from {
       scale: 0 1;
@@ -651,14 +1026,14 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
       background-position: -150% 0;
     }
   }
-  @keyframes blink {
-    50% {
-      opacity: 0;
-    }
-  }
   @keyframes spin {
     to {
       rotate: 360deg;
+    }
+  }
+  @keyframes caret {
+    50% {
+      opacity: 0;
     }
   }
   @keyframes dots {
@@ -676,72 +1051,192 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     }
   }
 
-  @media (min-width: 861px) and (min-height: 560px) {
-    :global(body) {
+  /* Escritorio: una pantalla; solo el panel de detalle hace scroll. */
+  @media (min-width: 961px) and (min-height: 560px) {
+    .res {
       height: 100dvh;
     }
   }
-  @media (min-width: 861px) and (max-height: 760px) {
+  @media (min-width: 961px) and (max-height: 720px) {
     .level-desc {
       display: none;
     }
-    .stage {
-      padding: 18px 24px;
-    }
-    .detail {
-      padding: 20px 24px;
-      gap: 18px;
-    }
   }
-  @media (max-width: 860px) {
-    .topbar {
-      padding: 12px 16px;
+
+  /* Móvil: primero el momento "revelación" (Glo con su sombrero, frase y puntaje, centrados),
+     luego el nivel en su tarjeta, cifras 2×2, el detalle fluyendo y la acción fija abajo. */
+  @media (max-width: 960px) {
+    .res {
+      padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
     }
-    .results {
+    .bar .back {
+      display: none;
+    }
+    .main {
       grid-template-columns: 1fr;
-      gap: 12px;
-      padding: 0 16px 16px;
+      grid-template-rows: none;
+      align-items: start;
+      gap: 20px;
+      padding-top: 4px;
     }
-    .detail {
-      padding: 20px 16px;
-      overflow: visible;
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .glo-row {
+      flex-direction: column;
+      gap: 0;
+    }
+    canvas {
+      width: min(58vw, 250px);
+      margin: 0;
+    }
+    .say {
+      max-width: 14ch;
+      margin-inline: auto;
+      font-size: clamp(1.6rem, 7.4vw, 2.2rem);
+    }
+    .say-es {
+      margin-inline: auto;
+    }
+    .score-line {
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 22px;
+    }
+    h1 {
+      font-size: clamp(4rem, 22vw, 5.6rem);
+    }
+    .level {
+      width: 100%;
+      margin-top: 24px;
+      padding: 18px 18px 16px;
+      border-radius: 20px;
+      background: var(--surface);
+      text-align: left;
+    }
+    .path {
+      max-width: none;
     }
     .stats {
-      grid-template-columns: repeat(2, 1fr);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 0;
+      width: 100%;
+      margin-top: 20px;
+      text-align: left;
+    }
+    .stats div + div {
+      padding-left: 0;
+      border-left: 0;
+    }
+    .stats div:nth-child(even) {
+      padding-left: 18px;
+      border-left: 1.5px solid var(--line);
+    }
+    .sheet {
+      max-height: none;
+      overflow: visible;
+      padding: 22px 18px;
+    }
+    .skills :global(li) {
+      grid-template-columns: 1fr 36px 44px;
+      row-gap: 6px;
+    }
+    .skills :global(.bar) {
+      grid-column: 1 / -1;
+      grid-row: 2;
     }
     .review :global(.tag) {
       display: none;
     }
-    .review :global(.q) {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      white-space: normal;
-    }
-    .block-head {
-      flex-direction: column;
-      gap: 4px;
-    }
-    .ruler li {
-      font-size: 0.6rem;
-    }
     .review :global(summary) {
-      grid-template-columns: 26px 1fr 16px;
+      grid-template-columns: 22px 1fr 16px;
+      min-height: 48px;
     }
     .review :global(.body) {
-      padding-left: 14px;
+      padding-left: 34px;
+    }
+    .dock {
+      position: fixed;
+      z-index: 30;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      background: var(--surface);
+      border-top: 1.5px solid var(--line);
+      box-shadow: 0 -16px 32px -24px color-mix(in srgb, var(--shadow) 40%, transparent);
+    }
+    .dock .home {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      color: var(--ink);
+      box-shadow: inset 0 0 0 1.5px var(--line);
+    }
+    .dock .cta {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 22px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 500;
+      text-decoration: none;
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+    }
+    .dock .cta:active {
+      transform: scale(0.99);
+    }
+    .dock svg {
+      width: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
   }
 </style>
 
 <script>
   import { api, ApiError, esc } from "../lib/api";
-  import type { CoachState } from "../lib/coach";
+  import { hatFor, mountGlo } from "../lib/glo";
+  import { handoff, splash } from "../lib/splash";
+  import { salesLink } from "../lib/sales";
+  import { renderCard, type Format } from "../lib/share";
+  import { createStage, type Track } from "../lib/stage";
 
   type Option = { id: string; text: string };
   type ReviewItem = {
-    question: { position: number; skill: string; level: string; prompt: string; options: Option[] | null; stimulus: { title: string } | null };
-    response: { option_id?: string; text?: string } | null;
+    question: { position: number; type: string; skill: string; level: string; prompt: string; options: Option[] | null; stimulus: { title: string } | null };
+    response: {
+      option_id?: string;
+      text?: string;
+      // Speaking (calificado en el servidor)
+      transcript?: string;
+      score?: number;
+      accuracy?: number;
+      clarity?: number;
+      fluency?: number;
+      wpm?: number;
+      long_pauses?: number;
+      missed?: string[];
+      rubric?: { task: number; grammar: number; vocabulary: number };
+      feedback?: string | null;
+    } | null;
     is_correct: boolean;
     correct_answer: string;
     explanation: string | null;
@@ -759,6 +1254,7 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
       skills: { code: string; name: string; correct: number; total: number; pct: number }[];
       duration_seconds: number;
       ai_feedback: string | null;
+      recommendation: { course: string; level: string; weeks: number; promise: string; focus: string[]; script: string };
     };
     review: ReviewItem[];
   };
@@ -766,12 +1262,19 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
   const $ = (id: string) => document.getElementById(id)!;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const level = (code: string) => code.replace("PRE_", "Pre-");
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
   const CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
-  let coach: { setState(s: CoachState): void; pulse(): void } | undefined;
-  const coachReady = import("../lib/coach")
-    .then(({ createCoach }) => (coach = createCoach($("coach") as HTMLCanvasElement)))
-    .catch(() => $("coach").remove());
+  // Recién enviada la evaluación: la pantalla de carga sigue aquí hasta que llega tu resultado.
+  // Abriendo un resultado guardado (desde el historial): la misma pantalla de Glo, desde cero.
+  const [word, from] = handoff.take();
+  const load = splash(word ?? "Loading", from);
+  const glo = mountGlo({
+    canvas: $("coach") as HTMLCanvasElement,
+    say: $("say"),
+    sayEs: $("say-es"),
+    scene: $("results"),
+  });
 
   function fail(msg: string) {
     $("screen").classList.add("error");
@@ -790,21 +1293,39 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     requestAnimationFrame(step);
   }
 
+  // Lo que Glo dice según el puntaje y el sombrero que gana (*palabra* = coral).
+  function cheer(score: number): [string, string] {
+    if (score >= 80) return ["*Amazing* work!", "¡Trabajo increíble!"];
+    if (score >= 60) return ["Great *job!*", "¡Muy bien hecho!"];
+    if (score >= 40) return ["Good *start!* Keep going.", "¡Buen comienzo! Sigue así."];
+    return ["Every expert was a *beginner.*", "Todo experto fue principiante."];
+  }
+  function hatLine(code: string): [string, string] {
+    const l = level(code);
+    const hat = hatFor(code);
+    if (hat === "grad") return ["You earned the *graduation* cap!", `¡Te ganaste el birrete! Estás en ${l}.`];
+    if (hat === "bowler") return [`Very *British!* You're ${l}.`, `¡Muy británico! Estás en ${l}.`];
+    return [`You're ${l}. *Let's* celebrate!`, `Estás en ${l}. ¡A celebrar que empezaste!`];
+  }
+
   function renderSummary(data: Result) {
     const r = data.result;
     const score = Math.round(r.score_pct);
     const total = r.correct_count + r.incorrect_count;
     $("assessment-title").textContent = data.assessment_title;
-    $("score-sub").textContent = `${r.correct_count} de ${total} respuestas correctas`;
+    $("score-sub").textContent = `${r.correct_count} de ${total} correctas`;
     countUp($("score"), score);
-    requestAnimationFrame(() => ($("ring-fill").style.strokeDashoffset = String(100 - score)));
 
     $("level-code").textContent = level(r.suggested_level.code);
     $("level-name").textContent = r.suggested_level.name;
     $("level-desc").textContent = r.suggested_level.description ?? "";
+    // El camino se "enciende" parada a parada hasta tu nivel.
     const items = [...$("ruler").children] as HTMLElement[];
     const idx = items.findIndex((li) => li.dataset.level === r.suggested_level.code);
-    items.forEach((li, i) => i <= idx && li.classList.add(i === idx ? "current" : "reached"));
+    items.forEach((li, i) => {
+      li.style.setProperty("--delay", `${0.3 + i * 0.15}s`);
+      requestAnimationFrame(() => i <= idx && li.classList.add(i === idx ? "current" : "reached"));
+    });
 
     $("st-correct").textContent = String(r.correct_count);
     $("st-incorrect").textContent = String(r.incorrect_count - r.unanswered_count);
@@ -812,17 +1333,84 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     const m = Math.floor(r.duration_seconds / 60);
     $("st-time").textContent = m ? `${m} min` : `${r.duration_seconds} s`;
 
+    const best = [...r.skills].sort((a, b) => b.pct - a.pct)[0];
     $("skills").innerHTML = r.skills
       .map(
-        (s, i) => `<li><span>${esc(s.name)}</span>
+        (s, i) => `<li class="${s === best && s.pct > 0 ? "best" : ""}"><span>${esc(s.name)}</span>
           <span class="bar" role="img" aria-label="${esc(s.name)}: ${Math.round(s.pct)}%"><span style="--pct:${s.pct}%;--delay:${0.4 + i * 0.1}s"></span></span>
           <span class="frac">${s.correct}/${s.total}</span><span class="pct">${Math.round(s.pct)}%</span></li>`,
       )
       .join("");
 
+    renderRecommendation(data);
+    setupShare(data);
+
     const wrong = data.review.filter((i) => !i.is_correct).length;
-    $("review-legend").textContent = wrong ? `${wrong} por repasar · toca una pregunta para ver la explicación` : "¡Todas correctas!";
+    $("review-legend").textContent = wrong ? `${wrong} por repasar · toca una para ver por qué` : "¡Todas correctas!";
     $("review").innerHTML = data.review.map(reviewItem).join("");
+  }
+
+  function renderRecommendation(data: Result) {
+    const r = data.result;
+    const rec = r.recommendation;
+    $("rec").dataset.level = rec.level;
+    $("rec-course").textContent = rec.course;
+    $("rec-meta").textContent = `Nivel ${rec.level} · ${rec.weeks} semanas para ${rec.promise}.`;
+    const focus = rec.focus.map((f) => `<strong>${esc(f)}</strong>`).join(" y ");
+    $("rec-focus").innerHTML = focus ? `Con foco en ${focus}.` : "Avanzas parejo: el curso refuerza todas las habilidades.";
+    const href = salesLink(rec.level, rec.course, r.score_pct);
+    ($("rec-cta") as HTMLAnchorElement).href = href;
+    ($("dock-cta") as HTMLAnchorElement).href = href;
+    $("dock-label").textContent = `Empezar ${rec.level}`;
+  }
+
+  // ---------- Compartir mi nivel ----------
+  function setupShare(data: Result) {
+    const r = data.result;
+    const dialog = $("share") as HTMLDialogElement;
+    const img = $("share-img") as HTMLImageElement;
+    const dl = $("share-dl") as HTMLAnchorElement;
+    const go = $("share-go");
+    const best = [...r.skills].sort((a, b) => b.pct - a.pct)[0];
+    const lv = level(r.suggested_level.code);
+    const text = `Mi nivel de inglés es ${lv}. ¿Y el tuyo? Descúbrelo con Glo en ${location.origin}`;
+    const cache = new Map<Format, Promise<Blob>>();
+    let current: File | null = null;
+    img.alt = `Tarjeta: mi nivel de inglés es ${lv} (${r.suggested_level.name}).`;
+
+    const frame = $("share-frame");
+    const loader = $("share-load");
+    async function show(fmt: Format) {
+      frame.dataset.fmt = fmt;
+      if (!cache.has(fmt)) {
+        loader.hidden = false;
+        img.hidden = true;
+        // Dos frames: que el loader se pinte antes de la foto de Glo (bloquea el hilo un instante).
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        // Glo se fotografía en el momento, con su sombrero y su pose.
+        const snap = glo.coach?.snapshot(fmt === "story" ? 600 : 400) ?? null;
+        cache.set(fmt, renderCard(fmt, { level: lv, levelName: r.suggested_level.name, score: Math.round(r.score_pct), best: best ?? null, glo: snap }));
+      }
+      const blob = await cache.get(fmt)!;
+      if (frame.dataset.fmt !== fmt) return; // cambió de formato mientras se dibujaba
+      current = new File([blob], `mi-nivel-${lv}-${fmt}.png`, { type: "image/png" });
+      if (dl.href.startsWith("blob:")) URL.revokeObjectURL(dl.href);
+      img.src = dl.href = URL.createObjectURL(blob);
+      dl.download = current.name;
+      loader.hidden = true;
+      img.hidden = false;
+      // Con menú nativo (móvil: Instagram, WhatsApp…) "Compartir" manda; en escritorio, descargar.
+      go.hidden = !navigator.canShare?.({ files: [current] });
+    }
+
+    $("share-open").addEventListener("click", () => {
+      dialog.showModal();
+      glo.coach?.setState("success");
+      show(dialog.querySelector<HTMLInputElement>("input[name=fmt]:checked")!.value as Format);
+    });
+    dialog.addEventListener("change", (e) => show((e.target as HTMLInputElement).value as Format));
+    dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());
+    go.addEventListener("click", () => current && navigator.share({ files: [current], text }).catch(() => {}));
   }
 
   function answerText(item: ReviewItem) {
@@ -832,26 +1420,47 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     return item.question.options?.find((o) => o.id === r.option_id)?.text ?? null;
   }
 
+  const pct = (v = 0) => `${Math.round(v * 100)}%`;
+  function speechBody(item: ReviewItem) {
+    const r = item.response;
+    if (!r?.transcript) return '<p class="ans"><span class="wrong">Sin grabar</span></p>';
+    const chips = [
+      `Oral ${pct(r.score)}`,
+      r.accuracy !== undefined && `Precisión ${pct(r.accuracy)}`,
+      r.rubric && `Tarea ${r.rubric.task}/4`,
+      r.rubric && `Gramática ${r.rubric.grammar}/4`,
+      r.rubric && `Vocabulario ${r.rubric.vocabulary}/4`,
+      `Claridad ${pct(r.clarity)}`,
+      `${r.wpm ?? 0} palabras/min`,
+      r.long_pauses ? `${r.long_pauses} pausa${r.long_pauses > 1 ? "s" : ""} larga${r.long_pauses > 1 ? "s" : ""}` : "",
+    ].filter(Boolean);
+    return `<p class="transcript" lang="en">Dijiste: “${esc(r.transcript)}”</p>
+      <ul class="metrics">${chips.map((c) => `<li>${esc(String(c))}</li>`).join("")}</ul>
+      ${r.missed?.length ? `<p>No se entendió: <span class="wrong" lang="en">${esc(r.missed.join(", "))}</span></p>` : ""}
+      ${r.feedback ? `<p>${esc(r.feedback)}</p>` : ""}`;
+  }
+
   function reviewItem(item: ReviewItem) {
     const q = item.question;
     const given = answerText(item);
+    const speech = q.type === "read_aloud" || q.type === "open_response";
     const answers = item.is_correct
       ? `<span class="right">${esc(given ?? item.correct_answer)}</span>`
       : `${given ? `<span class="wrong">${esc(given)}</span>` : '<span class="wrong">Sin responder</span>'}<span class="right">${esc(item.correct_answer)}</span>`;
     return `<li><details class="${item.is_correct ? "ok" : "ko"}">
       <summary>
-        <span class="mark" aria-label="${item.is_correct ? "Correcta" : "Incorrecta"}">${item.is_correct ? "✓" : "✕"}</span>
+        <span class="tick" aria-label="${item.is_correct ? "Correcta" : "Incorrecta"}">${item.is_correct ? "✓" : "✕"}</span>
         <span class="q" lang="en">${q.position}. ${esc(q.prompt)}</span>
-        <span class="tag">${esc(q.skill)} · ${esc(level(q.level))}</span>${CHEV}
+        <span class="tag">${esc(q.skill)} / ${esc(level(q.level))}</span>${CHEV}
       </summary>
       <div class="body">
-        <p class="ans" lang="en">${answers}</p>
+        ${speech ? speechBody(item) : `<p class="ans" lang="en">${answers}</p>`}
         ${item.explanation ? `<p class="why">${esc(item.explanation)}</p>` : ""}
         ${item.transcript ? `<p class="transcript" lang="en">“${esc(item.transcript)}”</p>` : ""}
       </div></details></li>`;
   }
 
-  // ---------- Feedback del coach (IA) ----------
+  // ---------- Feedback de Glo (IA) ----------
   async function typewrite(text: string) {
     const body = $("fb-body");
     const paragraphs = text.split(/\n\s*\n/).filter(Boolean);
@@ -861,62 +1470,49 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
     if (reduced) return ps.forEach((p, i) => (p.textContent = paragraphs[i]));
     const caret = document.createElement("span");
     caret.className = "caret";
+    glo.coach?.say(text.length * 0.004 + 1);
     for (const [i, para] of paragraphs.entries()) {
       const node = document.createTextNode("");
       ps[i].append(node, caret);
       for (let c = 3; c < para.length + 3; c += 3) {
         node.data = para.slice(0, c);
-        if (c % 30 === 0) coach?.pulse();
         await new Promise((r) => setTimeout(r, 12));
       }
     }
     caret.remove();
   }
 
-  async function loadFeedback(data: Result) {
-    coach?.setState("loading");
-    let text = data.result.ai_feedback;
-    try {
-      text ??= (await api<{ feedback: string }>(`/attempts/${data.id}/feedback`, { method: "POST" })).feedback;
-    } catch {
-      text = "No pudimos generar tu feedback en este momento. Revisa tus respuestas abajo: cada una incluye su explicación.";
-    }
-    coach?.setState(data.result.score_pct >= 60 ? "success" : "idle");
-    await typewrite(text);
-    $("listen").hidden = false;
-  }
+  // Feedback (texto) y voz se preparan durante la pantalla de carga: al entrar, "Escuchar" es instantáneo.
+  const FALLBACK = "No pudimos generar tu feedback en este momento. Revisa tus respuestas abajo: cada una incluye su explicación.";
+  const getFeedback = (data: Result) =>
+    data.result.ai_feedback
+      ? Promise.resolve(data.result.ai_feedback)
+      : api<{ feedback: string }>(`/attempts/${data.id}/feedback`, { method: "POST" }).then((r) => r.feedback, () => FALLBACK);
+  const getVoice = (path: string) =>
+    fetch(`/api/v1/attempts/${path}/audio`)
+      .then((r) => (r.ok ? r.blob() : null))
+      .then((b) => (b ? new Audio(URL.createObjectURL(b)) : null))
+      .catch(() => null);
 
-  // ---------- Voz del coach (ElevenLabs vía API) ----------
-  let audio: HTMLAudioElement | undefined;
-  $("listen").addEventListener("click", async () => {
-    const btn = $("listen");
-    const label = btn.querySelector("span")!;
-    if (!audio) {
-      btn.setAttribute("aria-busy", "true");
-      label.textContent = "Cargando voz…";
-      const res = await fetch(`/api/v1/attempts/${new URLSearchParams(location.search).get("id")}/feedback/audio`);
-      btn.removeAttribute("aria-busy");
-      if (!res.ok) {
-        label.textContent = "Voz no disponible";
-        btn.setAttribute("disabled", "");
-        return;
-      }
-      audio = new Audio(URL.createObjectURL(await res.blob()));
-      audio.addEventListener("play", () => {
-        btn.setAttribute("aria-pressed", "true");
-        label.textContent = "Pausar";
-        coach?.setState("loading"); // Glo "habla"
-      });
-      const stop = () => {
-        btn.setAttribute("aria-pressed", "false");
-        label.textContent = "Escuchar";
-        coach?.setState("idle");
-      };
-      audio.addEventListener("pause", stop);
-      audio.addEventListener("ended", stop);
+  // ---------- "Escuchar a Glo": dos actos en el escenario (src/lib/stage.ts) ----------
+  // 1) el feedback; 2) "tu siguiente paso": Glo gira y presenta el curso. Audios separados:
+  // "Que Glo te lo cuente" abre directo en el acto 2, desde su primer segundo.
+  function setupVoice(feedbackAudio: HTMLAudioElement | null, feedback: string, pitchAudio: HTMLAudioElement | null, pitch: string) {
+    const tracks: Track[] = [];
+    if (feedbackAudio) tracks.push({ audio: feedbackAudio, text: feedback, intro: ["Here's my *feedback.*", "Este es mi feedback para ti."] });
+    if (pitchAudio) tracks.push({ audio: pitchAudio, text: pitch, card: $("rec"), intro: ["Your *next* step.", "Tu siguiente paso."] });
+    const stage = createStage(glo, $("coach") as HTMLCanvasElement, tracks);
+    if (feedbackAudio) {
+      const btn = $("listen");
+      btn.hidden = false;
+      btn.addEventListener("click", () => (stage.isOpen ? stage.close() : stage.open(0, btn)));
     }
-    audio.paused ? audio.play() : audio.pause();
-  });
+    if (pitchAudio) {
+      const btn = $("rec-listen");
+      btn.hidden = false;
+      btn.addEventListener("click", () => stage.open(tracks.length - 1, btn));
+    }
+  }
 
   // ---------- Inicio ----------
   const id = new URLSearchParams(location.search).get("id");
@@ -924,12 +1520,34 @@ const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
   else {
     try {
       const data = await api<Result>(`/attempts/${encodeURIComponent(id)}/result`);
+      load.progress(0.7);
+      // Progreso real: resultado → feedback (IA) → voz. Si la voz tarda más de 15 s, se entra igual
+      // y "Escuchar" aparece cuando esté lista.
+      const text = getFeedback(data).then((t) => (load.progress(0.82), t));
+      // La voz del curso no depende de la IA: se pide ya, en paralelo.
+      const pitchVoice = getVoice(`${data.id}/recommendation`);
+      const voice = text.then(() => getVoice(`${data.id}/feedback`)).then((a) => (load.progress(0.97), a));
+      const coach = await glo.ready;
+      await Promise.race([voice, new Promise((r) => setTimeout(r, 15000))]);
+      await load.done(); // el conteo del puntaje empieza ya a la vista
       $("results").hidden = false;
       $("screen").hidden = true;
+      const score = Math.round(data.result.score_pct);
+      glo.speak(...cheer(score));
       renderSummary(data);
-      await coachReady;
-      loadFeedback(data);
+      const feedback = text.then(async (t) => {
+        await typewrite(t);
+        const [a, b] = await Promise.all([voice, pitchVoice]);
+        if ((a && t !== FALLBACK) || b) setupVoice(t !== FALLBACK ? a : null, t, b, data.result.recommendation.script);
+      });
+      // Tras el conteo del puntaje, Glo celebra y le cae el sombrero de su nivel.
+      await wait(1300);
+      coach?.setState(score >= 60 ? "success" : "idle");
+      coach?.wear(hatFor(data.result.suggested_level.code));
+      glo.speak(...hatLine(data.result.suggested_level.code));
+      await feedback;
     } catch (e) {
+      load.cancel();
       fail(e instanceof ApiError && e.code === "attempt_open" ? "Esta evaluación sigue abierta. Termínala para ver tu resultado." : (e as Error).message);
     }
   }

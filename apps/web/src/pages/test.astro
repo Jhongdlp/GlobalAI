@@ -1,50 +1,56 @@
 ---
 import Base from "../layouts/Base.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
+import "../styles/glo.css";
 ---
 
 <Base title="Evaluación · Global AI">
-  <header class="topbar">
-    <a class="brand" href="/dashboard" aria-label="Global AI, volver al inicio"><span class="dot"></span><span class="brand-name">Global AI</span></a>
-    <p class="title" id="title"></p>
-    <div class="status">
-      <span class="save" id="save" data-state="saved" aria-live="polite">Guardado</span>
-      <span class="timer" id="timer" role="timer" aria-label="Tiempo restante">--:--</span>
-      <a class="exit" href="/dashboard">Salir</a>
-    </div>
-  </header>
-
-  <nav class="steps" id="steps" aria-label="Preguntas"></nav>
-
-  <main class="exam" hidden id="exam">
-    <aside class="stage" aria-hidden="true">
-      <canvas id="coach"></canvas>
-      <div class="caption" id="caption">
-        <p class="en" lang="en"></p>
-        <p class="es"></p>
+  <div class="test">
+    <header class="bar">
+      <a class="brand" href="/dashboard" aria-label="Global AI, volver al inicio"><span class="mark" aria-hidden="true"></span><span class="brand-name">Global AI</span></a>
+      <p class="title" id="title"></p>
+      <p class="count" id="count" aria-hidden="true"></p>
+      <div class="status">
+        <span class="save" id="save" data-state="saved" aria-live="polite">Guardado</span>
+        <span class="timer" id="timer" role="timer" aria-label="Tiempo restante">--:--</span>
+        <ThemeToggle />
+        <a class="exit" href="/dashboard">Salir</a>
       </div>
-      <p class="fineprint">Tus respuestas se guardan solas. Evita cambiar de pestaña durante la evaluación.</p>
-    </aside>
+    </header>
 
-    <section class="qa">
-      <p class="meta" id="meta"></p>
-      <div id="stimulus"></div>
-      <form id="answer-form" novalidate>
-        <h1 id="prompt" tabindex="-1" lang="en"></h1>
-        <div id="answer"></div>
-      </form>
-      <footer class="nav">
-        <button type="button" class="ghost" id="prev">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
-          Anterior
-        </button>
-        <p class="kbd-hint" aria-hidden="true" id="kbd-hint"></p>
-        <button type="button" class="primary" id="next">
-          <span class="label">Siguiente</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-        </button>
-      </footer>
-    </section>
-  </main>
+    <nav class="steps" id="steps" aria-label="Preguntas"></nav>
+
+    <main class="exam" hidden id="exam">
+      <!-- Glo junto a la pregunta: te da la instrucción y, en los audios, vuela al reproductor y los dice. -->
+      <section class="side">
+        <div class="home" id="home"><canvas id="coach" aria-hidden="true"></canvas></div>
+        <div class="voice" aria-hidden="true">
+          <p class="say" id="say" lang="en"></p>
+          <p class="say-es" id="say-es"></p>
+        </div>
+        <p class="meta" id="meta"></p>
+      </section>
+
+      <section class="qa">
+        <div id="stimulus"></div>
+        <form id="answer-form" novalidate>
+          <h1 id="prompt" tabindex="-1" lang="en"></h1>
+          <div id="answer"></div>
+        </form>
+        <footer class="nav">
+          <button type="button" class="ghost" id="prev">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+            Anterior
+          </button>
+          <p class="kbd-hint" aria-hidden="true" id="kbd-hint"></p>
+          <button type="button" class="primary" id="next">
+            <span class="label">Siguiente</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </button>
+        </footer>
+      </section>
+    </main>
+  </div>
 
   <div class="screen" id="screen" role="status">
     <div class="spinner" aria-hidden="true"></div>
@@ -61,139 +67,119 @@ import Base from "../layouts/Base.astro";
     </div>
   </dialog>
 
+  <!-- Conexión: si se cae, las respuestas siguen a salvo en el equipo; al volver, se sincronizan solas. -->
+  <div class="net" id="net" role="status" aria-live="polite" hidden>
+    <svg class="net-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 4.2-2.6M10.7 5.1A15 15 0 0 1 22 8.8M5 12.5a10 10 0 0 1 5.2-2.7M16.9 10.6A10 10 0 0 1 19 12.5M8.5 16a5 5 0 0 1 7 0M12 20h.01M3 3l18 18"></path></svg>
+    <svg class="net-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+    <p><strong id="net-title"></strong><span id="net-sub"></span></p>
+  </div>
+
   <p class="sr-only" id="announcer" aria-live="assertive"></p>
 </Base>
 
 <style>
+  /* Mismo lenguaje que el dashboard: papel claro, una pantalla, Glo dentro de la composición. */
   :global(body) {
+    --pop: var(--ink);
+  }
+  .test {
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
+    padding: clamp(14px, 2vw, 28px) clamp(16px, 3vw, 48px);
   }
 
-  .topbar {
+  .bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 14px 24px;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
   }
   .title {
     margin: 0;
     font-size: 0.85rem;
     color: var(--muted);
   }
+  .count {
+    display: none; /* solo en móvil, donde los pasos no llevan número */
+    margin: 0 auto 0 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
   .status {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 18px;
     font-size: 0.85rem;
   }
   .save {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
     color: var(--muted);
-  }
-  .save::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #1f7a4d;
-    transition: background 0.3s;
-  }
-  .save[data-state="saving"]::before {
-    background: var(--accent);
-    animation: blink 0.8s ease-in-out infinite;
+    transition: color 0.3s;
   }
   .save[data-state="offline"] {
     color: var(--danger);
   }
-  .save[data-state="offline"]::before {
-    background: var(--danger);
-  }
   .timer {
-    min-width: 72px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: var(--surface);
-    border: 1.5px solid var(--line);
-    font-weight: 600;
-    text-align: center;
+    min-width: 5ch;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-align: right;
     font-variant-numeric: tabular-nums;
-    transition:
-      color 0.3s,
-      border-color 0.3s,
-      background 0.3s;
+    transition: color 0.3s;
   }
   .timer.low {
     color: var(--danger);
-    border-color: var(--danger);
-    background: var(--danger-soft);
-    animation: pulse 1s ease-in-out infinite;
   }
   .exit {
-    color: var(--muted);
+    color: var(--ink);
+    font-weight: 500;
     text-decoration: underline;
+    text-decoration-thickness: 1px;
     text-underline-offset: 4px;
+    transition: text-underline-offset 0.2s var(--ease-out);
   }
   .exit:hover {
-    color: var(--ink);
+    text-underline-offset: 6px;
   }
 
-  /* Pasos: la línea de 10 marcas es la barra de progreso y la navegación a la vez. */
+  /* Pasos: la línea de marcas es progreso y navegación a la vez. */
   .steps {
     display: grid;
     grid-template-columns: repeat(var(--n, 10), 1fr);
     gap: 6px;
-    padding: 0 24px 14px;
+    margin-top: clamp(12px, 2vh, 20px);
   }
   .steps :global(button) {
     position: relative;
-    height: 30px;
+    height: 28px;
+    padding: 10px 0 0;
     border: 0;
-    border-radius: 8px;
     background: transparent;
     color: var(--muted);
     font: inherit;
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.72rem;
     cursor: pointer;
-    padding-top: 10px;
   }
   .steps :global(button::before) {
     content: "";
     position: absolute;
     inset: 0 0 auto;
-    height: 5px;
-    border-radius: 3px;
+    height: 4px;
+    border-radius: 2px;
     background: var(--line);
     transition: background 0.3s var(--ease-out);
   }
   .steps :global(button.answered::before) {
-    background: color-mix(in srgb, var(--accent) 45%, var(--line));
+    background: var(--ink);
   }
   .steps :global(button[aria-current="step"]) {
-    color: var(--accent);
-    font-weight: 600;
+    color: var(--ink);
+    font-weight: 700;
   }
   .steps :global(button[aria-current="step"]::before) {
-    background: var(--accent);
+    background: var(--glo);
   }
   .steps :global(button:hover) {
     color: var(--ink);
@@ -202,87 +188,71 @@ import Base from "../layouts/Base.astro";
   .exam {
     flex: 1;
     display: grid;
-    grid-template-columns: minmax(260px, 0.7fr) 1.6fr;
-    gap: 20px;
-    padding: 0 20px 20px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr);
+    grid-template-rows: minmax(0, 1fr); /* la fila respeta el alto disponible → sin scroll de página */
+    align-items: center;
+    gap: clamp(24px, 5vw, 72px);
     min-height: 0;
+    padding-block: clamp(12px, 2.4vh, 28px) 0;
   }
   .exam[hidden] {
     display: none;
   }
 
-  .stage {
-    display: grid;
-    grid-template-rows: 1fr auto auto;
-    justify-items: center;
-    gap: 14px;
-    padding: 28px 24px 22px;
-    border-radius: 20px;
-    color: var(--bg);
-    background:
-      radial-gradient(circle, rgb(246 241 231 / 0.12) 1px, transparent 1.4px) 0 0 / 24px 24px,
-      var(--stage);
-    text-align: center;
-    animation: rise 0.8s var(--ease-out) both;
+  .side {
+    display: flex;
+    flex-direction: column;
+  }
+  .home {
+    width: min(24vw, 40vh, 320px);
+    aspect-ratio: 1;
+    margin-left: -4%;
   }
   canvas {
-    align-self: center;
-    width: min(100%, 260px, 34dvh);
+    position: relative;
+    z-index: 20; /* vuela por encima del panel */
+    display: block;
+    width: 100%;
     aspect-ratio: 1;
+    transform-origin: center;
+    animation: glo-in 1s 0.1s var(--ease-spring) both;
   }
-  .caption p {
-    margin: 0;
+  .say {
+    max-width: 12ch;
+    font-size: clamp(1.7rem, min(2.9vw, 5.6vh), 2.8rem);
+    translate: none;
   }
-  .caption.swap p {
-    animation: rise 0.45s var(--ease-out);
+  .say-es {
+    margin-top: 12px;
+    font-size: 0.9rem;
   }
-  .en {
-    font-size: 1.1rem;
-    font-weight: 500;
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: clamp(16px, 3vh, 28px) 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
   }
-  .es {
-    font-size: 0.85rem;
-    opacity: 0.7;
-  }
-  .fineprint {
-    margin: 0;
-    font-size: 0.72rem;
-    opacity: 0.55;
-    max-width: 30ch;
+  .meta :global(span + span::before) {
+    content: "/";
+    margin-right: 10px;
+    color: var(--glo);
   }
 
   .qa {
     display: flex;
     flex-direction: column;
+    max-height: 100%;
     min-height: 0;
-    padding: 32px 40px 24px;
-    border-radius: 20px;
+    padding: clamp(22px, 2.8vw, 40px) clamp(22px, 2.8vw, 40px) 0;
+    border-radius: 24px;
     background: var(--surface);
-    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--shadow) 35%, transparent);
     overflow: auto;
-    animation: rise 0.8s 0.1s var(--ease-out) both;
+    /* backwards (no both): al terminar no deja transform, que atraparía la barra fija del móvil. */
+    animation: glo-fade 0.8s 0.1s var(--ease-out) backwards;
   }
-  .meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin: 0 0 18px;
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
-  .meta :global(.chip) {
-    padding: 2px 10px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 500;
-  }
-  .meta :global(.chip.level) {
-    background: var(--bg);
-    color: var(--ink);
-  }
-
   #answer-form {
     flex: 1;
   }
@@ -290,42 +260,77 @@ import Base from "../layouts/Base.astro";
     animation: slide 0.4s var(--ease-out);
   }
   h1 {
-    margin: 0 0 24px;
-    font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+    margin: 0 0 22px;
+    font-size: clamp(1.2rem, 2vw, 1.55rem);
     font-weight: 500;
     line-height: 1.5;
     letter-spacing: -0.01em;
     outline: none;
   }
 
-  /* Lectura y audio */
+  /* Lectura */
   #stimulus :global(.reading) {
     max-height: 30dvh;
     overflow: auto;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
     padding: 18px 20px;
-    border-radius: 12px;
+    border-radius: 14px;
     background: var(--bg);
     font-size: 0.95rem;
     line-height: 1.7;
   }
   #stimulus :global(.reading h2),
   #stimulus :global(.audio h2) {
-    margin: 0 0 6px;
-    font-size: 0.72rem;
+    margin: 0 0 8px;
+    font-size: 0.8rem;
     font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
     color: var(--muted);
   }
   #stimulus :global(.reading p) {
     margin: 0;
   }
+
+  /* Audio: a la izquierda, el hueco donde Glo se posa a "decirlo". */
   #stimulus :global(.audio) {
-    margin-bottom: 22px;
-    padding: 16px 18px;
-    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 14px 18px 14px 14px;
+    border-radius: 16px;
     background: var(--bg);
+  }
+  #stimulus :global(.spot) {
+    --amp: 0;
+    position: relative;
+    flex: none;
+    width: 120px;
+    aspect-ratio: 1;
+    border: 1.5px dashed var(--line);
+    border-radius: 50%;
+    transition: border-color 0.4s;
+  }
+  #stimulus :global(.spot.on) {
+    border-color: transparent;
+  }
+  /* Ondas de sonido: crecen con el volumen real del audio. */
+  #stimulus :global(.spot::before),
+  #stimulus :global(.spot::after) {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--glo);
+    border-radius: 50%;
+    opacity: calc(var(--amp) * 1.4);
+    scale: calc(1 + var(--amp) * 0.35);
+  }
+  #stimulus :global(.spot::after) {
+    opacity: calc(var(--amp) * 0.8);
+    scale: calc(1.12 + var(--amp) * 0.6);
+  }
+  #stimulus :global(.audio-body) {
+    flex: 1;
+    min-width: 0;
   }
   #stimulus :global(.player) {
     display: flex;
@@ -352,19 +357,26 @@ import Base from "../layouts/Base.astro";
     width: 20px;
     fill: currentColor;
   }
+  /* Onda tipo nota de voz: puntos que crecen con el volumen real a medida que Glo habla. */
   #stimulus :global(.track) {
     flex: 1;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--line);
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 32px;
   }
-  #stimulus :global(.track span) {
-    display: block;
-    height: 100%;
-    width: 0;
-    background: var(--accent);
-    transition: width 0.25s linear;
+  #stimulus :global(.track i) {
+    flex: 1;
+    height: calc(4px + var(--h, 0) * 28px);
+    max-height: 100%;
+    border-radius: 2px;
+    background: var(--line);
+    transition:
+      height 0.2s var(--ease-spring),
+      background-color 0.2s;
+  }
+  #stimulus :global(.track i.on) {
+    background: var(--ink);
   }
   #stimulus :global(.time) {
     font-size: 0.8rem;
@@ -386,10 +398,10 @@ import Base from "../layouts/Base.astro";
     display: flex;
     align-items: center;
     gap: 14px;
-    min-height: 60px;
+    min-height: 58px;
     padding: 12px 16px;
     border: 1.5px solid var(--line);
-    border-radius: 12px;
+    border-radius: 14px;
     background: var(--surface);
     cursor: pointer;
     transition:
@@ -398,7 +410,7 @@ import Base from "../layouts/Base.astro";
       transform 0.15s var(--ease-out);
   }
   #answer :global(.option:hover) {
-    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-color: color-mix(in srgb, var(--ink) 35%, var(--line));
   }
   #answer :global(.option:active) {
     transform: scale(0.99);
@@ -418,7 +430,7 @@ import Base from "../layouts/Base.astro";
     place-items: center;
     width: 30px;
     height: 30px;
-    border-radius: 8px;
+    border-radius: 9px;
     background: var(--bg);
     font-size: 0.8rem;
     font-weight: 600;
@@ -464,17 +476,272 @@ import Base from "../layouts/Base.astro";
     color: var(--muted);
   }
 
+  /* Speaking: la frase a leer va en el enunciado; abajo, el micrófono y lo que se entendió. */
+  h1.read-aloud {
+    padding: 18px 20px;
+    border-left: 3px solid var(--glo);
+    border-radius: 0 14px 14px 0;
+    background: var(--bg);
+    font-size: clamp(1.25rem, 2.2vw, 1.7rem);
+  }
+  /* Prueba de micrófono: barras con tu volumen real y una línea que se llena mientras hablas. */
+  #answer :global(.micheck) {
+    --amp: 0;
+    --ok: 0;
+    display: grid;
+    gap: 16px;
+    max-width: 440px;
+    padding: 22px;
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: 0 20px 40px -30px color-mix(in srgb, var(--shadow) 40%, transparent);
+  }
+  #answer :global(.mc-wave) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 64px;
+  }
+  #answer :global(.mc-wave span) {
+    width: 6px;
+    height: calc(14px + var(--amp) * var(--k) * 50px);
+    border-radius: 3px;
+    background: var(--line);
+    transition: height 0.08s linear, background 0.3s;
+  }
+  #answer :global(.micheck.on .mc-wave span) {
+    background: var(--glo);
+  }
+  #answer :global(.micheck.ok .mc-wave span) {
+    background: #1f7a4d;
+  }
+  #answer :global(.mc-fill) {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  #answer :global(.mc-fill span) {
+    display: block;
+    height: 100%;
+    width: calc(var(--ok) * 100%);
+    background: #1f7a4d;
+    transition: width 0.15s linear;
+  }
+  #answer :global(.mc-title) {
+    margin: 0;
+    font-weight: 600;
+  }
+  #answer :global(.mc-sub) {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  #answer :global(.mc-sub.error) {
+    color: var(--danger);
+  }
+  #answer :global(.mc-actions) {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  /* Insertado con innerHTML: no hereda los estilos con alcance de .primary. */
+  #answer :global(.mc-go) {
+    height: 48px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+  }
+  #answer :global(.mc-go:disabled) {
+    opacity: 0.6;
+    cursor: default;
+  }
+  #answer :global(.micheck.ok .mc-go) {
+    background: #1f7a4d;
+    opacity: 1;
+  }
+  #answer :global(.mc-skip) {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  /* Aviso de conexión: tarjeta de papel arriba al centro, sin alarmas rojas (nada se perdió). */
+  .net {
+    position: fixed;
+    z-index: 40;
+    bottom: 24px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100vw - 32px);
+    padding: 12px 18px 12px 14px;
+    border-radius: 16px;
+    background: var(--ink);
+    color: var(--surface);
+    box-shadow: 0 20px 40px -20px color-mix(in srgb, var(--shadow) 60%, transparent);
+    translate: -50% 0;
+    animation: net-in 0.5s var(--ease-spring);
+  }
+  .net[hidden] {
+    display: none;
+  }
+  .net svg {
+    flex: none;
+    width: 22px;
+    fill: none;
+    stroke: var(--glo);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .net .net-on,
+  .net.back .net-off {
+    display: none;
+  }
+  .net.back .net-on {
+    display: block;
+    stroke: #7ddca8;
+  }
+  .net p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.35;
+  }
+  .net strong {
+    display: block;
+  }
+  .net span {
+    opacity: 0.75;
+    font-size: 0.78rem;
+  }
+  @keyframes net-in {
+    from {
+      opacity: 0;
+      translate: -50% 20px;
+    }
+  }
+  /* Móvil: abajo vive la barra de acciones; el aviso va arriba. */
+  @media (max-width: 960px) {
+    .net {
+      top: 10px;
+      bottom: auto;
+    }
+  }
+
+  #answer :global(.speak) {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  #answer :global(.mic) {
+    --amp: 0;
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    transition:
+      background 0.2s,
+      transform 0.15s var(--ease-out);
+  }
+  #answer :global(.mic:active:not(:disabled)) {
+    transform: scale(0.94);
+  }
+  #answer :global(.mic:disabled) {
+    opacity: 0.4;
+    cursor: default;
+  }
+  #answer :global(.mic[aria-pressed="true"]) {
+    background: var(--danger);
+  }
+  /* Anillo que crece con el volumen real del micrófono: "te estoy oyendo". */
+  #answer :global(.mic::after) {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border: 2px solid var(--danger);
+    border-radius: 50%;
+    opacity: calc(var(--amp) * 1.5);
+    scale: calc(1 + var(--amp) * 0.4);
+  }
+  #answer :global(.mic svg) {
+    width: 28px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  #answer :global(.mic[aria-pressed="true"] svg) {
+    fill: currentColor;
+    stroke: none;
+  }
+  #answer :global(.speak-status) {
+    margin: 0;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  #answer :global(.speak-status.error) {
+    color: var(--danger);
+  }
+  #answer :global(.speak-status small) {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  #answer :global(.heard) {
+    margin-top: 20px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: var(--bg);
+  }
+  #answer :global(.heard h2) {
+    margin: 0 0 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  #answer :global(.heard p) {
+    margin: 0;
+    line-height: 1.6;
+  }
+  #answer :global(.heard audio) {
+    display: block;
+    width: 100%;
+    height: 36px;
+    margin-top: 12px;
+  }
+
   /* Fija al pie del panel: con lecturas largas la navegación siempre queda a mano. */
   .nav {
     position: sticky;
-    bottom: -24px;
+    bottom: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin: 24px 0 -24px;
-    padding: 18px 0 24px;
-    border-top: 1px solid var(--line);
+    margin-top: 22px;
+    padding: 16px 0 clamp(18px, 2.4vw, 28px);
+    border-top: 1.5px solid var(--line);
     background: var(--surface);
   }
   .kbd-hint {
@@ -501,7 +768,7 @@ import Base from "../layouts/Base.astro";
     gap: 8px;
     height: 48px;
     padding: 0 20px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: 500;
     white-space: nowrap;
     transition:
@@ -514,7 +781,9 @@ import Base from "../layouts/Base.astro";
     border: 0;
     background: var(--accent);
     color: var(--accent-ink);
-    box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--accent) 70%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      0 12px 24px -12px color-mix(in srgb, var(--accent) 80%, transparent);
   }
   .primary:hover {
     background: color-mix(in srgb, var(--accent) 88%, black);
@@ -543,7 +812,7 @@ import Base from "../layouts/Base.astro";
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: translate 0.3s var(--ease-out);
+    transition: translate 0.3s var(--ease-spring);
   }
   .primary:hover svg {
     translate: 3px 0;
@@ -562,7 +831,6 @@ import Base from "../layouts/Base.astro";
     gap: 16px;
     background: var(--bg);
     text-align: center;
-    transition: opacity 0.4s var(--ease-out);
   }
   .screen[hidden] {
     display: none;
@@ -573,11 +841,11 @@ import Base from "../layouts/Base.astro";
     color: var(--muted);
   }
   .spinner {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: 3px solid var(--line);
-    border-top-color: var(--accent);
+    border-top-color: var(--glo);
     animation: spin 0.8s linear infinite;
   }
   .screen.error .spinner {
@@ -589,25 +857,26 @@ import Base from "../layouts/Base.astro";
   }
 
   dialog {
-    width: min(92vw, 480px);
+    width: min(92vw, 460px);
     padding: 28px;
     border: 0;
-    border-radius: 18px;
+    border-radius: 22px;
     background: var(--surface);
     color: var(--ink);
-    box-shadow: 0 30px 80px -20px rgb(22 32 90 / 0.45);
+    box-shadow: 0 30px 80px -20px color-mix(in srgb, var(--shadow) 40%, transparent);
   }
   dialog[open] {
-    animation: rise 0.35s var(--ease-out);
+    animation: glo-fade 0.35s var(--ease-out);
   }
   dialog::backdrop {
-    background: rgb(22 32 90 / 0.35);
+    background: color-mix(in srgb, var(--shadow) 30%, transparent);
     backdrop-filter: blur(3px);
   }
   dialog h2 {
     margin: 0 0 8px;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 600;
+    letter-spacing: -0.02em;
   }
   dialog p {
     margin: 0 0 24px;
@@ -621,6 +890,11 @@ import Base from "../layouts/Base.astro";
     gap: 10px;
   }
 
+  /* El anunciador (sr-only) quedaba bajo la pantalla y creaba scroll. */
+  #announcer {
+    top: 0;
+  }
+
   @keyframes slide {
     from {
       opacity: 0;
@@ -632,49 +906,33 @@ import Base from "../layouts/Base.astro";
       scale: 1.15;
     }
   }
-  @keyframes blink {
-    50% {
-      opacity: 0.3;
-    }
-  }
-  @keyframes pulse {
-    50% {
-      opacity: 0.75;
-    }
-  }
   @keyframes spin {
     to {
       rotate: 360deg;
     }
   }
 
+  /* Escritorio: una sola pantalla; si la pregunta es larga, solo el panel hace scroll. */
   @media (min-width: 861px) and (min-height: 560px) {
-    :global(body) {
+    .test {
       height: 100dvh;
     }
   }
-  @media (min-width: 861px) and (max-height: 760px) {
-    .qa {
-      padding: 22px 32px 18px;
-    }
+  @media (min-width: 861px) and (max-height: 720px) {
     h1 {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     #answer :global(.option) {
-      min-height: 50px;
+      min-height: 48px;
       padding: 8px 14px;
     }
-    .nav {
-      bottom: -18px;
-      margin: 14px 0 -18px;
-      padding: 12px 0 18px;
-    }
-    .fineprint {
-      display: none;
-    }
     #stimulus :global(.reading) {
-      max-height: 20dvh;
+      max-height: 22dvh;
       margin-bottom: 14px;
+    }
+    .nav {
+      margin-top: 14px;
+      padding-top: 12px;
     }
   }
   @media (max-width: 1100px) {
@@ -682,76 +940,162 @@ import Base from "../layouts/Base.astro";
       display: none;
     }
   }
+  /* Móvil, pensado para el pulgar: Glo sentado en el borde de la tarjeta (como en el login),
+     navegación fija abajo con zona segura y confirmación como hoja inferior. */
   @media (max-width: 860px) {
-    .topbar {
-      padding: 12px 16px;
+    .test {
+      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     }
-    .brand-name {
+    .brand-name,
+    .save {
       display: none;
     }
+    .count {
+      display: block;
+    }
+    .status {
+      gap: 14px;
+    }
     .steps {
-      padding: 0 16px 10px;
       gap: 4px;
+    }
+    .steps :global(button) {
+      height: 20px;
+      padding: 0;
+      font-size: 0; /* el número sigue en aria-label */
     }
     .exam {
       grid-template-columns: 1fr;
-      gap: 10px;
-      padding: 0 16px 16px;
+      grid-template-rows: none;
+      align-items: start;
+      gap: 0;
     }
-    .stage {
-      grid-template-columns: 64px 1fr;
-      grid-template-rows: auto;
-      justify-items: start;
-      align-items: center;
-      padding: 12px 16px;
-      text-align: left;
+    .side {
+      position: relative;
+      z-index: 2;
+      padding: 8px 38% 16px 0;
     }
-    canvas {
-      width: 64px;
+    .home {
+      position: absolute;
+      right: -6px;
+      bottom: -44px;
+      width: min(38vw, 156px);
+      margin: 0;
     }
-    .en {
-      font-size: 0.95rem;
+    .say {
+      font-size: clamp(1.45rem, 6.6vw, 1.9rem);
     }
-    .es {
-      font-size: 0.78rem;
+    .say-es {
+      margin-top: 8px;
+      font-size: 0.8rem;
     }
-    .fineprint {
+    .meta {
+      margin-top: 10px;
+      font-size: 0.75rem;
+    }
+    /* "Pregunta x de y" ya está arriba (2/10): aquí solo habilidad / nivel. */
+    .meta :global(span:first-child) {
       display: none;
     }
-    .qa {
-      padding: 22px 18px 18px;
+    .meta :global(span:nth-child(2)::before) {
+      content: none;
     }
-    .nav {
-      bottom: -18px;
-      margin: 14px 0 -18px;
-      padding: 12px 0 18px;
+    .qa {
+      max-height: none;
+      padding: 44px 18px 22px;
+      overflow: visible;
+    }
+    h1 {
+      font-size: 1.2rem;
+    }
+    #stimulus :global(.reading) {
+      max-height: none; /* la lectura fluye con la página, nada de scroll dentro de una cajita */
+      padding: 16px;
+    }
+    #stimulus :global(.audio) {
+      gap: 14px;
+      padding: 12px;
+    }
+    #stimulus :global(.spot) {
+      width: 76px;
     }
     #answer :global(.options) {
       grid-template-columns: 1fr;
     }
+    #answer :global(.option) {
+      min-height: 56px;
+    }
+    .nav {
+      position: fixed;
+      z-index: 30;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      gap: 10px;
+      margin: 0;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      border-top: 1.5px solid var(--line);
+      box-shadow: 0 -16px 32px -24px color-mix(in srgb, var(--shadow) 40%, transparent);
+    }
     .kbd-hint {
       display: none;
+    }
+    #prev {
+      flex: none;
+      width: 56px;
+      height: 56px;
+      padding: 0;
+      justify-content: center;
+      font-size: 0; /* solo la flecha; el texto sigue siendo el nombre accesible */
+    }
+    #next {
+      flex: 1;
+      height: 56px;
+      justify-content: space-between;
+    }
+    dialog {
+      width: 100%;
+      max-width: none;
+      margin: auto 0 0;
+      padding: 28px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+      border-radius: 24px 24px 0 0;
+    }
+    dialog[open] {
+      animation: sheet-up 0.35s var(--ease-out);
+    }
+    .dialog-actions {
+      flex-direction: column-reverse;
+    }
+    .dialog-actions button {
+      justify-content: center;
+      height: 54px;
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      translate: 0 100%;
     }
   }
 </style>
 
 <script>
   import { api, ApiError, esc } from "../lib/api";
-  import type { CoachState } from "../lib/coach";
+  import { audioLevel, micLevel, mountGlo } from "../lib/glo";
+  import { handoff, splash } from "../lib/splash";
 
   type Option = { id: string; text: string };
   type Question = {
     id: string;
     position: number;
-    type: "multiple_choice" | "fill_blank" | "comprehension" | "vocabulary";
-    response_format: "choice" | "text";
+    type: "multiple_choice" | "fill_blank" | "comprehension" | "vocabulary" | "read_aloud" | "open_response";
+    response_format: "choice" | "text" | "speech";
     skill: string;
     level: string;
     prompt: string;
     options: Option[] | null;
     stimulus: { id: string; kind: "text" | "audio"; title: string; content: string | null; audio_url: string | null } | null;
   };
-  type Answer = { option_id: string } | { text: string };
+  type Answer = { option_id: string } | { text: string } | { transcript: string; tries: number };
   type Attempt = {
     id: string;
     status: "in_progress" | "submitted" | "expired";
@@ -766,6 +1110,10 @@ import Base from "../layouts/Base.astro";
   const SKILLS: Record<string, string> = { grammar: "Grammar", vocabulary: "Vocabulary", reading: "Reading", listening: "Listening", speaking: "Speaking" };
   const PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>';
   const PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const MIC = '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+  const STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  const SPEECH_TRIES = 3; // igual que MAX_SPEECH_TRIES en la API
+  const SPEECH_MAX_S = { read_aloud: 20, open_response: 60 } as Record<string, number>;
 
   let attempt: Attempt;
   let current = 0;
@@ -774,28 +1122,87 @@ import Base from "../layouts/Base.astro";
   let events: { type: string; occurred_at: string; question_id?: string }[] = [];
   let finished = false;
 
-  let coach: { setState(s: CoachState): void; pulse(): void } | undefined;
-  import("../lib/coach")
-    .then(({ createCoach }) => (coach = createCoach($<HTMLCanvasElement>("coach"))))
-    .catch(() => $("coach").remove());
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canvas = $<HTMLCanvasElement>("coach");
+  const glo = mountGlo({ canvas, say: $("say"), sayEs: $("say-es"), scene: $("exam") });
 
-  // ---------- Coach e instrucciones bilingües ----------
-  function say(en: string, es: string) {
-    const c = $("caption");
-    if (c.querySelector(".en")!.textContent === en) return;
-    c.querySelector(".en")!.textContent = en;
-    c.querySelector(".es")!.textContent = es;
-    c.classList.remove("swap");
-    void c.offsetWidth;
-    c.classList.add("swap");
-  }
+  // ---------- Glo e instrucciones bilingües (*palabra* = coral) ----------
+  const say = (en: string, es: string) => glo.speak(en, es);
   function instruction(q: Question) {
-    if (allAnswered() && current === attempt.questions.length - 1) return say("All done! Review and submit.", "¡Listo! Revisa y envía tus respuestas.");
-    if (q.stimulus?.kind === "audio") return say("Listen to the audio, then answer.", "Escucha el audio y luego responde.");
-    if (q.stimulus?.kind === "text") return say("Read the text, then answer.", "Lee el texto y luego responde.");
-    if (q.response_format === "text") return say("Type the missing words.", "Escribe lo que falta en el espacio.");
-    if (q.type === "vocabulary") return say("Pick the best word.", "Elige la palabra más adecuada.");
-    say("Choose the correct option.", "Elige la opción correcta.");
+    if ((q.type === "read_aloud" || q.type === "open_response") && !micReady()) return say("First, let's test your *mic.*", "Primero, probemos tu micrófono.");
+    if (allAnswered() && current === attempt.questions.length - 1) return say("All done! *Review* and submit.", "¡Listo! Revisa y envía tus respuestas.");
+    if (q.type === "read_aloud") return say("Read it *aloud.*", "Lee la frase en voz alta, a tu ritmo.");
+    if (q.type === "open_response") return say("Tell me in *English!*", "Cuéntamelo en inglés. Yo te escucho.");
+    if (q.stimulus?.kind === "audio") return say("Press play. I'll *read* it to you.", "Dale a reproducir. Yo te lo leo.");
+    if (q.stimulus?.kind === "text") return say("*Read* the text, then answer.", "Lee el texto y luego responde.");
+    if (q.response_format === "text") return say("Type the *missing* words.", "Escribe lo que falta en el espacio.");
+    if (q.type === "vocabulary") return say("Pick the best *word.*", "Elige la palabra más adecuada.");
+    say("Choose the *correct* option.", "Elige la opción correcta.");
+  }
+
+  // ---------- Glo vuela al escenario del audio y lo "dice" ----------
+  // FLIP con Web Animations: se agacha, salta en parábola inclinándose hacia donde va,
+  // se estira en el aire y aterriza aplastándose un poco (anticipación + squash & stretch).
+  // Devuelve una promesa que se cumple al posarse (o al instante si no hay movimiento).
+  // ponytail: la posición se calcula al despegar; si el panel hace scroll con Glo fuera, queda desfasado.
+  let awayAt: HTMLElement | null = null;
+  function fly(to: HTMLElement | null): Promise<unknown> {
+    const target = to ?? awayAt;
+    awayAt = to;
+    canvas.getAnimations().forEach((a) => a.cancel());
+    if (!target || reducedMotion) return Promise.resolve();
+    const h = $("home").getBoundingClientRect();
+    const r = target.getBoundingClientRect();
+    // El cuerpo de Glo ocupa ~65% del lienzo y queda ~7% por debajo del centro (la cámara deja hueco
+    // para sombreros): se agranda y se sube para que el globo, no el lienzo, llene el círculo.
+    const sc = (r.width * 1.35) / h.width;
+    const dx = r.left + r.width / 2 - (h.left + h.width / 2);
+    const dy = r.top + r.height / 2 - (h.top + h.height / 2) - h.height * sc * 0.07;
+    // A → B: ida (casa → escenario) o vuelta (escenario → casa).
+    const [ax, ay, as, bx, by, bs] = to ? [0, 0, 1, dx, dy, sc] : [dx, dy, sc, 0, 0, 1];
+    const lift = 70 + Math.abs(dx) * 0.18;
+    const lean = Math.sign(bx - ax) * 16;
+    const at = (x: number, y: number, s: number, sx = 1, sy = 1, rot = 0) =>
+      `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${s * sx}, ${s * sy})`;
+    const frames: Keyframe[] = [
+      { offset: 0, transform: at(ax, ay, as) },
+      { offset: 0.14, transform: at(ax, ay + 8 * as, as, 1.1, 0.88) }, // se agacha
+    ];
+    for (let i = 0; i <= 10; i++) {
+      const t = i / 10;
+      const e = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2; // ease-in-out
+      const arc = Math.sin(Math.PI * t);
+      frames.push({
+        offset: 0.2 + 0.62 * t,
+        transform: at(ax + (bx - ax) * e, ay + (by - ay) * e - lift * 4 * e * (1 - e), as + (bs - as) * e, 1 - 0.08 * arc, 1 + 0.1 * arc, lean * arc),
+      });
+    }
+    frames.push(
+      { offset: 0.9, transform: at(bx, by + 6 * bs, bs, 1.16, 0.84) }, // aterriza
+      { offset: 1, transform: at(bx, by, bs) },
+    );
+    return canvas
+      .animate(frames, { duration: 1000, easing: "linear", fill: to ? "forwards" : "none" })
+      .finished.catch(() => {}); // cancelada = otro vuelo tomó el relevo
+  }
+
+  // Volumen real del audio → boca de Glo, anillos del escenario y la onda, que se dibuja mientras suena.
+  function lipSync(audio: HTMLAudioElement, spot: HTMLElement, bars: HTMLElement[]) {
+    const level = audioLevel(audio, (v) => {
+      glo.coach?.voice(v);
+      spot.style.setProperty("--amp", v.toFixed(3));
+      const b = bars[Math.floor((audio.currentTime / (audio.duration || 1)) * bars.length)];
+      if (b && v > Number(b.style.getPropertyValue("--h") || 0)) b.style.setProperty("--h", v.toFixed(2));
+    });
+    return {
+      start() {
+        if (!level.start()) glo.coach?.say(audio.duration || 8); // sin Web Audio: boca "a ojo"
+      },
+      stop() {
+        level.stop();
+        glo.coach?.say(0);
+      },
+    };
   }
 
   // ---------- Persistencia local (sobrevive a recargas y cortes de red) ----------
@@ -820,7 +1227,33 @@ import Base from "../layouts/Base.astro";
 
   // ---------- Autoguardado ----------
   const save = $("save");
+  const net = $("net");
+  let offline = false;
+  let netTimer: number | undefined;
   function setSave(state: "saved" | "saving" | "offline") {
+    // Se cae la red: Glo lo dice con calma. Vuelve: confirma que todo se sincronizó y el aviso se va.
+    if (state === "offline" && !offline) {
+      offline = true;
+      clearTimeout(netTimer);
+      net.classList.remove("back");
+      $("net-title").textContent = "Sin conexión";
+      $("net-sub").textContent = "Tus respuestas están a salvo en este equipo. Puedes seguir respondiendo.";
+      net.hidden = false;
+      glo.coach?.setState("peek");
+      say("No *wifi?* No problem.", "Sin conexión. Tus respuestas están a salvo.");
+    } else if (state === "saved" && offline) {
+      offline = false;
+      net.classList.add("back");
+      $("net-title").textContent = "Conexión recuperada";
+      $("net-sub").textContent = "Todo quedó sincronizado.";
+      glo.coach?.setState("success");
+      say("*Synced!* Let's go on.", "¡Sincronizado! Sigamos.");
+      netTimer = window.setTimeout(() => {
+        net.hidden = true;
+        glo.coach?.setState("idle");
+        if (attempt?.questions[current]) instruction(attempt.questions[current]);
+      }, 2600);
+    }
     save.dataset.state = state;
     save.textContent = state === "saved" ? "Guardado" : state === "saving" ? "Guardando…" : "Sin conexión · guardado en este equipo";
   }
@@ -858,7 +1291,8 @@ import Base from "../layouts/Base.astro";
     clearTimeout(debounce);
     debounce = window.setTimeout(flush, delay);
   }
-  addEventListener("online", flush);
+  addEventListener("online", () => (pending.size ? flush() : setSave("saved")));
+  addEventListener("offline", () => setSave("offline"));
   setInterval(flush, 8000);
 
   // ---------- Eventos de integridad (se informan al profesor, no bloquean) ----------
@@ -929,38 +1363,60 @@ import Base from "../layouts/Base.astro";
   });
 
   function renderStimulus(q: Question) {
+    cancelRecording(); // cambiar de pregunta descarta una grabación a medias
     const box = $("stimulus");
+    box.querySelector("audio")?.pause(); // un <audio> quitado del DOM sigue sonando
+    fly(null);
     const s = q.stimulus;
     if (!s) return (box.innerHTML = "");
     if (s.kind === "text") {
       box.innerHTML = `<article class="reading" lang="en" tabindex="0" aria-label="Texto: ${esc(s.title)}"><h2>${esc(s.title)}</h2><p>${esc(s.content ?? "")}</p></article>`;
       return;
     }
-    box.innerHTML = `<div class="audio"><h2>${esc(s.title)}</h2>
-      <div class="player">
-        <button type="button" class="play" aria-label="Reproducir audio">${PLAY}</button>
-        <div class="track"><span></span></div>
-        <span class="time">0:00</span>
+    box.innerHTML = `<div class="audio">
+      <div class="spot" aria-hidden="true"></div>
+      <div class="audio-body"><h2>${esc(s.title)}</h2>
+        <div class="player">
+          <button type="button" class="play" aria-label="Reproducir audio">${PLAY}</button>
+          <div class="track">${"<i></i>".repeat(40)}</div>
+          <span class="time">0:00</span>
+        </div>
       </div>
       <audio preload="auto" src="${esc(s.audio_url ?? "")}"></audio></div>`;
     const audio = box.querySelector("audio")!;
     const btn = box.querySelector<HTMLButtonElement>(".play")!;
-    const bar = box.querySelector<HTMLElement>(".track span")!;
+    const bars = [...box.querySelectorAll<HTMLElement>(".track i")];
     const time = box.querySelector<HTMLElement>(".time")!;
     const fmt = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-    btn.addEventListener("click", () => (audio.paused ? audio.play() : audio.pause()));
+    const spot = box.querySelector<HTMLElement>(".spot")!;
+    const sync = lipSync(audio, spot, bars);
+    btn.addEventListener("click", () => {
+      if (!audio.paused) return audio.pause();
+      if (awayAt === spot) return audio.play();
+      // Primero Glo vuela al escenario; al posarse, empieza a "hablar".
+      spot.classList.add("on");
+      glo.coach?.setState("idle");
+      fly(spot).then(() => awayAt === spot && audio.play()); // si cambiaste de pregunta en el aire, no suena
+    });
     audio.addEventListener("play", () => {
       btn.innerHTML = PAUSE;
       btn.setAttribute("aria-label", "Pausar audio");
-      coach?.setState("loading"); // Glo "habla" mientras suena el audio
+      sync.start();
+      say("Listen *carefully…*", "Escucha con atención…");
     });
     audio.addEventListener("pause", () => {
       btn.innerHTML = PLAY;
       btn.setAttribute("aria-label", "Reproducir audio");
-      coach?.setState("idle");
+      sync.stop();
+    });
+    audio.addEventListener("ended", () => {
+      fly(null);
+      spot.classList.remove("on");
+      say("Now *answer.* You can replay it.", "Ahora responde. Puedes volver a escucharlo.");
     });
     audio.addEventListener("timeupdate", () => {
-      bar.style.width = `${(audio.currentTime / (audio.duration || 1)) * 100}%`;
+      const played = (audio.currentTime / (audio.duration || 1)) * bars.length;
+      bars.forEach((b, i) => b.classList.toggle("on", i < played));
       time.textContent = fmt(audio.duration ? audio.duration - audio.currentTime : 0);
     });
     audio.addEventListener("loadedmetadata", () => (time.textContent = fmt(audio.duration)));
@@ -969,10 +1425,226 @@ import Base from "../layouts/Base.astro";
     });
   }
 
+  // ---------- Speaking: grabar, subir y mostrar lo que se entendió ----------
+  // La calificación ocurre en el servidor (ElevenLabs Scribe + rúbrica); aquí nunca se ve el puntaje.
+  const recordings = new Map<string, string>(); // question_id → URL local para volver a escucharse
+  let rec: { recorder: MediaRecorder; discard: boolean } | null = null;
+  function cancelRecording() {
+    if (!rec) return;
+    rec.discard = true;
+    rec.recorder.stop();
+  }
+
+  // ---------- Prueba de micrófono (una vez por sesión, justo antes de la primera pregunta oral) ----------
+  // El permiso se pide en contexto y un micrófono mudo se detecta antes de gastar un intento.
+  const MIC_OK = "ga:mic-ok";
+  const micReady = () => {
+    try {
+      return sessionStorage.getItem(MIC_OK) === "1";
+    } catch {
+      return true; // sin almacenamiento: no bloquear
+    }
+  };
+  let stopCheck: (() => void) | null = null;
+  function renderMicCheck(q: Question) {
+    const box = $("answer");
+    box.innerHTML = `<div class="micheck">
+        <div class="mc-wave" aria-hidden="true">${[0.5, 0.8, 1, 0.7, 1, 0.8, 0.5].map((k) => `<span style="--k:${k}"></span>`).join("")}</div>
+        <div class="mc-fill" aria-hidden="true"><span></span></div>
+        <div>
+          <p class="mc-title">Primero, probemos tu micrófono</p>
+          <p class="mc-sub" aria-live="polite">Toca el botón y di <strong lang="en">“Hello, Glo!”</strong> en voz alta.</p>
+        </div>
+        <div class="mc-actions">
+          <button type="button" class="primary mc-go">Probar micrófono</button>
+          <button type="button" class="mc-skip">Saltar prueba</button>
+        </div>
+      </div>`;
+    $("kbd-hint").textContent = "";
+    const card = box.querySelector<HTMLElement>(".micheck")!;
+    const sub = card.querySelector<HTMLElement>(".mc-sub")!;
+    const go = card.querySelector<HTMLButtonElement>(".mc-go")!;
+    const done = () => {
+      stopCheck?.();
+      try {
+        sessionStorage.setItem(MIC_OK, "1");
+      } catch {}
+      if (attempt.questions[current]?.id !== q.id) return;
+      renderSpeech(q);
+      instruction(q);
+    };
+    card.querySelector(".mc-skip")!.addEventListener("click", done);
+
+    go.addEventListener("click", async () => {
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      } catch {
+        glo.coach?.setState("error");
+        sub.classList.add("error");
+        sub.textContent = "No pudimos usar tu micrófono. Permite el acceso desde el icono junto a la dirección web y vuelve a intentarlo.";
+        return;
+      }
+      sub.classList.remove("error");
+      go.disabled = true;
+      go.textContent = "Escuchando…";
+      card.classList.add("on");
+      glo.coach?.setState("listen");
+      say("Say *hello!* I'm listening.", "Dime «Hello, Glo!» en voz alta.");
+      sub.innerHTML = `Di <strong lang="en">“Hello, Glo!”</strong>… la línea verde se llena mientras te escucho.`;
+      // ~0.8 s de voz por encima del ruido = te oigo bien.
+      let heard = 0;
+      let last = performance.now();
+      let ended = false;
+      const quiet = setTimeout(() => {
+        sub.textContent = "No te escucho. Revisa que el micrófono no esté silenciado y habla un poco más fuerte.";
+      }, 7000);
+      const stopMeter = micLevel(stream, (v) => {
+        const now = performance.now();
+        if (v > 0.12) heard += (now - last) / 1000;
+        last = now;
+        card.style.setProperty("--amp", v.toFixed(3));
+        card.style.setProperty("--ok", Math.min(1, heard / 0.8).toFixed(3));
+        glo.coach?.voice(v); // en "listen", tu volumen = Glo asiente
+        if (heard >= 0.8) finish();
+      });
+      stopCheck = () => {
+        clearTimeout(quiet);
+        stopMeter();
+        stream.getTracks().forEach((t) => t.stop());
+        stopCheck = null;
+      };
+      function finish() {
+        if (ended) return;
+        ended = true;
+        stopCheck?.();
+        card.classList.remove("on");
+        card.classList.add("ok");
+        card.style.setProperty("--ok", "1");
+        glo.coach?.setState("success");
+        say("I can *hear* you!", "¡Te escucho perfecto! Ya puedes grabar.");
+        sub.textContent = "¡Micrófono listo!";
+        go.textContent = "Listo";
+        setTimeout(done, reducedMotion ? 300 : 1500);
+      }
+    });
+  }
+
+  function renderSpeech(q: Question) {
+    const prompt = $("prompt");
+    const box = $("answer");
+    prompt.textContent = q.prompt;
+    prompt.classList.toggle("read-aloud", q.type === "read_aloud");
+    if (!micReady()) return renderMicCheck(q);
+    box.innerHTML = `<div class="speak">
+        <button type="button" class="mic" aria-pressed="false" aria-label="Grabar respuesta">${MIC}</button>
+        <p class="speak-status" aria-live="polite"></p>
+      </div>
+      <div class="heard" hidden><h2>Esto es lo que entendimos</h2><p lang="en"></p></div>`;
+    $("kbd-hint").innerHTML = "<kbd>Enter</kbd> para continuar";
+    const mic = box.querySelector<HTMLButtonElement>(".mic")!;
+    const status = box.querySelector<HTMLElement>(".speak-status")!;
+    const heard = box.querySelector<HTMLElement>(".heard")!;
+    const max = SPEECH_MAX_S[q.type] ?? 45;
+
+    const setStatus = (main: string, sub = "", error = false) => {
+      status.innerHTML = esc(main) + (sub ? `<small>${esc(sub)}</small>` : "");
+      status.classList.toggle("error", error);
+    };
+    const showSaved = () => {
+      const saved = answers[q.id];
+      const tries = saved && "transcript" in saved ? saved.tries : 0;
+      const left = SPEECH_TRIES - tries;
+      mic.disabled = left <= 0;
+      if (!tries) return setStatus("Toca el micrófono para grabar", `Máximo ${max} segundos · ${SPEECH_TRIES} intentos`);
+      heard.hidden = false;
+      heard.querySelector("p")!.textContent = `“${(saved as { transcript: string }).transcript}”`;
+      heard.querySelector("audio")?.remove();
+      const url = recordings.get(q.id);
+      if (url) heard.insertAdjacentHTML("beforeend", `<audio controls src="${url}" aria-label="Tu grabación"></audio>`);
+      setStatus("Respuesta guardada", left ? `Puedes grabar de nuevo (te queda${left > 1 ? "n" : ""} ${left})` : "Usaste todos tus intentos");
+    };
+    showSaved();
+
+    mic.addEventListener("click", async () => {
+      if (rec) return rec.recorder.stop();
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      } catch {
+        glo.coach?.setState("error");
+        return setStatus("No pudimos usar tu micrófono", "Permite el acceso al micrófono en tu navegador y vuelve a intentarlo.", true);
+      }
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      const current = (rec = { recorder, discard: false });
+      const stopMeter = micLevel(stream, (v) => {
+        mic.style.setProperty("--amp", v.toFixed(3));
+        glo.coach?.voice(v); // en "listen", tu volumen = Glo asiente
+      });
+      const t0 = Date.now();
+      const clock = setInterval(() => {
+        const s = Math.floor((Date.now() - t0) / 1000);
+        setStatus(`Grabando… 0:${String(s).padStart(2, "0")}`, "Toca de nuevo para terminar");
+        if (s >= max) recorder.stop();
+      }, 250);
+      recorder.addEventListener("dataavailable", (e) => chunks.push(e.data));
+      recorder.addEventListener("stop", () => {
+        clearInterval(clock);
+        stopMeter();
+        stream.getTracks().forEach((t) => t.stop());
+        rec = null;
+        mic.setAttribute("aria-pressed", "false");
+        mic.setAttribute("aria-label", "Grabar respuesta");
+        mic.innerHTML = MIC;
+        glo.coach?.setState("idle");
+        if (current.discard) return;
+        uploadSpeech(q, new Blob(chunks, { type: recorder.mimeType || "audio/webm" }));
+      });
+      recorder.start();
+      mic.setAttribute("aria-pressed", "true");
+      mic.setAttribute("aria-label", "Terminar grabación");
+      mic.innerHTML = STOP;
+      glo.coach?.setState("listen");
+      say("I'm *listening…*", "Te escucho…");
+      setStatus("Grabando… 0:00", "Toca de nuevo para terminar");
+    });
+
+    async function uploadSpeech(q: Question, blob: Blob) {
+      mic.disabled = true;
+      setStatus("Glo está analizando tu voz…", "Toma unos segundos");
+      glo.coach?.setState("loading");
+      try {
+        const res = await api<{ transcript: string; tries_left: number }>(`/attempts/${attempt.id}/answers/${q.id}/speech`, {
+          method: "PUT",
+          body: blob,
+          headers: { "Content-Type": blob.type },
+        });
+        answers[q.id] = { transcript: res.transcript, tries: SPEECH_TRIES - res.tries_left };
+        const old = recordings.get(q.id);
+        if (old) URL.revokeObjectURL(old);
+        recordings.set(q.id, URL.createObjectURL(blob));
+        renderSteps();
+        glo.coach?.setState("success");
+        say("Got it! *Nice.*", "¡Listo! Tu respuesta quedó guardada.");
+        if (attempt.questions[current]?.id === q.id) showSaved();
+      } catch (e) {
+        glo.coach?.setState("error"); // "no, no" con los ojos cerrados; grabar de nuevo lo pone a escuchar
+        if (e instanceof ApiError && e.code === "attempt_expired") return timeUp();
+        if (e instanceof ApiError && e.code === "attempt_closed") return goToResult();
+        mic.disabled = false;
+        const sub = e instanceof ApiError && e.code === "stt_unavailable" ? "Puedes seguir con las demás preguntas." : "Inténtalo de nuevo.";
+        if (attempt.questions[current]?.id === q.id) setStatus((e as Error).message, sub, true);
+      }
+    }
+  }
+
   function renderAnswer(q: Question) {
     const prompt = $("prompt");
     const box = $("answer");
     const saved = answers[q.id];
+    prompt.classList.remove("read-aloud");
+    if (q.response_format === "speech") return renderSpeech(q);
 
     if (q.response_format === "text") {
       // Los "___" consecutivos se convierten en un único hueco dentro de la frase.
@@ -986,13 +1658,19 @@ import Base from "../layouts/Base.astro";
       box.innerHTML = '<p class="hint">Escribe tu respuesta en el espacio. No importan mayúsculas ni espacios extra.</p>';
       const el = $<HTMLInputElement>("blank");
       el.value = saved && "text" in saved ? saved.text : "";
+      // Pegar queda bloqueado en las respuestas escritas (el evento "paste" igual se registra).
+      el.addEventListener("paste", (e) => {
+        e.preventDefault();
+        say("Type it *yourself.*", "Escríbela tú: aquí no se puede pegar texto.");
+      });
+      el.addEventListener("drop", (e) => e.preventDefault());
       el.addEventListener("input", () => {
-        coach?.setState("email");
-        coach?.pulse();
+        glo.coach?.setState("email");
+        glo.coach?.pulse();
         const v = el.value.trim();
         setAnswer(q, v ? { text: v } : null, 700);
       });
-      el.addEventListener("blur", () => coach?.setState("idle"));
+      el.addEventListener("blur", () => glo.coach?.setState("idle"));
       el.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -1015,7 +1693,7 @@ import Base from "../layouts/Base.astro";
       .join("")}</fieldset>`;
     box.querySelectorAll<HTMLInputElement>("input").forEach((r) =>
       r.addEventListener("change", () => {
-        coach?.pulse();
+        glo.coach?.pulse();
         setAnswer(q, { option_id: r.value });
       }),
     );
@@ -1023,15 +1701,19 @@ import Base from "../layouts/Base.astro";
   }
 
   function render(direction = 1) {
+    stopCheck?.(); // al cambiar de pregunta, se suelta el micrófono de la prueba
     const q = attempt.questions[current];
     const total = attempt.questions.length;
-    $("meta").innerHTML = `Pregunta ${current + 1} de ${total}
-      <span class="chip">${esc(SKILLS[q.skill] ?? q.skill)}</span>
-      <span class="chip level">${esc(q.level.replace("_", "-"))}</span>`;
+    $("meta").innerHTML = `<span>Pregunta ${current + 1} de ${total}</span>
+      <span>${esc(SKILLS[q.skill] ?? q.skill)}</span><span>${esc(q.level.replace("_", "-"))}</span>`;
     renderStimulus(q);
     renderAnswer(q);
     renderSteps();
     instruction(q);
+
+    $("count").textContent = `${current + 1}/${total}`;
+    // En móvil, cada pregunta nueva empieza arriba (Glo e instrucción a la vista).
+    if (scrollY > 0) scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
 
     const last = current === total - 1;
     $<HTMLButtonElement>("prev").disabled = current === 0;
@@ -1111,18 +1793,24 @@ import Base from "../layouts/Base.astro";
     location.replace(`/results?id=${attempt.id}`);
   }
 
-  async function submit() {
+  // Enviar: Glo gris se llena de color mientras se califica; la pantalla sigue en la página de resultados.
+  async function submit(word = "Grading") {
     if (finished) return;
     finished = true;
-    coach?.setState("loading");
-    showScreen("Calculando tu resultado…");
+    const load = splash(word);
+    load.progress(0.3);
     sendEvents(true);
     try {
       // Se envían todas las respuestas: cubre las que no alcanzaron a sincronizarse offline.
-      await api(`/attempts/${attempt.id}/submit`, { method: "POST", body: JSON.stringify({ answers }) });
+      // Las orales ya están calificadas en el servidor: no viajan en el envío.
+      const typed = Object.fromEntries(Object.entries(answers).filter(([, a]) => !("transcript" in a)));
+      await api(`/attempts/${attempt.id}/submit`, { method: "POST", body: JSON.stringify({ answers: typed }) });
+      load.progress(0.6);
+      handoff.mark(word, 0.6);
       goToResult();
     } catch (e) {
       finished = false;
+      load.cancel();
       $("screen").hidden = true;
       setSave("offline");
       openConfirm((e as Error).message);
@@ -1130,8 +1818,8 @@ import Base from "../layouts/Base.astro";
   }
   function timeUp() {
     if (finished) return;
-    showScreen("Se acabó el tiempo. Guardando tus respuestas…");
-    submit();
+    $("announcer").textContent = "Se acabó el tiempo. Enviando tus respuestas.";
+    submit("Time's up");
   }
 
   // ---------- Inicio ----------
@@ -1163,7 +1851,7 @@ import Base from "../layouts/Base.astro";
     tick();
     setInterval(tick, 1000);
     if (pending.size) flush();
-    if (resumed) say("Welcome back. Your answers were saved.", "Qué bueno verte de nuevo. Tus respuestas se guardaron.");
+    if (resumed) say("Welcome back! Your answers are *saved.*", "Qué bueno verte de nuevo. Tus respuestas se guardaron.");
   }
   start();
 </script>

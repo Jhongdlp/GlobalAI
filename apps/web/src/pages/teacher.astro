@@ -1,0 +1,1771 @@
+---
+import Base from "../layouts/Base.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
+import "../styles/glo.css";
+
+// ponytail: misma escala que dashboard/results; exponer GET /levels si cambia a menudo.
+const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
+---
+
+<Base title="Panel docente · Global AI">
+  <div class="panel">
+    <header class="topbar">
+      <a class="brand" href="/teacher"><span class="mark" aria-hidden="true"></span>Global AI <span class="role">Panel docente</span></a>
+      <div class="user">
+        <span class="who" id="user-name"></span>
+        <ThemeToggle />
+        <button class="link" id="export" type="button">Exportar CSV</button>
+        <button class="link" id="logout" type="button">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <section class="head" aria-labelledby="title">
+      <div>
+        <h1 id="title">Tu grupo</h1>
+        <p class="sub" id="sub">Cargando datos del grupo…</p>
+      </div>
+      <!-- Cada indicador trae su contexto: una cifra sola no dice si va bien o mal. -->
+      <dl class="kpis">
+        <div class="kpi">
+          <dt>Evaluados</dt>
+          <dd class="v" id="k-students">—</dd>
+          <dd class="foot"><span class="meter" id="k-cover"><span></span></span><span class="ctx" id="k-students-ctx"></span></dd>
+        </div>
+        <div class="kpi">
+          <dt>Puntaje promedio</dt>
+          <dd class="v" id="k-avg">—</dd>
+          <dd class="foot"><span class="ctx" id="k-avg-ctx"></span></dd>
+        </div>
+        <div class="kpi">
+          <dt>Intentos enviados</dt>
+          <dd class="v" id="k-attempts">—</dd>
+          <dd class="foot"><span class="cols" id="k-activity" role="img"></span><span class="ctx">14 días</span></dd>
+        </div>
+        <div class="kpi">
+          <dt>Evaluándose ahora</dt>
+          <dd class="v" id="k-live">—</dd>
+          <dd class="foot"><span class="ctx">en este momento</span></dd>
+        </div>
+        <div class="kpi warn">
+          <dt>Requieren atención</dt>
+          <dd class="v" id="k-alerts">—</dd>
+          <dd class="foot"><span class="ctx" id="k-alerts-ctx"></span></dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="grid">
+      <div class="main">
+        <section class="charts" aria-label="Gráficos del grupo">
+          <figure class="chart">
+            <figcaption><h2>Niveles del grupo</h2><span class="note" id="levels-note"></span></figcaption>
+            <ol class="levels" id="levels" aria-label="Estudiantes por nivel actual">
+              {LEVELS.map((c) => <li data-level={c}><span class="n"></span><span class="col"><span></span></span><span class="lbl">{c.replace("PRE_", "Pre-")}</span></li>)}
+            </ol>
+          </figure>
+          <figure class="chart">
+            <figcaption><h2>Promedio por habilidad</h2><span class="note" id="skills-hint"></span></figcaption>
+            <ul class="skills" id="skills"><li class="skeleton"></li></ul>
+          </figure>
+        </section>
+
+        <section class="roster" aria-labelledby="roster-title">
+          <div class="tools">
+            <h2 id="roster-title">Estudiantes <span id="count"></span></h2>
+            <div class="filters">
+              <label class="search">
+                <span class="sr-only">Buscar estudiante</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m20 20-4.2-4.2"></path></svg>
+                <input id="q" type="search" placeholder="Buscar estudiante" autocomplete="off" />
+              </label>
+              <label>
+                <span class="sr-only">Filtrar por nivel</span>
+                <select id="level">
+                  <option value="">Todos los niveles</option>
+                  {LEVELS.map((c) => <option value={c}>{c.replace("PRE_", "Pre-")}</option>)}
+                  <option value="none">Sin evaluar</option>
+                </select>
+              </label>
+              <fieldset class="seg" aria-label="Mostrar">
+                <label><input type="radio" name="show" value="all" checked /><span>Todos</span></label>
+                <label><input type="radio" name="show" value="alert" /><span>Con alerta</span></label>
+              </fieldset>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col" aria-sort="ascending"><button data-sort="name">Estudiante</button></th>
+                  <th scope="col"><button data-sort="level">Nivel</button></th>
+                  <th scope="col" class="num"><button data-sort="score">Último</button></th>
+                  <th scope="col" class="c-skills">Habilidades</th>
+                  <th scope="col" class="num c-attempts"><button data-sort="attempts">Intentos</button></th>
+                  <th scope="col" class="c-date"><button data-sort="date">Último envío</button></th>
+                  <th scope="col"><button data-sort="alert">Estado</button></th>
+                </tr>
+              </thead>
+              <tbody id="rows">
+                <tr><td colspan="7"><div class="skeleton"></div></td></tr>
+                <tr><td colspan="7"><div class="skeleton"></div></td></tr>
+                <tr><td colspan="7"><div class="skeleton"></div></td></tr>
+              </tbody>
+            </table>
+            <p class="empty" id="no-match" hidden>Ningún estudiante coincide con el filtro.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="sheet" aria-labelledby="alerts-title">
+        <h2 id="alerts-title">Requieren atención <span id="alerts-count"></span></h2>
+        <ul class="alerts" id="alerts"><li class="skeleton"></li></ul>
+      </aside>
+    </div>
+  </div>
+
+  <div class="tip" id="tip" role="tooltip" hidden></div>
+
+  <dialog id="drawer" aria-labelledby="d-title">
+    <div class="d-bar">
+      <button class="link" id="d-back" type="button" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg><span></span>
+      </button>
+      <button class="link d-close" id="d-close" type="button" aria-label="Cerrar">Cerrar</button>
+    </div>
+    <div class="d-body" id="d-body"></div>
+  </dialog>
+</Base>
+
+<style>
+  /* Mismo papel, tipografía y acento que el lado del estudiante; sin Glo: es una herramienta de trabajo. */
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.8vh, 22px);
+    min-height: 100dvh;
+    padding: clamp(16px, 2.2vw, 32px) clamp(16px, 3vw, 48px);
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .role {
+    padding-left: 10px;
+    border-left: 1.5px solid var(--line);
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 0.85rem;
+  }
+  .user {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 0.85rem;
+  }
+  .who {
+    color: var(--muted);
+  }
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: text-underline-offset 0.2s var(--ease-out);
+  }
+  .link:hover {
+    text-underline-offset: 6px;
+  }
+  .link[hidden] {
+    display: none;
+  }
+  .link svg {
+    width: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Cabecera: título + indicadores en tipografía grande separados por filetes. */
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px 40px;
+    animation: rise 0.6s var(--ease-out) both;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
+  .sub {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  /* :global porque el panel de detalle inyecta los mismos indicadores desde JS. */
+  :global(.stats) {
+    display: flex;
+    margin: 0;
+  }
+  :global(.stats div) {
+    display: flex;
+    flex-direction: column-reverse;
+    padding-right: clamp(14px, 1.8vw, 28px);
+  }
+  :global(.stats div + div) {
+    padding-left: clamp(14px, 1.8vw, 28px);
+    border-left: 1.5px solid var(--line);
+  }
+  :global(.stats dd) {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+  :global(.stats dt) {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  /* Indicadores: cifra grande + una línea de contexto (medidor, variación o actividad). */
+  .kpis {
+    display: flex;
+    margin: 0;
+  }
+  .kpi {
+    display: grid;
+    grid-template-rows: auto auto 18px;
+    align-content: end;
+    gap: 2px;
+    min-width: 0;
+    padding: 0 clamp(14px, 1.6vw, 26px);
+    border-left: 1.5px solid var(--line);
+  }
+  .kpi:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .kpi:last-child {
+    padding-right: 0;
+  }
+  .kpi dt {
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .kpi .v {
+    margin: 0;
+    font-size: clamp(1.4rem, 2vw, 1.9rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi.warn .v {
+    color: var(--danger);
+  }
+  .foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .foot :global(.up) {
+    color: var(--ok);
+    font-weight: 600;
+  }
+  .foot :global(.down) {
+    color: var(--danger);
+    font-weight: 600;
+  }
+  .meter {
+    width: 56px;
+    height: 6px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--line) 70%, var(--surface));
+    overflow: hidden;
+  }
+  .meter span {
+    display: block;
+    height: 100%;
+    width: var(--pct, 0%);
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 0.8s var(--ease-out);
+  }
+  /* Actividad diaria: columnas de 5px, un solo tono; los días sin intentos quedan en línea base. */
+  .cols {
+    display: flex;
+    align-items: end;
+    gap: 2px;
+    height: 18px;
+  }
+  .cols :global(span) {
+    width: 5px;
+    height: max(2px, var(--h));
+    border-radius: 2px 2px 0 0;
+    background: var(--accent);
+  }
+  .cols :global(span.zero) {
+    background: var(--line);
+  }
+
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: clamp(14px, 1.6vw, 24px);
+    min-height: 0;
+  }
+  .main {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.6vh, 20px);
+    min-height: 0;
+  }
+
+  /* Franja de gráficos: siempre a la vista, sin scroll, arriba de la lista. */
+  .charts {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--shadow) 35%, transparent);
+    animation: rise 0.6s 0.05s var(--ease-out) both;
+  }
+  .chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 14px clamp(16px, 1.8vw, 24px);
+  }
+  .chart + .chart {
+    border-left: 1.5px solid var(--line);
+  }
+  figcaption {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  .note :global(strong) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  /* Lista de estudiantes */
+  .roster {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 24px;
+    background: var(--surface);
+    box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--shadow) 35%, transparent);
+    animation: rise 0.6s 0.05s var(--ease-out) both;
+  }
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    padding: 12px clamp(16px, 2vw, 24px) 8px;
+  }
+  #count {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+  }
+  .search {
+    position: relative;
+    display: block;
+  }
+  .search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 16px;
+    translate: 0 -50%;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    pointer-events: none;
+  }
+  input[type="search"],
+  select {
+    height: 40px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    transition: border-color 0.2s;
+  }
+  input[type="search"] {
+    width: min(240px, 60vw);
+    padding: 0 12px 0 36px;
+  }
+  select {
+    padding: 0 10px;
+    cursor: pointer;
+  }
+  input[type="search"]:hover,
+  select:hover {
+    border-color: var(--muted);
+  }
+  .seg {
+    display: flex;
+    margin: 0;
+    padding: 3px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  .seg label {
+    position: relative;
+  }
+  .seg input {
+    position: absolute;
+    opacity: 0;
+  }
+  .seg span {
+    display: block;
+    padding: 6px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted);
+    transition:
+      background 0.2s,
+      color 0.2s;
+  }
+  .seg input:checked + span {
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 500;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--shadow) 12%, transparent);
+  }
+  .seg input:focus-visible + span {
+    outline: 3px solid var(--accent);
+  }
+
+  .table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 0 clamp(6px, 1vw, 12px) 12px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--line);
+    text-align: left;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  th button {
+    padding: 10px 12px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  th:not(:has(button)) {
+    padding: 10px 12px;
+  }
+  th[aria-sort] button {
+    color: var(--ink);
+  }
+  th[aria-sort="ascending"] button::after {
+    content: " ↑";
+  }
+  th[aria-sort="descending"] button::after {
+    content: " ↓";
+  }
+  td {
+    padding: 7px 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    vertical-align: middle;
+  }
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  th.num button {
+    margin-left: auto;
+    display: block;
+  }
+  tbody :global(tr) {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  tbody :global(tr:hover) {
+    background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+  }
+  /* Fila con alerta: filete coral al margen, como una anotación del profesor. */
+  tbody :global(tr.flag td:first-child) {
+    box-shadow: inset 3px 0 0 var(--glo);
+  }
+  tbody :global(.name) {
+    display: block;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  tbody :global(.name:hover) {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  tbody :global(.mail) {
+    display: block;
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+  tbody :global(.lvl) {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  tbody :global(.score) {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  :global(.delta) {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  :global(.delta.up) {
+    color: var(--ok);
+  }
+  :global(.delta.down) {
+    color: var(--danger);
+  }
+  :global(.muted) {
+    color: var(--muted);
+  }
+  /* Mini columnas por habilidad: forma del perfil de un vistazo; el detalle va en el tooltip. */
+  tbody :global(.spark) {
+    display: flex;
+    align-items: end;
+    gap: 3px;
+    height: 26px;
+  }
+  tbody :global(.spark span) {
+    width: 7px;
+    height: max(2px, var(--pct));
+    border-radius: 2px 2px 0 0;
+    background: var(--ink);
+    opacity: 0.85;
+  }
+  tbody :global(.spark span.low) {
+    background: var(--glo);
+    opacity: 1;
+  }
+  tbody :global(.state) {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  tbody :global(.state.high) {
+    color: var(--danger);
+  }
+  tbody :global(.state.medium) {
+    color: var(--warn);
+  }
+  tbody :global(.state.ok) {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* Panel lateral: alertas + fotografía del grupo */
+  .sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    overflow: auto;
+    padding: 14px clamp(14px, 1.6vw, 22px);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--shadow) 35%, transparent);
+    animation: rise 0.6s 0.1s var(--ease-out) both;
+  }
+  #count,
+  #alerts-count {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .alerts {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .alerts :global(button) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    border-left: 3px solid var(--warn-line);
+    border-radius: 0 8px 8px 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .alerts :global(button.high) {
+    border-left-color: var(--danger);
+  }
+  .alerts :global(button:hover) {
+    background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+  }
+  .alerts :global(.who-a) {
+    font-weight: 600;
+  }
+  .alerts :global(.sev) {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: right;
+    color: var(--warn);
+  }
+  .alerts :global(.high .sev) {
+    color: var(--danger);
+  }
+  .alerts :global(.why) {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+  }
+  .alerts :global(.meta) {
+    grid-column: 1 / -1;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  /* Distribución por nivel: columnas de un solo tono sobre la escala MCER. */
+  .levels {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .levels li {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+  }
+  .levels .n {
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    min-height: 1.3em;
+  }
+  .levels .col {
+    display: flex;
+    align-items: end;
+    width: 100%;
+    height: 74px;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .levels .col {
+    justify-content: center;
+  }
+  .levels .col span {
+    width: min(100%, 36px);
+    height: var(--h, 0%);
+    border-radius: 4px 4px 0 0;
+    background: var(--accent);
+    transform-origin: bottom;
+    animation: grow-y 0.8s var(--ease-out) both;
+  }
+  .levels .lbl {
+    color: var(--muted);
+  }
+
+  .skills {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .skills :global(li:not(.skeleton)) {
+    display: grid;
+    grid-template-columns: 76px 1fr 38px;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+  }
+  :global(.bar) {
+    height: 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--line) 60%, var(--surface));
+    overflow: hidden;
+  }
+  :global(.bar span) {
+    display: block;
+    height: 100%;
+    width: var(--pct);
+    border-radius: inherit;
+    background: var(--ink);
+    transform-origin: left;
+    animation: grow 0.9s var(--ease-out) both;
+  }
+  :global(.low .bar span) {
+    background: var(--glo);
+  }
+  :global(.pct) {
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Scroll interno discreto: la barra coral global distrae en una herramienta de datos. */
+  .table-wrap,
+  .sheet,
+  .d-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+
+  /* Tooltip único para todas las marcas de los gráficos. */
+  .tip {
+    position: fixed;
+    z-index: 200;
+    max-width: 240px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--surface);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    pointer-events: none;
+    box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--shadow) 50%, transparent);
+  }
+  .tip[hidden] {
+    display: none;
+  }
+  [data-tip] {
+    cursor: default;
+  }
+
+  .empty,
+  :global(.empty) {
+    padding: 16px 12px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .skeleton,
+  :global(.skeleton) {
+    height: 32px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--line) 60%, transparent) 50%, transparent 70%) 0 0 / 300% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  /* Panel lateral de detalle (dialog nativo: foco atrapado, Esc cierra, fondo inerte). */
+  dialog {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(640px, 100vw);
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: -30px 0 60px -30px color-mix(in srgb, var(--shadow) 40%, transparent);
+    overflow: hidden;
+  }
+  dialog[open] {
+    display: flex;
+    flex-direction: column;
+    animation: slide 0.35s var(--ease-out);
+  }
+  dialog::backdrop {
+    background: color-mix(in srgb, var(--shadow) 28%, transparent);
+    animation: fade 0.3s ease;
+  }
+  .d-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px clamp(18px, 3vw, 32px);
+    border-bottom: 1.5px solid var(--line);
+    font-size: 0.85rem;
+  }
+  .d-close {
+    margin-left: auto;
+  }
+  .d-body {
+    flex: 1;
+    overflow: auto;
+    padding: 24px clamp(18px, 3vw, 32px) 40px;
+  }
+  .d-body :global(h2) {
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .d-body :global(.lvl) {
+    font-weight: 700;
+  }
+  .d-body :global(section + section) {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1.5px solid var(--line);
+  }
+  .d-body :global(.d-head) {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 16px;
+  }
+  .d-body :global(.d-title) {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .d-body :global(.d-sub) {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .d-body :global(.d-sub a) {
+    color: inherit;
+  }
+  .d-body :global(.big) {
+    margin: 0;
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .d-body :global(.big small) {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--muted);
+  }
+  .d-body :global(.stats) {
+    margin-top: 20px;
+  }
+  .d-body :global(.skills) {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .d-body :global(.skills li) {
+    display: grid;
+    grid-template-columns: 90px 1fr 44px 44px;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+  }
+
+  /* Evolución del puntaje: una sola serie, línea de 2px, puntos con tooltip nativo. */
+  .d-body :global(.trend) {
+    display: block;
+    width: 100%;
+    height: 120px;
+    overflow: visible;
+  }
+  .d-body :global(.trend .grid-l) {
+    stroke: var(--line);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+  }
+  .d-body :global(.trend polyline) {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .d-body :global(.trend-wrap) {
+    position: relative;
+    padding: 8px 0 18px 28px;
+  }
+  .d-body :global(.trend-dot) {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    translate: -50% -50%;
+    border: 2px solid var(--surface);
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .d-body :global(.trend-dot::after) {
+    content: "";
+    position: absolute;
+    inset: -8px; /* objetivo de hover más grande que la marca */
+  }
+  .d-body :global(.trend-y) {
+    position: absolute;
+    left: 0;
+    translate: 0 -50%;
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .d-body :global(.list) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .d-body :global(.list li + li) {
+    border-top: 1px solid var(--line);
+  }
+  .d-body :global(.list button) {
+    display: grid;
+    grid-template-columns: 1fr auto 56px 18px;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 11px 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .d-body :global(.list button:hover .arrow) {
+    stroke: var(--glo);
+    translate: 3px 0;
+  }
+  .d-body :global(.arrow) {
+    width: 16px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition:
+      stroke 0.2s,
+      translate 0.3s var(--ease-spring);
+  }
+
+  .d-body :global(.reasons) {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 12px 14px;
+    list-style: none;
+    border-left: 3px solid var(--danger);
+    border-radius: 0 8px 8px 0;
+    background: var(--danger-soft);
+    font-size: 0.82rem;
+  }
+
+  .d-body :global(.timeline) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.82rem;
+  }
+  .d-body :global(.timeline li) {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 12px;
+    padding: 7px 0;
+    border-top: 1px solid var(--line);
+  }
+  .d-body :global(.timeline time) {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .d-body :global(.timeline .benign) {
+    color: var(--muted);
+  }
+
+  .d-body :global(.feedback) {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--bg);
+    font-size: 0.85rem;
+    white-space: pre-line;
+  }
+
+  .d-body :global(.review) {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .d-body :global(.review li) {
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    font-size: 0.82rem;
+  }
+  .d-body :global(.review li.ko) {
+    border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
+  }
+  .d-body :global(.q-meta) {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+  .d-body :global(.q-prompt) {
+    margin: 4px 0 8px;
+    font-weight: 500;
+  }
+  .d-body :global(.q-ans) {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+  }
+  .d-body :global(.right) {
+    color: var(--ok);
+  }
+  .d-body :global(.wrong) {
+    color: var(--danger);
+  }
+  .d-body :global(.q-ans b) {
+    display: inline-block;
+    min-width: 88px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  @keyframes grow {
+    from {
+      scale: 0 1;
+    }
+  }
+  @keyframes grow-y {
+    from {
+      scale: 1 0;
+    }
+  }
+  @keyframes shimmer {
+    to {
+      background-position: -150% 0;
+    }
+  }
+  @keyframes slide {
+    from {
+      translate: 40px 0;
+      opacity: 0;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* Escritorio: la página cabe en la ventana; la tabla y el panel hacen scroll por dentro. */
+  @media (min-width: 1101px) and (min-height: 560px) {
+    .panel {
+      height: 100dvh;
+    }
+  }
+
+  @media (min-width: 1101px) and (max-height: 760px) {
+    .chart {
+      gap: 6px;
+      padding-block: 10px;
+    }
+    .levels .col {
+      height: 46px;
+    }
+    .levels .n {
+      min-height: 1.1em;
+      font-size: 0.75rem;
+    }
+    .skills {
+      gap: 2px;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    /* Apilado: lo accionable (alertas) va antes que el análisis. */
+    .sheet {
+      order: -1;
+    }
+    .kpis {
+      width: 100%;
+    }
+    .kpi {
+      flex: 1;
+    }
+  }
+  @media (max-width: 760px) {
+    .brand,
+    .link {
+      white-space: nowrap;
+    }
+    .user {
+      gap: 14px;
+    }
+    tbody :global(.mail) {
+      display: none; /* el email sigue en el detalle; aquí gana espacio el estado */
+    }
+    .d-body :global(.big) {
+      font-size: 2rem;
+    }
+    .who,
+    .role,
+    .c-skills,
+    .c-attempts,
+    .c-date,
+    tbody :global(.c-skills),
+    tbody :global(.c-attempts),
+    tbody :global(.c-date) {
+      display: none;
+    }
+    .kpis {
+      flex-wrap: wrap;
+      gap: 14px 0;
+    }
+    .kpi {
+      flex: 1 1 50%;
+    }
+    .kpi:nth-child(odd) {
+      padding-left: 0;
+      border-left: 0;
+    }
+    .kpi.warn {
+      flex-basis: 100%;
+    }
+    .charts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .chart + .chart {
+      border-left: 0;
+      border-top: 1.5px solid var(--line);
+    }
+    .filters,
+    .search,
+    input[type="search"] {
+      width: 100%;
+    }
+    select {
+      flex: 1;
+    }
+    td,
+    th button,
+    th:not(:has(button)) {
+      padding-inline: 8px;
+    }
+  }
+</style>
+
+<script>
+  import { api, ApiError, esc } from "../lib/api";
+  import { handoff, splash } from "../lib/splash";
+
+  // Recién iniciada la sesión: la misma pantalla de carga de Glo que ve el estudiante.
+  const loader = splash(...handoff.take());
+
+  type Count = { code: string; name: string; value: number };
+  type Student = {
+    id: string;
+    full_name: string;
+    email: string;
+    attempts: number;
+    last_attempt_id: string | null;
+    last_submitted_at: string | null;
+    last_score_pct: number | null;
+    previous_score_pct: number | null;
+    best_score_pct: number | null;
+    level: string | null;
+    skills: Record<string, number>;
+    integrity_flags: number;
+    alert: "high" | "medium" | null;
+  };
+  type Alert = {
+    attempt_id: string;
+    student_id: string;
+    student_name: string;
+    submitted_at: string;
+    score_pct: number;
+    severity: "high" | "medium";
+    reasons: { kind: string; severity: string; message: string }[];
+    events: Record<string, number>;
+  };
+  type Overview = {
+    total_students: number;
+    evaluated_students: number;
+    total_attempts: number;
+    average_score_pct: number | null;
+    in_progress: number;
+    flagged_attempts: number;
+    levels: Count[];
+    skills: Count[];
+    activity: { date: string; attempts: number; average_score_pct: number | null }[];
+    students: Student[];
+    alerts: Alert[];
+  };
+  type Progress = {
+    total_attempts: number;
+    best_score_pct: number | null;
+    average_score_pct: number | null;
+    current_level: { code: string; name: string; description: string | null } | null;
+    skills: { code: string; name: string; latest_pct: number; previous_pct: number | null; average_pct: number }[];
+    attempts: { id: string; submitted_at: string; duration_seconds: number; score_pct: number; correct_count: number; suggested_level: string; status: string }[];
+  };
+  type Option = { id: string; text: string };
+  type ReviewItem = {
+    question: { position: number; type: string; skill: string; level: string; prompt: string; options: Option[] | null };
+    response: { option_id?: string; text?: string; transcript?: string; score?: number } | null;
+    is_correct: boolean;
+    correct_answer: string;
+    explanation: string | null;
+  };
+  type AttemptDetail = {
+    student: { id: string; full_name: string; email: string };
+    status: string;
+    integrity_flags: number;
+    events: { type: string; occurred_at: string; question_position: number | null }[];
+    attempt: {
+      assessment_title: string;
+      result: {
+        score_pct: number;
+        correct_count: number;
+        incorrect_count: number;
+        unanswered_count: number;
+        suggested_level: { code: string; name: string; description: string | null };
+        skills: { code: string; name: string; correct: number; total: number; pct: number }[];
+        submitted_at: string;
+        duration_seconds: number;
+        ai_feedback: string | null;
+      };
+      review: ReviewItem[];
+    };
+  };
+
+  const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
+  const SKILLS: Record<string, string> = { grammar: "Grammar", vocabulary: "Vocabulary", reading: "Reading", listening: "Listening", speaking: "Speaking" };
+  const EVENTS: Record<string, string> = {
+    tab_hidden: "Cambió de pestaña",
+    window_blur: "Salió de la ventana",
+    paste: "Pegó texto",
+    copy: "Copió texto",
+    fullscreen_exit: "Salió de pantalla completa",
+    resumed: "Reanudó tras desconexión",
+    rapid_answer: "Respondió en menos de 3 s",
+    answered_after_leaving: "Cambió la respuesta al volver",
+  };
+  const TYPES: Record<string, string> = {
+    multiple_choice: "Opción múltiple",
+    fill_blank: "Completar",
+    comprehension: "Comprensión",
+    vocabulary: "Vocabulario",
+    read_aloud: "Lectura en voz alta",
+    open_response: "Respuesta oral",
+  };
+  const ARROW = '<svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
+  const LOW = 60; // bajo este % una habilidad se marca para reforzar
+
+  const $ = (id: string) => document.getElementById(id)!;
+  const pct = (n: number | null | undefined) => (n == null ? "—" : `${Math.round(n)}%`);
+  const lvl = (code: string | null) => (code ? code.replace("PRE_", "Pre-") : "—");
+  const dateFmt = new Intl.DateTimeFormat("es", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const rel = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
+  function ago(iso: string) {
+    const min = (new Date(iso).getTime() - Date.now()) / 60000;
+    if (min > -60) return rel.format(Math.round(min), "minute");
+    if (min > -1440) return rel.format(Math.round(min / 60), "hour");
+    return rel.format(Math.round(min / 1440), "day");
+  }
+  const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+  function delta(now: number | null, before: number | null) {
+    if (now == null || before == null) return "";
+    const d = Math.round(now - before);
+    return d > 0 ? `<span class="delta up">+${d}</span>` : d < 0 ? `<span class="delta down">${d}</span>` : '<span class="delta">=</span>';
+  }
+
+  let data: Overview | null = null;
+  let sort: { key: string; dir: 1 | -1 } = { key: "name", dir: 1 };
+
+  // ---------------------------------------------------------------- lista
+  const SORTS: Record<string, (s: Student) => number | string> = {
+    name: (s) => s.full_name.toLocaleLowerCase("es"),
+    level: (s) => (s.level ? LEVELS.indexOf(s.level) : -1),
+    score: (s) => s.last_score_pct ?? -1,
+    attempts: (s) => s.attempts,
+    date: (s) => (s.last_submitted_at ? Date.parse(s.last_submitted_at) : 0),
+    alert: (s) => (s.alert === "high" ? 2 : s.alert === "medium" ? 1 : 0),
+  };
+
+  function visibleStudents() {
+    const q = ($("q") as HTMLInputElement).value.trim().toLocaleLowerCase("es");
+    const level = ($("level") as HTMLSelectElement).value;
+    const onlyAlerts = (document.querySelector('input[name="show"]:checked') as HTMLInputElement).value === "alert";
+    const key = SORTS[sort.key];
+    return data!.students
+      .filter((s) => !q || `${s.full_name} ${s.email}`.toLocaleLowerCase("es").includes(q))
+      .filter((s) => !level || (level === "none" ? !s.level : s.level === level))
+      .filter((s) => !onlyAlerts || s.alert)
+      .sort((a, b) => {
+        const x = key(a), y = key(b);
+        return (x < y ? -1 : x > y ? 1 : 0) * sort.dir;
+      });
+  }
+
+  function sparkline(s: Student) {
+    const entries = Object.entries(s.skills);
+    if (!entries.length) return '<span class="muted">—</span>';
+    const label = entries.map(([c, v]) => `${SKILLS[c] ?? c} ${Math.round(v)}%`).join(", ");
+    return `<span class="spark" role="img" aria-label="${esc(label)}" data-tip="${esc(label)}">${entries
+      .map(([, v]) => `<span class="${v < LOW ? "low" : ""}" style="--pct:${v}%"></span>`)
+      .join("")}</span>`;
+  }
+
+  function renderRows() {
+    const rows = visibleStudents();
+    $("count").textContent = String(rows.length);
+    $("no-match").hidden = rows.length > 0;
+    $("rows").innerHTML = rows
+      .map((s) => {
+        const state = s.alert === "high" ? '<span class="state high">⚠ Atender</span>' : s.alert === "medium" ? '<span class="state medium">● Revisar</span>' : s.attempts ? '<span class="state ok">Al día</span>' : '<span class="state ok">Sin evaluar</span>';
+        return `<tr class="${s.alert ? "flag" : ""}" data-id="${s.id}">
+          <td><a class="name" href="#" data-id="${s.id}">${esc(s.full_name)}</a><span class="mail">${esc(s.email)}</span></td>
+          <td><span class="lvl">${lvl(s.level)}</span></td>
+          <td class="num"><span class="score">${pct(s.last_score_pct)}</span>${delta(s.last_score_pct, s.previous_score_pct)}</td>
+          <td class="c-skills">${sparkline(s)}</td>
+          <td class="num c-attempts">${s.attempts}</td>
+          <td class="c-date">${s.last_submitted_at ? `<span data-tip="${dateFmt.format(new Date(s.last_submitted_at))}">${ago(s.last_submitted_at)}</span>` : '<span class="muted">—</span>'}</td>
+          <td>${state}${s.integrity_flags ? `<span class="delta">${s.integrity_flags} señal${s.integrity_flags > 1 ? "es" : ""}</span>` : ""}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  $("rows").addEventListener("click", (e) => {
+    const row = (e.target as HTMLElement).closest<HTMLElement>("tr[data-id]");
+    if (!row) return;
+    e.preventDefault();
+    openStudent(row.dataset.id!);
+  });
+  $("q").addEventListener("input", renderRows);
+  $("level").addEventListener("change", renderRows);
+  document.querySelectorAll('input[name="show"]').forEach((r) => r.addEventListener("change", renderRows));
+  document.querySelectorAll<HTMLButtonElement>("th button").forEach((b) =>
+    b.addEventListener("click", () => {
+      const key = b.dataset.sort!;
+      // Nombre arranca A→Z; los números, de mayor a menor (lo que un profesor busca primero).
+      sort = { key, dir: sort.key === key ? (-sort.dir as 1 | -1) : key === "name" ? 1 : -1 };
+      document.querySelectorAll("th").forEach((th) => th.removeAttribute("aria-sort"));
+      b.parentElement!.setAttribute("aria-sort", sort.dir === 1 ? "ascending" : "descending");
+      renderRows();
+    }),
+  );
+
+  // ---------------------------------------------------------------- resumen
+  const dayFmt = new Intl.DateTimeFormat("es", { day: "numeric", month: "short" });
+  // Promedio ponderado por intentos de un tramo de días.
+  function weighted(days: Overview["activity"]) {
+    const n = days.reduce((t, d) => t + d.attempts, 0);
+    return n ? days.reduce((t, d) => t + (d.average_score_pct ?? 0) * d.attempts, 0) / n : null;
+  }
+  // Variación con flecha y signo: nunca solo color.
+  function trend(diff: number, unit = " pts") {
+    const d = Math.round(diff);
+    return d > 0 ? `<span class="up">▲ ${d}${unit}</span>` : d < 0 ? `<span class="down">▼ ${-d}${unit}</span>` : `<span>= 0${unit}</span>`;
+  }
+
+  function renderOverview(d: Overview) {
+    $("sub").textContent = `Evaluación de ubicación · actualizado ${new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit" }).format(new Date())}`;
+
+    // Evaluados: cobertura del grupo.
+    const cover = d.total_students ? (d.evaluated_students / d.total_students) * 100 : 0;
+    const pending = d.total_students - d.evaluated_students;
+    $("k-students").innerHTML = `${d.evaluated_students}<span class="muted">/${d.total_students}</span>`;
+    $("k-cover").querySelector("span")!.style.setProperty("--pct", `${cover}%`);
+    $("k-cover").dataset.tip = `${Math.round(cover)}% del grupo ya tiene nivel`;
+    $("k-students-ctx").textContent = pending ? `${pending} sin evaluar` : "todo el grupo";
+
+    // Promedio: esta semana contra la anterior.
+    $("k-avg").textContent = pct(d.average_score_pct);
+    const week = weighted(d.activity.slice(-7)), prev = weighted(d.activity.slice(-14, -7));
+    $("k-avg-ctx").innerHTML = week != null && prev != null ? `${trend(week - prev)} vs. semana previa` : week != null ? `${pct(week)} esta semana` : "sin intentos esta semana";
+
+    // Intentos: actividad diaria de 14 días.
+    $("k-attempts").textContent = String(d.total_attempts);
+    const peak = Math.max(1, ...d.activity.map((a) => a.attempts));
+    const cols = $("k-activity");
+    cols.setAttribute("aria-label", `Intentos por día en los últimos 14 días: ${d.activity.reduce((t, a) => t + a.attempts, 0)}`);
+    cols.innerHTML = d.activity
+      .map((a) => {
+        const day = dayFmt.format(new Date(`${a.date}T12:00:00`));
+        const tip = a.attempts ? `${day} · ${a.attempts} intento${a.attempts > 1 ? "s" : ""} · promedio ${pct(a.average_score_pct)}` : `${day} · sin intentos`;
+        return `<span class="${a.attempts ? "" : "zero"}" style="--h:${(a.attempts / peak) * 100}%" data-tip="${tip}"></span>`;
+      })
+      .join("");
+
+    $("k-live").textContent = String(d.in_progress);
+
+    const high = d.alerts.filter((a) => a.severity === "high").length;
+    $("k-alerts").textContent = String(d.alerts.length);
+    $("alerts-count").textContent = String(d.alerts.length);
+    $("k-alerts-ctx").textContent = d.alerts.length ? `${high} urgentes · ${d.alerts.length - high} por revisar` : "nada pendiente";
+
+    $("alerts").innerHTML = d.alerts.length
+      ? d.alerts
+          .map(
+            (a) => `<li><button type="button" class="${a.severity}" data-attempt="${a.attempt_id}" data-student="${a.student_id}">
+              <span class="who-a">${esc(a.student_name)}</span>
+              <span class="sev">${a.severity === "high" ? "⚠ Atender" : "● Revisar"}</span>
+              <ul class="why">${a.reasons.map((r) => `<li>${esc(r.message)}</li>`).join("")}</ul>
+              <span class="meta">${pct(a.score_pct)} · ${ago(a.submitted_at)}</span>
+            </button></li>`,
+          )
+          .join("")
+      : '<li class="empty">Nada pendiente. Todo el grupo va al día.</li>';
+
+    // Niveles: columnas con cantidad encima (etiqueta directa: son solo 6 marcas).
+    const max = Math.max(1, ...d.levels.map((l) => l.value));
+    const evaluated = d.levels.reduce((t, l) => t + l.value, 0);
+    for (const l of d.levels) {
+      const li = document.querySelector<HTMLElement>(`#levels [data-level="${l.code}"]`)!;
+      li.querySelector(".n")!.textContent = l.value ? String(l.value) : "";
+      li.querySelector<HTMLElement>(".col span")!.style.setProperty("--h", `${(l.value / max) * 100}%`);
+      li.dataset.tip = `${lvl(l.code)} · ${l.name}: ${l.value} estudiante${l.value === 1 ? "" : "s"}${evaluated ? ` (${Math.round((l.value / evaluated) * 100)}%)` : ""}`;
+    }
+    const mode = [...d.levels].sort((a, b) => b.value - a.value)[0];
+    $("levels-note").innerHTML = mode?.value ? `Mayoría en <strong>${lvl(mode.code)}</strong> · ${mode.value} de ${evaluated}` : "";
+
+    const weakest = [...d.skills].sort((a, b) => a.value - b.value)[0];
+    $("skills").innerHTML = d.skills.length
+      ? d.skills
+          .map(
+            (s) => `<li class="${s.value < LOW ? "low" : ""}" data-tip="${esc(s.name)}: ${pct(s.value)} de promedio en el último intento de cada estudiante">
+              <span>${esc(s.name)}</span>
+              <span class="bar" role="img" aria-label="${esc(s.name)} ${pct(s.value)}"><span style="--pct:${s.value}%"></span></span>
+              <span class="pct">${pct(s.value)}</span></li>`,
+          )
+          .join("")
+      : '<li class="empty">Sin datos todavía.</li>';
+    $("skills-hint").innerHTML = weakest ? `Reforzar <strong>${esc(weakest.name)}</strong>` : "";
+
+    renderRows();
+  }
+
+  // Tooltip único: sigue a la marca bajo el puntero (también dentro del panel de detalle).
+  const tip = $("tip");
+  document.addEventListener("pointerover", (e) => {
+    const t = (e.target as HTMLElement).closest<HTMLElement>("[data-tip]");
+    if (!t) return void (tip.hidden = true);
+    const host = t.closest("dialog") ?? document.body; // el dialog modal tapa todo lo que está fuera
+    if (tip.parentElement !== host) host.append(tip);
+    tip.textContent = t.dataset.tip!;
+    tip.hidden = false;
+    const r = t.getBoundingClientRect();
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - tip.offsetWidth / 2), innerWidth - tip.offsetWidth - 8);
+    const above = r.top - tip.offsetHeight - 8;
+    tip.style.left = `${left}px`;
+    tip.style.top = `${above > 8 ? above : r.bottom + 8}px`;
+  });
+  addEventListener("scroll", () => (tip.hidden = true), true);
+
+  $("alerts").addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("button[data-attempt]");
+    if (b) openAttempt(b.dataset.attempt!, b.dataset.student!);
+  });
+
+  // ---------------------------------------------------------------- detalle
+  const drawer = $("drawer") as HTMLDialogElement;
+  const body = $("d-body");
+  const back = $("d-back") as HTMLButtonElement;
+  let backTo: (() => void) | null = null;
+
+  function show(html: string, backLabel?: string, onBack?: () => void) {
+    body.innerHTML = html;
+    body.scrollTop = 0;
+    backTo = onBack ?? null;
+    back.hidden = !onBack;
+    back.querySelector("span")!.textContent = backLabel ?? "";
+    if (!drawer.open) drawer.showModal();
+  }
+  function loading() {
+    show('<div class="skeleton" style="height:64px"></div><div class="skeleton" style="margin-top:16px;height:200px"></div>');
+  }
+  function failed(e: unknown) {
+    show(`<p class="empty">${esc((e as Error).message)}</p>`);
+  }
+  back.addEventListener("click", () => backTo?.());
+  $("d-close").addEventListener("click", () => drawer.close());
+  drawer.addEventListener("click", (e) => {
+    if (e.target === drawer) drawer.close(); // clic en el fondo
+  });
+
+  function trendChart(attempts: Progress["attempts"]) {
+    const pts = [...attempts].reverse(); // cronológico
+    if (pts.length < 2) return "";
+    const x = (i: number) => (i / (pts.length - 1)) * 100;
+    const y = (v: number) => 100 - v;
+    return `<section><h2>Evolución del puntaje</h2><div class="trend-wrap">
+      ${[100, 50, 0].map((v) => `<span class="trend-y" style="top:calc(8px + ${y(v)} * (100% - 26px) / 100)">${v}</span>`).join("")}
+      <svg class="trend" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        ${[0, 50, 100].map((v) => `<line class="grid-l" x1="0" x2="100" y1="${v}" y2="${v}" vector-effect="non-scaling-stroke"></line>`).join("")}
+        <polyline points="${pts.map((p, i) => `${x(i)},${y(p.score_pct)}`).join(" ")}"></polyline>
+      </svg>
+      ${pts
+        .map(
+          (p, i) =>
+            `<span class="trend-dot" style="left:calc(28px + ${x(i)} * (100% - 28px) / 100);top:calc(8px + ${y(p.score_pct)} * (100% - 26px) / 100)" data-tip="${dateFmt.format(new Date(p.submitted_at))}: ${pct(p.score_pct)} · ${lvl(p.suggested_level)}"></span>`,
+        )
+        .join("")}
+    </div></section>`;
+  }
+
+  async function openStudent(id: string) {
+    loading();
+    try {
+      const { student, progress: p } = await api<{ student: AttemptDetail["student"]; progress: Progress }>(`/teacher/students/${id}`);
+      const level = p.current_level;
+      show(`
+        <section>
+          <div class="d-head">
+            <div>
+              <h1 class="d-title" id="d-title">${esc(student.full_name)}</h1>
+              <p class="d-sub"><a href="mailto:${esc(student.email)}">${esc(student.email)}</a></p>
+            </div>
+            <p class="big">${lvl(level?.code ?? null)}<small>${esc(level?.name ?? "Sin evaluar")}</small></p>
+          </div>
+          <dl class="stats">
+            <div><dd>${p.total_attempts}</dd><dt>intentos</dt></div>
+            <div><dd>${pct(p.best_score_pct)}</dd><dt>mejor puntaje</dt></div>
+            <div><dd>${pct(p.average_score_pct)}</dd><dt>promedio</dt></div>
+          </dl>
+        </section>
+        ${
+          p.skills.length
+            ? `<section><h2>Por habilidad · último intento y cambio</h2><ul class="skills">${p.skills
+                .map(
+                  (s) => `<li class="${s.latest_pct < LOW ? "low" : ""}" data-tip="${esc(s.name)}: ${pct(s.latest_pct)} en el último intento · promedio histórico ${pct(s.average_pct)}">
+                    <span>${esc(s.name)}</span>
+                    <span class="bar" role="img" aria-label="${esc(s.name)} ${pct(s.latest_pct)}"><span style="--pct:${s.latest_pct}%"></span></span>
+                    <span class="pct">${pct(s.latest_pct)}</span>${delta(s.latest_pct, s.previous_pct) || '<span class="delta"></span>'}</li>`,
+                )
+                .join("")}</ul></section>`
+            : ""
+        }
+        ${trendChart(p.attempts)}
+        <section><h2>Intentos</h2>${
+          p.attempts.length
+            ? `<ul class="list">${p.attempts
+                .map(
+                  (a) => `<li><button type="button" data-attempt="${a.id}">
+                    <span>${dateFmt.format(new Date(a.submitted_at))}<span class="delta">${a.status === "expired" ? "Tiempo agotado" : "Enviado"} · ${mmss(a.duration_seconds)} min</span></span>
+                    <span class="lvl">${lvl(a.suggested_level)}</span>
+                    <strong class="pct">${pct(a.score_pct)}</strong>${ARROW}</button></li>`,
+                )
+                .join("")}</ul>`
+            : '<p class="empty">Todavía no ha enviado ninguna evaluación.</p>'
+        }</section>`);
+      body.querySelectorAll<HTMLElement>("[data-attempt]").forEach((b) =>
+        b.addEventListener("click", () => openAttempt(b.dataset.attempt!, id)),
+      );
+    } catch (e) {
+      failed(e);
+    }
+  }
+
+  function answerText(item: ReviewItem) {
+    const r = item.response;
+    if (!r) return null;
+    if (r.transcript !== undefined) return `“${r.transcript}” (${Math.round((r.score ?? 0) * 100)}%)`;
+    if (r.text !== undefined) return r.text || null;
+    return item.question.options?.find((o) => o.id === r.option_id)?.text ?? null;
+  }
+
+  async function openAttempt(attemptId: string, studentId: string) {
+    loading();
+    try {
+      const d = await api<AttemptDetail>(`/teacher/attempts/${attemptId}`);
+      const r = d.attempt.result;
+      const started = Date.parse(r.submitted_at) - r.duration_seconds * 1000;
+      const alert = data?.alerts.find((a) => a.attempt_id === attemptId);
+      show(
+        `<section>
+          <div class="d-head">
+            <div>
+              <h1 class="d-title" id="d-title">${esc(d.student.full_name)}</h1>
+              <p class="d-sub">${esc(d.attempt.assessment_title)} · ${dateFmt.format(new Date(r.submitted_at))} · ${d.status === "expired" ? "tiempo agotado" : "enviado"}</p>
+            </div>
+            <p class="big">${pct(r.score_pct)}<small>${lvl(r.suggested_level.code)} · ${esc(r.suggested_level.name)}</small></p>
+          </div>
+          <dl class="stats">
+            <div><dd>${r.correct_count}</dd><dt>correctas</dt></div>
+            <div><dd>${r.incorrect_count - r.unanswered_count}</dd><dt>incorrectas</dt></div>
+            <div><dd>${r.unanswered_count}</dd><dt>sin responder</dt></div>
+            <div><dd>${mmss(r.duration_seconds)}</dd><dt>minutos</dt></div>
+          </dl>
+        </section>
+        ${alert ? `<section><h2>Por qué requiere atención</h2><ul class="reasons">${alert.reasons.map((x) => `<li>⚠ ${esc(x.message)}</li>`).join("")}</ul></section>` : ""}
+        <section><h2>Por habilidad</h2><ul class="skills">${r.skills
+          .map(
+            (s) => `<li class="${s.pct < LOW ? "low" : ""}"><span>${esc(s.name)}</span>
+              <span class="bar" role="img" aria-label="${esc(s.name)} ${pct(s.pct)}"><span style="--pct:${s.pct}%"></span></span>
+              <span class="pct">${pct(s.pct)}</span><span class="delta">${s.correct}/${s.total}</span></li>`,
+          )
+          .join("")}</ul></section>
+        <section><h2>Bitácora de integridad</h2>${
+          d.events.length
+            ? `<ol class="timeline">${d.events
+                .map(
+                  (e) => `<li><time>${mmss(Math.max(0, (Date.parse(e.occurred_at) - started) / 1000))}</time>
+                    <span class="${e.type === "resumed" ? "benign" : ""}">${EVENTS[e.type] ?? e.type}</span>
+                    <span class="muted">${e.question_position ? `pregunta ${e.question_position}` : ""}</span></li>`,
+                )
+                .join("")}</ol>`
+            : '<p class="empty">Sin eventos: respondió sin salir de la evaluación.</p>'
+        }</section>
+        ${r.ai_feedback ? `<section><h2>Feedback que recibió del English Coach</h2><p class="feedback">${esc(r.ai_feedback)}</p></section>` : ""}
+        <section><h2>Respuestas (${r.correct_count}/${d.attempt.review.length} correctas)</h2><ol class="review">${d.attempt.review
+          .map((item) => {
+            const q = item.question;
+            const given = answerText(item);
+            return `<li class="${item.is_correct ? "ok" : "ko"}">
+              <div class="q-meta"><span>${q.position}. ${TYPES[q.type] ?? q.type} · ${esc(SKILLS[q.skill] ?? q.skill)} · ${lvl(q.level)}</span>
+                <strong class="${item.is_correct ? "right" : "wrong"}">${item.is_correct ? "✓ Correcta" : "✕ Incorrecta"}</strong></div>
+              <p class="q-prompt" lang="en">${esc(q.prompt)}</p>
+              <p class="q-ans"><span><b>Respondió</b> <span class="${item.is_correct ? "right" : "wrong"}" lang="en">${given ? esc(given) : "Sin responder"}</span></span>
+                ${item.is_correct ? "" : `<span><b>Correcta</b> <span class="right" lang="en">${esc(item.correct_answer)}</span></span>`}</p>
+            </li>`;
+          })
+          .join("")}</ol></section>`,
+        "Volver al estudiante",
+        () => openStudent(studentId),
+      );
+    } catch (e) {
+      failed(e);
+    }
+  }
+
+  // ---------------------------------------------------------------- acciones
+  $("logout").addEventListener("click", async () => {
+    await api("/auth/logout", { method: "POST" }).catch(() => {});
+    location.replace("/");
+  });
+
+  $("export").addEventListener("click", () => {
+    if (!data) return;
+    const skills = Object.keys(SKILLS);
+    const head = ["Estudiante", "Email", "Nivel", "Último %", "Anterior %", "Mejor %", "Intentos", "Último envío", "Señales de integridad", "Alerta", ...skills.map((s) => `${SKILLS[s]} %`)];
+    const rows = visibleStudents().map((s) => [
+      s.full_name, s.email, lvl(s.level), s.last_score_pct ?? "", s.previous_score_pct ?? "", s.best_score_pct ?? "",
+      s.attempts, s.last_submitted_at ?? "", s.integrity_flags, s.alert ?? "", ...skills.map((c) => s.skills[c] ?? ""),
+    ]);
+    const cell = (v: unknown) => `"${String(v).replaceAll('"', '""')}"`;
+    const csv = "﻿" + [head, ...rows].map((r) => r.map(cell).join(",")).join("\r\n"); // BOM: Excel respeta tildes
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `grupo-global-ai-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // ---------------------------------------------------------------- carga
+  async function load() {
+    data = await api<Overview>("/teacher/overview");
+    renderOverview(data);
+  }
+
+  try {
+    const me = await api<{ full_name: string; role: string }>("/auth/me");
+    loader.progress(0.4);
+    if (me.role === "student") location.replace("/dashboard");
+    $("user-name").textContent = me.full_name;
+    await load();
+    loader.done();
+    // "Evaluándose ahora" y las alertas se mantienen frescas mientras la pestaña está a la vista.
+    // ponytail: sondeo cada 60 s; con muchos profesores conectados, pasar a SSE/WebSocket.
+    setInterval(() => document.visibilityState === "visible" && !drawer.open && load().catch(() => {}), 60_000);
+  } catch (e) {
+    const msg = e instanceof ApiError && e.status === 403 ? "Tu cuenta no tiene acceso al panel docente." : (e as Error).message;
+    $("rows").innerHTML = `<tr><td colspan="7" class="empty">${esc(msg)}</td></tr>`;
+    $("sub").textContent = "No pudimos cargar el grupo.";
+    loader.done();
+  }
+</script>

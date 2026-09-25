@@ -8,6 +8,7 @@ from app.models import Role
 class LoginIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
+    accept_terms: bool = False
 
 
 class UserOut(BaseModel):

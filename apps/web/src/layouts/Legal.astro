@@ -1,0 +1,144 @@
+---
+import Base from "./Base.astro";
+import "../styles/glo.css";
+
+// Términos y Privacidad: lectura larga, así que columna estrecha, resumen primero y nada que distraiga.
+interface Props {
+  title: string;
+  summary: string[]; // lo esencial en frases cortas, antes del texto completo
+}
+const { title, summary } = Astro.props;
+const DOCS = [
+  ["/terminos", "Términos y condiciones"],
+  ["/privacidad", "Política de privacidad"],
+];
+---
+
+<Base title={`${title} · Global AI`}>
+  <div class="legal">
+    <header>
+      <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Global AI</a>
+      <nav aria-label="Documentos legales">
+        {DOCS.map(([href, label]) => <a href={href} aria-current={label === title ? "page" : undefined}>{label}</a>)}
+      </nav>
+    </header>
+
+    <main>
+      <h1>{title}</h1>
+      <!-- Misma fecha que TERMS_VERSION en la API: al cambiarla, se pide aceptar de nuevo. -->
+      <p class="updated">Última actualización: 24 de septiembre de 2026</p>
+
+      <section class="summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">En pocas palabras</h2>
+        <ul>{summary.map((s) => <li set:html={s} />)}</ul>
+      </section>
+
+      <article><slot /></article>
+    </main>
+
+    <footer>
+      <p>¿Dudas sobre tus datos? Escríbenos a <strong>privacidad@globalai.demo</strong>.</p>
+      <a href="/">Volver</a>
+    </footer>
+  </div>
+</Base>
+
+<style>
+  .legal {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(16px, 2.4vw, 36px) clamp(16px, 4vw, 32px) 64px;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-bottom: clamp(32px, 8vh, 72px);
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    font-size: 0.85rem;
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  nav a:hover,
+  nav a[aria-current="page"] {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
+  .updated {
+    margin: 12px 0 32px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .summary {
+    padding: 24px clamp(20px, 3vw, 28px);
+    border-radius: 20px;
+    background: var(--surface);
+    border-left: 4px solid var(--glo);
+  }
+  .summary h2 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+  }
+  .summary ul {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding-left: 1.1em;
+  }
+
+  article {
+    line-height: 1.7;
+  }
+  article :global(h2) {
+    margin: 48px 0 8px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    scroll-margin-top: 24px;
+  }
+  article :global(p),
+  article :global(li) {
+    color: color-mix(in srgb, var(--ink) 88%, var(--bg));
+  }
+  article :global(li + li) {
+    margin-top: 6px;
+  }
+  article :global(a),
+  footer a {
+    color: var(--accent);
+    text-underline-offset: 3px;
+  }
+
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  footer p {
+    margin: 0;
+  }
+</style>

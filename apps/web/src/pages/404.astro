@@ -1,0 +1,14 @@
+---
+import Notice from "../layouts/Notice.astro";
+---
+
+<Notice
+  title="Página no encontrada · Global AI"
+  mark="404"
+  en="This page got *lost* in translation."
+  es="Esta página se perdió en la traducción."
+  by="Glo · error 404"
+>
+  <a class="cta" href="/dashboard">Volver al inicio</a>
+  <button class="link" type="button" onclick="history.length > 1 ? history.back() : location.assign('/')">Página anterior</button>
+</Notice>

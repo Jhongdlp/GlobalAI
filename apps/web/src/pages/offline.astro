@@ -1,0 +1,20 @@
+---
+import Notice from "../layouts/Notice.astro";
+---
+
+<Notice
+  title="Sin conexión · Global AI"
+  mark="···"
+  en="No signal. I'll *wait* right here."
+  es="Sin conexión. Te espero aquí mismo."
+  by="Glo · sin internet"
+  state="loading"
+>
+  <button class="cta" type="button" onclick="location.reload()">Reintentar</button>
+  <p class="hint" role="status">Volveremos solos en cuanto regrese la conexión.</p>
+</Notice>
+
+<script>
+  // El SW sirve esta página en lugar de la que pediste: al volver la red, recargar la lleva allí.
+  addEventListener("online", () => location.reload());
+</script>

@@ -1,0 +1,90 @@
+---
+import Legal from "../layouts/Legal.astro";
+
+// Cada frase describe lo que el código hace hoy. Si cambia el manejo de datos, cambia esta página.
+const summary = [
+  "Solo guardamos lo necesario para evaluarte: tu cuenta, tus respuestas y tus resultados.",
+  "<strong>Tu voz no se guarda.</strong> La grabación se transcribe y se descarta; conservamos solo el texto y la nota.",
+  "La IA que te da feedback recibe tus errores, <strong>nunca tu nombre ni tu correo</strong>.",
+  "Una sola cookie, la de tu sesión. Sin publicidad, sin rastreadores, sin venta de datos.",
+  "Puedes pedirnos ver, corregir o borrar tus datos cuando quieras.",
+];
+---
+
+<Legal title="Política de privacidad" {summary}>
+  <h2 id="responsable">1. Quién es responsable</h2>
+  <p>
+    Global AI es responsable del tratamiento de los datos que se recogen en esta plataforma de evaluación de inglés.
+    Para cualquier consulta sobre tus datos escríbenos a <strong>privacidad@globalai.demo</strong>.
+  </p>
+
+  <h2 id="datos">2. Qué datos recogemos</h2>
+  <ul>
+    <li><strong>Cuenta:</strong> nombre, correo electrónico y rol (estudiante o profesor). Tu contraseña se guarda cifrada con bcrypt: nadie, ni nosotros, puede leerla.</li>
+    <li><strong>Evaluaciones:</strong> tus respuestas, puntajes por habilidad, nivel MCER sugerido, fechas de cada intento y el feedback generado.</li>
+    <li><strong>Voz (solo en preguntas de speaking):</strong> el micrófono se activa únicamente cuando pulsas grabar. El audio se envía a transcribir y <strong>no se almacena</strong>; guardamos la transcripción y la calificación.</li>
+    <li><strong>Integridad del examen:</strong> mientras presentas una prueba registramos si cambias de pestaña, sales de la ventana o pegas texto. No registramos pulsaciones de teclas, pantalla ni cámara.</li>
+    <li><strong>Seguridad:</strong> para frenar ataques al inicio de sesión, tu IP y correo se cuentan en memoria durante unos minutos. No se guardan en la base de datos.</li>
+    <li><strong>Consentimiento:</strong> la versión de estos documentos que aceptaste y la fecha en que lo hiciste.</li>
+  </ul>
+
+  <h2 id="uso">3. Para qué los usamos</h2>
+  <ul>
+    <li>Calificar tus pruebas y mostrarte tu nivel y tu progreso.</li>
+    <li>Darte feedback personalizado de tu coach, Glo.</li>
+    <li>Que tu profesor pueda acompañarte: ve tus resultados, respuestas y eventos de integridad.</li>
+    <li>Mantener la plataforma segura y justa para todos.</li>
+  </ul>
+  <p>No usamos tus datos para publicidad, no creamos perfiles comerciales y <strong>no los vendemos</strong>.</p>
+
+  <h2 id="terceros">4. Con quién los compartimos</h2>
+  <p>Usamos proveedores que procesan datos por nuestra cuenta, solo con lo mínimo necesario:</p>
+  <ul>
+    <li><strong>OpenAI</strong> genera el feedback escrito y califica respuestas abiertas. Recibe tus puntajes, las preguntas falladas o la transcripción de tu respuesta. Nunca tu nombre ni tu correo.</li>
+    <li><strong>ElevenLabs</strong> transcribe tus grabaciones de voz y genera la voz de Glo. Recibe solo el audio o el texto a leer.</li>
+    <li><strong>Proveedores de hosting y base de datos</strong>, donde vive la plataforma.</li>
+  </ul>
+  <p>Fuera de esto, solo entregaríamos datos si una autoridad competente lo exige por ley.</p>
+
+  <h2 id="cookies">5. Cookies y almacenamiento local</h2>
+  <ul>
+    <li><strong>Cookie de sesión</strong> (<code>gai_session</code>): te mantiene conectado hasta 8 horas. Es <em>httpOnly</em>, así que ningún script puede leerla.</li>
+    <li><strong>Borrador de la prueba</strong> en tu navegador: si se cae la conexión no pierdes tus respuestas. Se borra al enviar el examen.</li>
+    <li>Una marca de sesión para no repetirte la pantalla de carga.</li>
+  </ul>
+  <p>No usamos cookies de analítica, publicidad ni de terceros.</p>
+
+  <h2 id="seguridad">6. Cómo los protegemos</h2>
+  <ul>
+    <li>Conexión cifrada (HTTPS) y contraseñas con hash bcrypt.</li>
+    <li>Las respuestas correctas nunca llegan a tu navegador: la calificación ocurre en el servidor.</li>
+    <li>Cada persona solo ve sus propios intentos; las vistas de profesor exigen rol de profesor.</li>
+    <li>Límite de intentos de inicio de sesión para frenar ataques de fuerza bruta.</li>
+  </ul>
+
+  <h2 id="conservacion">7. Cuánto tiempo los guardamos</h2>
+  <p>
+    Mientras tu cuenta esté activa, para que puedas ver tu progreso. Si pides eliminarla, borramos tu cuenta y, con
+    ella, todos tus intentos y respuestas.
+  </p>
+
+  <h2 id="derechos">8. Tus derechos</h2>
+  <p>
+    Puedes conocer, actualizar, rectificar y suprimir tus datos, pedir una copia, oponerte a un tratamiento y retirar
+    tu consentimiento, conforme a la normativa de protección de datos aplicable (por ejemplo, la Ley 1581 de 2012 en
+    Colombia o el RGPD en la Unión Europea). Escríbenos a <strong>privacidad@globalai.demo</strong> y te responderemos
+    en un máximo de 15 días hábiles.
+  </p>
+
+  <h2 id="menores">9. Menores de edad</h2>
+  <p>
+    Si eres menor de edad, usa la plataforma con autorización de tu madre, padre o representante legal, o a través de
+    tu institución educativa.
+  </p>
+
+  <h2 id="cambios">10. Cambios a esta política</h2>
+  <p>
+    Si cambiamos algo importante, actualizaremos la fecha de arriba y te pediremos aceptarla de nuevo al iniciar
+    sesión.
+  </p>
+</Legal>

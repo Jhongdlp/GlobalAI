@@ -1,0 +1,194 @@
+---
+import Base from "./Base.astro";
+import "../styles/glo.css";
+import type { CoachState } from "../lib/coach";
+
+// Pantallas de aviso (404, sin conexión): Glo dice la frase en grande y debajo van las acciones (slot).
+interface Props {
+  title: string;
+  mark: string; // ornamento tipográfico gigante del fondo
+  en: string; // *palabra* = coral
+  es: string;
+  by: string;
+  state?: CoachState;
+}
+const { title, mark, en, es, by, state = "idle" } = Astro.props;
+---
+
+<Base title={title}>
+  <div class="notice" data-en={en} data-es={es} data-state={state}>
+    <header>
+      <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Global AI</a>
+    </header>
+
+    <main class="stage">
+      <p class="ghost" aria-hidden="true">{mark}</p>
+      <canvas id="coach" aria-hidden="true"></canvas>
+      <div class="voice">
+        <h1 class="sr-only">{es}</h1>
+        <p class="say" id="say" lang="en" aria-hidden="true"></p>
+        <p class="say-es" id="say-es" aria-hidden="true"></p>
+        <p class="by">{by}</p>
+        <div class="actions"><slot /></div>
+      </div>
+    </main>
+  </div>
+</Base>
+
+<style>
+  :global(body) {
+    --pop: var(--ink);
+  }
+  .notice {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    padding: clamp(16px, 2.2vw, 32px) clamp(16px, 3vw, 48px);
+    overflow: hidden;
+  }
+  .stage {
+    position: relative;
+    flex: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    align-content: center;
+    gap: clamp(8px, 3vw, 48px);
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  /* El número del error, gigante y tenue detrás de Glo: tipografía como decoración. */
+  .ghost {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    margin: 0;
+    font-size: clamp(10rem, 34vw, 30rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.07em;
+    white-space: nowrap;
+    color: var(--glo);
+    opacity: 0.1;
+    translate: calc(-50% + var(--px, 0) * -26px) calc(-50% + var(--py, 0) * -18px);
+    transition: translate 0.9s var(--ease-out);
+    pointer-events: none;
+    user-select: none;
+  }
+  canvas {
+    position: relative;
+    width: min(30vw, 46vh, 380px);
+    aspect-ratio: 1;
+    animation: glo-in 1s 0.1s var(--ease-spring) both;
+  }
+  .voice {
+    position: relative;
+  }
+  .say {
+    max-width: 12ch;
+    font-size: clamp(2.2rem, min(5vw, 8vh), 4.4rem);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+    margin-top: clamp(24px, 5vh, 44px);
+    animation: glo-fade 0.6s 0.5s var(--ease-out) both;
+  }
+  .actions > :global(.cta) {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    height: 56px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: inherit;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      0 12px 24px -12px color-mix(in srgb, var(--accent) 80%, transparent);
+    transition:
+      background 0.2s,
+      transform 0.15s var(--ease-out);
+  }
+  .actions > :global(.cta:hover) {
+    background: color-mix(in srgb, var(--accent) 88%, black);
+  }
+  .actions > :global(.cta:active) {
+    transform: translateY(1px) scale(0.99);
+  }
+  .actions > :global(.link) {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: text-underline-offset 0.2s var(--ease-out);
+  }
+  .actions > :global(.link:hover) {
+    text-underline-offset: 6px;
+  }
+  .actions > :global(.hint) {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* Móvil: Glo arriba, texto debajo y la acción principal en la zona del pulgar. */
+  @media (max-width: 760px) {
+    .stage {
+      grid-template-columns: 1fr;
+      justify-items: start;
+      align-content: start;
+      padding-top: 4vh;
+    }
+    canvas {
+      width: min(46vw, 200px);
+      margin-left: -4%;
+    }
+    .say {
+      font-size: clamp(2rem, 10vw, 2.8rem);
+    }
+    .actions {
+      position: fixed;
+      inset: auto 16px max(16px, env(safe-area-inset-bottom)) 16px;
+      flex-direction: column-reverse;
+      gap: 14px;
+      margin: 0;
+    }
+    .actions > :global(.cta) {
+      width: 100%;
+      justify-content: center;
+    }
+    .actions > :global(.hint) {
+      text-align: center;
+    }
+  }
+</style>
+
+<script>
+  import type { CoachState } from "../lib/coach";
+  import { mountGlo } from "../lib/glo";
+
+  const root = document.querySelector<HTMLElement>(".notice")!;
+  const glo = mountGlo({
+    canvas: document.getElementById("coach") as HTMLCanvasElement,
+    say: document.getElementById("say")!,
+    sayEs: document.getElementById("say-es")!,
+    scene: root,
+  });
+  glo.speak(root.dataset.en!, root.dataset.es!);
+  glo.ready.then((c) => c?.setState(root.dataset.state as CoachState));
+</script>

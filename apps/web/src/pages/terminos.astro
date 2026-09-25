@@ -1,0 +1,78 @@
+---
+import Legal from "../layouts/Legal.astro";
+
+const summary = [
+  "Global AI te ayuda a descubrir tu nivel de inglés con pruebas calificadas en el servidor.",
+  "Tu cuenta es personal: no compartas tu contraseña.",
+  "Presenta las pruebas tú mismo y sin ayuda externa; registramos señales de integridad.",
+  "Los resultados y el feedback de la IA son orientativos, no una certificación oficial.",
+];
+---
+
+<Legal title="Términos y condiciones" {summary}>
+  <h2 id="aceptacion">1. Aceptación</h2>
+  <p>
+    Al iniciar sesión aceptas estos términos y nuestra <a href="/privacidad">Política de privacidad</a>. Si no estás de
+    acuerdo, no uses la plataforma.
+  </p>
+
+  <h2 id="servicio">2. El servicio</h2>
+  <p>
+    Global AI ofrece evaluaciones de inglés (gramática, vocabulario, lectura, escucha y expresión oral) alineadas con
+    el Marco Común Europeo de Referencia (MCER), resultados por habilidad, historial de progreso y feedback generado con
+    inteligencia artificial.
+  </p>
+
+  <h2 id="cuenta">3. Tu cuenta</h2>
+  <ul>
+    <li>Las cuentas son personales e intransferibles. Eres responsable de lo que ocurra con tu cuenta.</li>
+    <li>Mantén tu contraseña en secreto y avísanos si crees que alguien más la conoce.</li>
+    <li>Podemos suspender cuentas que se usen para dañar la plataforma o a otras personas.</li>
+  </ul>
+
+  <h2 id="integridad">4. Integridad de las pruebas</h2>
+  <ul>
+    <li>Responde por tu cuenta, sin ayuda de otras personas, traductores ni herramientas de IA.</li>
+    <li>
+      Durante la prueba registramos cambios de pestaña, salidas de la ventana y pegado de texto. Tu profesor puede ver
+      estos eventos junto a tus resultados. Pegar texto está desactivado en las respuestas escritas.
+    </li>
+    <li>Las pruebas pueden tener tiempo límite, número máximo de intentos y un tiempo de espera entre intentos.</li>
+  </ul>
+
+  <h2 id="resultados">5. Resultados y feedback con IA</h2>
+  <p>
+    El nivel sugerido es una estimación basada en tus respuestas, útil para orientar tu aprendizaje, pero no es una
+    certificación oficial. El feedback y la calificación de respuestas orales o abiertas se generan con inteligencia
+    artificial y pueden contener errores; si algo no te cuadra, coméntalo con tu profesor.
+  </p>
+
+  <h2 id="uso">6. Uso aceptable</h2>
+  <p>No está permitido:</p>
+  <ul>
+    <li>Intentar acceder a respuestas correctas, cuentas ajenas o partes no públicas del sistema.</li>
+    <li>Automatizar el uso de la plataforma o sobrecargarla a propósito.</li>
+    <li>Copiar o redistribuir las preguntas, audios o lecturas de las pruebas.</li>
+  </ul>
+
+  <h2 id="propiedad">7. Propiedad intelectual</h2>
+  <p>
+    Las preguntas, audios, textos, el diseño y Glo, nuestro coach, pertenecen a Global AI. Tus respuestas siguen siendo
+    tuyas; nos das permiso para usarlas solo para calificarte y mostrarte tu progreso.
+  </p>
+
+  <h2 id="responsabilidad">8. Disponibilidad y responsabilidad</h2>
+  <p>
+    Trabajamos para que la plataforma esté siempre disponible y guardamos tu progreso mientras respondes, pero puede
+    haber interrupciones. Si una falla técnica afecta una prueba, contáctanos y lo revisamos.
+  </p>
+
+  <h2 id="cambios">9. Cambios</h2>
+  <p>
+    Si modificamos estos términos, actualizaremos la fecha de arriba y te pediremos aceptarlos de nuevo al iniciar
+    sesión.
+  </p>
+
+  <h2 id="contacto">10. Contacto</h2>
+  <p>Para cualquier pregunta sobre estos términos, escríbenos a <strong>privacidad@globalai.demo</strong>.</p>
+</Legal>

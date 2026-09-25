@@ -84,6 +84,7 @@ class AttemptAnswer(UUIDPk, Timestamps, Base):
     )
     question_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("questions.id"))
     # choice -> {"option_id": "b"} | text -> {"text": "since"}
+    # speech -> {"transcript": "...", "score": 0.82, "tries": 1, ...} (lo escribe el servidor)
     response: Mapped[dict[str, Any]] = mapped_column(JSONB)
     is_correct: Mapped[bool | None]  # None hasta que el intento se envía
 
@@ -97,6 +98,13 @@ class IntegrityEventType(StrEnum):
     COPY = "copy"
     FULLSCREEN_EXIT = "fullscreen_exit"
     RESUMED = "resumed"  # reanudó tras desconexión o recarga
+    # Derivadas por el servidor al calificar (ver attempt_service._derived_signals). El cliente
+    # no puede enviarlas: se calculan con horas del servidor, no con lo que diga el navegador.
+    RAPID_ANSWER = "rapid_answer"
+    ANSWERED_AFTER_LEAVING = "answered_after_leaving"
+
+
+SERVER_ONLY_EVENTS = {IntegrityEventType.RAPID_ANSWER, IntegrityEventType.ANSWERED_AFTER_LEAVING}
 
 
 class AttemptEvent(UUIDPk, Base):
